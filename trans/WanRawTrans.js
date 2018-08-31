@@ -3,7 +3,7 @@
 let wanUtil = require('wanchain-util');
 
 module.exports = class WanRawTrans extends EthRawTrans {
-	constructor(from, to, gas, gasPrice, nonce, value, chainType) {
+	constructor(from, to, gas, gasPrice, nonce, value) {
 		super(from, to, gas, gasPrice, nonce, value);
 		this.txType = '0x01';
 		this.txParams = {

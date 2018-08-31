@@ -303,6 +303,54 @@ class baseChain {
     })
   }
 
+  getSolInferface(abi, contractAddr, contractFunc) {
+    let contract = this.theWeb3.eth.contract(abi);
+    let conInstance = contract.at(contractAddr);
+    return conInstance[contractFunc];
+  }
+
+  getERC20Interface(contractAddr, contractFunc) {
+    return this.getSolInferface(chainSCConfig.erc20Abi, contractAddr, contractFunc);
+  }
+
+  getTokenBalance(address, tokenScAddr, callback) {
+    try {
+      let balanceOf = this.getERC20Interface(tokenScAddr, 'balanceOf');
+      balanceOf(address, function(err, balance) {
+        if (err) {
+          log.debug('getTokenBalance at tokenScAddr', tokenScAddr, 'on address ', address, 'failed, and error is ', err);
+          callback(err, null);
+        } else {
+          let tokenBalance = balance.toString();
+          log.debug('getTokenBalance at tokenScAddr', tokenScAddr, 'on address ', address, 'the result is ',tokenBalance);
+        }
+        callback(null, tokenBalance);
+      });
+    } catch (err) {
+      log.debug('getTokenBalance at tokenScAddr', tokenScAddr, 'on address ', address, 'failed, and error is ', err);
+      callback(err, null);
+    }
+  }
+
+  getTokenAllowance(tokenScAddr, owner, spender, callback) {
+    try {
+      let allowance = this.getERC20Interface(tokenScAddr, 'allowance');
+      allowance(owner, spender, function(err, allowance) {
+        if (err) {
+          log.debug('getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
+          callback(err, null);
+        } else {
+          let tokenAllowance = allowance.toString();
+          log.debug('getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'the result is ',tokenAllowance);
+        }
+        callback(null, tokenAllowance);
+      });
+    } catch (err) {
+      log.debug('getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
+      callback(err, null);
+    }
+  }
+
 }
 
 module.exports = baseChain;
