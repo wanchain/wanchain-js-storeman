@@ -14,8 +14,8 @@ module.exports = class Erc20CrossAgent {
     let crossInfoInst = config.crossInfoDict[config.crossTypeDict[token.tokenType]];
     this.transChainType = this.getTransChainType(crossDirection, action); /* wan -- trans on wanchain HTLC contract, or, trans on originchain HTLC contract */
 
-    let abi = (transChainType !== 'wan') ? crossInfoInst.originalChainHtlcAbi : crossInfoInst.wanchainHtlcAbi;
-    let contractAddr = (transChainType !== 'wan') ? crossInfoInst.originalChainHtlcAddr : crossInfoInst.wanchainHtlcAddr;
+    let abi = (this.transChainType !== 'wan') ? crossInfoInst.originalChainHtlcAbi : crossInfoInst.wanchainHtlcAbi;
+    let contractAddr = (this.transChainType !== 'wan') ? crossInfoInst.originalChainHtlcAddr : crossInfoInst.wanchainHtlcAddr;
     let erc20Abi = config.erc20Abi;
 
     this.contract = new Contract(abi, contractAddr);
@@ -25,28 +25,47 @@ module.exports = class Erc20CrossAgent {
     this.crossFunc = (this.crossDirection === 0) ? crossInfoInst.depositFunc : crossInfoInst.withdrawFunc;
     this.crossEvent = (this.crossDirection === 0) ? crossInfoInst.depositEvent : crossInfoInst.withdrawEvent;
     this.approveFunc = 'approve';
-    this.key = record.x;
-    this.hashKey = record.hashX;
-    this.amount = record.value;
-    this.crossAddress = record.crossAddress;
 
-    let transInfo = this.getTransInfo(action);
-    if (transChainType === 'wan') {
-      this.trans = new wanRawTrans(...transInfo);
-    } else {
-      this.trans = new ethRawTrans(...transInfo);
+    if (record !== null) {
+      if (record.hasOwnProperty(x)) {
+        this.key = record.x;
+      }
+
+      this.hashKey = record.hashX;
+      this.amount = record.value;
+      this.crossAddress = record.crossAddress;
     }
 
-    this.lockEvent = contract.getEventSignature(this.crossEvent[0]);
-    this.refundEvent = contract.getEventSignature(this.crossEvent[1]);
-    this.revokeEvent = contract.getEventSignature(this.crossEvent[2]);
+    if (action !== null) {
+      let transInfo = this.getTransInfo(action);
+      if (this.transChainType === 'wan') {
+        this.trans = new wanRawTrans(...transInfo);
+      } else {
+        this.trans = new ethRawTrans(...transInfo);
+      }      
+    }
 
-    // this.depositLockEvent = contract.getEventSignature(crossInfoInst.depositEvent[0]);
-    // this.depositRefundEvent = contract.getEventSignature(crossInfoInst.depositEvent[1]);
-    // this.depositRevokeEvent = contract.getEventSignature(crossInfoInst.depositEvent[2]);
-    // this.withdrawLockEvent = contract.getEventSignature(crossInfoInst.withdrawEvent[0]);
-    // this.withdrawRefundEvent = contract.getEventSignature(crossInfoInst.withdrawEvent[1]);
-    // this.withdrawRevokeEvent = contract.getEventSignature(crossInfoInst.withdrawEvent[2]);
+    this.lockEvent = this.contract.getEventSignature(this.crossEvent[0]);
+    this.refundEvent = this.contract.getEventSignature(this.crossEvent[1]);
+    this.revokeEvent = this.contract.getEventSignature(this.crossEvent[2]);
+
+    // this.depositLockEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[0]);
+    // this.depositRefundEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[1]);
+    // this.depositRevokeEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[2]);
+    // this.withdrawLockEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[0]);
+    // this.withdrawRefundEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[1]);
+    // this.withdrawRevokeEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[2]);
+
+    // console.log("this.lockEvent", this.lockEvent);
+    // console.log("this.refundEvent", this.refundEvent);
+    // console.log("this.revokeEvent", this.revokeEvent);
+    // console.log("this.contractAddr", this.contractAddr);
+    // console.log("this.depositLockEvent", this.depositLockEvent);
+    // console.log("this.depositRefundEvent", this.depositRefundEvent);
+    // console.log("this.depositRevokeEvent", this.depositRevokeEvent);
+    // console.log("this.withdrawLockEvent", this.withdrawLockEvent);
+    // console.log("this.withdrawRefundEvent", this.withdrawRefundEvent);
+    // console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
 
     this.logger = logger;
   }
@@ -59,7 +78,7 @@ module.exports = class Erc20CrossAgent {
   }
 
   getTransChainType(crossDirection, action) {
-    if (this.record.crossDirection === 0) {
+    if (this.crossDirection === 0) {
       if (action === 'refund') {
         return 'eth';
       } else {
@@ -111,9 +130,9 @@ module.exports = class Erc20CrossAgent {
     if (action === 'approve') {
       from = global.storemanEth;
     } else if (action === 'refund') {
-      from = (crossDirection === 0) ? global.storemanEth : global.storemanWan;
+      from = (this.crossDirection === 0) ? global.storemanEth : global.storemanWan;
     } else {
-      from = (crossDirection === 0) ? global.storemanWan : global.storemanEth;
+      from = (this.crossDirection === 0) ? global.storemanWan : global.storemanEth;
     }
 
     to = (action === 'approve') ? this.tokenAddr : this.contractAddr;
@@ -207,7 +226,7 @@ module.exports = class Erc20CrossAgent {
         self.logger.debug("sendRawTransaction result: ", result);
         console.log("********************************** sendTransaction success ********************************** hashX", trans.Contract.hashKey);
         let content = self.build(result);
-        callback(err, content); 
+        callback(err, content);
       } else {
         console.log("********************************** sendTransaction failed ********************************** hashX", trans.Contract.hashKey);
         callback(err, result);

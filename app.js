@@ -8,10 +8,15 @@ const config = require('conf/config');
 const mongoose = require('mongoose');
 const ModelOps = require('db/modelOps');
 let Erc20CrossAgent = require("agent/Erc20CrossAgent.js");
+const stateAction = require("monitor/monitor.js");
 
 const {
   sleep
 } = require('comm/lib');
+
+const SAFE_BLOCK_NUM = 5;
+const CONFIRM_BLOCK_NUM = 2;
+const INTERVAL_TIME = 15 * 1000;
 
 global.crossToken = 'WCT';
 global.lastEthNonce = 0;
@@ -21,19 +26,34 @@ global.wanGasLimit = 1000000;
 global.ethGasLimit = 1000000;
 global.password = process.env.KEYSTORE_PWD;
 
-let wanCrossContract = new Erc20CrossAgent(crossToken, 0);
-let origenCrossContract = new Erc20CrossAgent(crossToken, 1);
+let wanCrossContract = new Erc20CrossAgent(global.crossToken, 0);
+let origenCrossContract = new Erc20CrossAgent(global.crossToken, 1);
+
+global.storemanEth = "0xc27ecd85faa4ae80bf5e28daf91b605db7be1ba8";
+global.storemanWan = "0x55ccc7a38f900a1e00f0a4c1e466ec36e7592024";
+
+global.ethChain = getChain('eth');
+global.wanChain = getChain('wan');
+
+global.syncLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
+global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 
 function getChain(chainType) {
   let chain = chainType.toLowerCase();
   if (chain === 'eth') {
-    return new EthChain(syncLogger, new Web3(new Web3.providers.HttpProvider(config.ethWeb3Url)));
+    return new EthChain(global.syncLogger, new Web3(new Web3.providers.HttpProvider(config.ethWeb3Url)));
   }
   else if (chain === 'wan') {
-    return new WanChain(syncLogger, new Web3(new Web3.providers.HttpProvider(config.wanWeb3Url)));
+    return new WanChain(global.syncLogger, new Web3(new Web3.providers.HttpProvider(config.wanWeb3Url)));
   } else {
     return null;
   }
+}
+
+async function init() {
+  global.ethGasPrice = await global.ethChain.getGasPriceSync();
+  global.ethNonce = await global.ethChain.getNonceSync(global.storemanEth);
+  global.wanNonce = await global.wanChain.getNonceSync(global.storemanWan);
 }
 
 function splitData(string) {
@@ -101,8 +121,8 @@ async function splitEvent(chainType, events) {
         let hashX = '0x';
         let data = [];
         // console.log(event);
-        if ((event.topics[0] === origenCrossContract.depositLockEvent && chainType === 'eth') ||
-          (event.topics[0] === destCrossContract.withdrawLockEvent && chainType === 'wan')) {
+        if ((event.topics[0] === origenCrossContract.lockEvent && chainType === 'eth') ||
+          (event.topics[0] === wanCrossContract.lockEvent && chainType === 'wan')) {
           console.log("********************************** 1: found new transaction ********************************** hashX", event.topics[3]);
           hashX = event.topics[3].toLowerCase();
           data = splitData(event.data);
@@ -117,15 +137,15 @@ async function splitEvent(chainType, events) {
             storeman: '0x' + event.topics[2].substr(-40, 40),
             value: parseInt(data[1], 16),
             crossAddress: '0x' + data[2].substr(-40, 40),
-            status: (chainType !== 'wan') ? 'waitingCross' : 'waitingApprove',
+            status: (chainType !== 'wan') ? 'waitingCross' : 'checkApprove',
             blockNumber: event.blockNumber,
             timestamp: event.timestamp * 1000,
             suspendTime: (1000 * Number(global.lockedTime) + Number(event.timestamp) * 1000).toString(),
             HTLCtime: (100000 + 2 * 1000 * Number(global.lockedTime) + Number(event.timestamp) * 1000).toString(),
             walletLockEvent: event
           };
-        } else if ((event.topics[0] === destCrossContract.depositLockEvent && chainType === 'wan') ||
-          (event.topics[0] === origenCrossContract.withdrawLockEvent && chainType === 'eth')) {
+        } else if ((event.topics[0] === wanCrossContract.lockEvent && chainType === 'wan') ||
+          (event.topics[0] === origenCrossContract.lockEvent && chainType === 'eth')) {
           console.log("********************************** 2: found storeman lock transaction ********************************** hashX", event.topics[3]);
           hashX = event.topics[3].toLowerCase();
           content = {
@@ -133,8 +153,8 @@ async function splitEvent(chainType, events) {
             storemanLockTxHash: event.transactionHash.toLowerCase(),
             storemanLockEvent: event
           };
-        } else if ((event.topics[0] === destCrossContract.depositRefundEvent && chainType === 'wan') ||
-          (event.topics[0] === origenCrossContract.withdrawRefundEvent && chainType === 'eth')) {
+        } else if ((event.topics[0] === wanCrossContract.refundEvent && chainType === 'wan') ||
+          (event.topics[0] === origenCrossContract.refundEvent && chainType === 'eth')) {
           console.log("********************************** 3: found wallet refund transaction ********************************** hashX", event.topics[3]);
           hashX = event.topics[3].toLowerCase();
           data = splitData(event.data);
@@ -143,8 +163,8 @@ async function splitEvent(chainType, events) {
             walletRefundEvent: event,
             // status: 'receivedX',
           };
-        } else if ((event.topics[0] === origenCrossContract.depositRefundEvent && chainType === 'eth') ||
-          (event.topics[0] === destCrossContract.withdrawRefundEvent && chainType === 'wan')) {
+        } else if ((event.topics[0] === origenCrossContract.refundEvent && chainType === 'eth') ||
+          (event.topics[0] === wanCrossContract.refundEvent && chainType === 'wan')) {
           console.log("********************************** 4: found storeman refund transaction ********************************** hashX", event.topics[3]);
           hashX = event.topics[3].toLowerCase();
           content = {
@@ -152,16 +172,16 @@ async function splitEvent(chainType, events) {
             storemanRefundTxHash: event.transactionHash.toLowerCase(),
             storemanRefundEvent: event
           };
-        } else if ((event.topics[0] === origenCrossContract.depositRevokeEvent && chainType === 'eth') ||
-          (event.topics[0] === destCrossContract.withdrawRevokeEvent && chainType === 'wan')) {
+        } else if ((event.topics[0] === origenCrossContract.revokeEvent && chainType === 'eth') ||
+          (event.topics[0] === wanCrossContract.revokeEvent && chainType === 'wan')) {
           console.log("********************************** 5: found wallet revoke transaction ********************************** hashX", event.topics[3]);
           hashX = event.topics[3].toLowerCase();
           content = {
             walletRevokeEvent: event,
             // status: 'waitingRevoke',
           };
-        } else if ((event.topics[0] === destCrossContract.depositRevokeEvent && chainType === 'wan') ||
-          (event.topics[0] === origenCrossContract.withdrawRevokeEvent && chainType === 'eth')) {
+        } else if ((event.topics[0] === wanCrossContract.revokeEvent && chainType === 'wan') ||
+          (event.topics[0] === origenCrossContract.revokeEvent && chainType === 'eth')) {
           console.log("********************************** 6: found storeman revoke transaction ********************************** hashX", event.topics[3]);
           hashX = event.topics[3].toLowerCase();
           content = {
@@ -184,7 +204,7 @@ async function splitEvent(chainType, events) {
     await Promise.all(multiEvents);
     console.log("********************************** splitEvent done **********************************");
   } catch (err) {
-    syncLogger.error("splitEvent", err);
+    global.syncLogger.error("splitEvent", err);
     return Promise.reject(err);
   }
 }
@@ -245,7 +265,7 @@ async function syncMain(logger, db) {
     chainType = 'wan';
     chain = getChain(chainType);
     from = wanBlockNumber;
-    scAddr = destCrossContract.contractAddr;
+    scAddr = wanCrossContract.contractAddr;
 
     try {
       curBlock = await chain.getBlockNumberSync();
@@ -269,23 +289,54 @@ async function syncMain(logger, db) {
   }
 }
 
+monitorRecord(record) {
+  let stateAction = new stateAction(record, global.monitorRecord, db);
+  stateAction.takeAction();
+}
 
-let logger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", level = 'info');
-db = mongoose.createConnection(config.crossEthDbUrl, { useNewUrlParser: true });
+async function handlerMain(logger, db) {
+  // let modelOps = new ModelOps(logger, db);
+  await init();
+  while (1) {
+    await sleep(INTERVAL_TIME);
+
+    console.log("********************************** handlerMain start **********************************");
+    let option = {
+      tokenAddr: config.crossTokenDict[global.crossToken].tokenAddr,
+      storeman: {
+        $in: [global.storemanEth, global.storemanWan]
+      },
+      status: {
+        $nin: ['refundFinished', 'revokeFinished']
+      }
+    }
+    let history = await modelOps.getEventHistory(option);
+    logger.debug('history length is ', history.length);
+
+    for (let i = 0; i < history.length; i++) {
+      let record = history[i];
+      try {
+        monitorRecord(record);
+      } catch (error) {
+        logger.error("monitorRecord error:", error);
+      }
+    }
+
+    await sleep(INTERVAL_TIME);
+  }
+}
+
+// let logger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", level = 'info');
+let db = mongoose.createConnection(config.crossEthDbUrl, { useNewUrlParser: true });
 db.on('connected', function(err) {
   if (err) {
-    syncLogger.error('Unable to connect to database(' + dbUrl + ')：' + err);
-    syncLogger.error('Aborting');
+    global.syncLogger.error('Unable to connect to database(' + dbUrl + ')：' + err);
+    global.syncLogger.error('Aborting');
     process.exit();
   } else {
-    syncLogger.info('Connecting to database is successful!');
+    global.syncLogger.info('Connecting to database is successful!');
   }
 });
-modelOps = new ModelOps(syncLogger, db);
+let modelOps = new ModelOps(global.syncLogger, db);
 
-global.ethChain = getChain('eth');
-global.wanChain = getChain('wan');
-global.syncLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", level = 'debug');
-global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", level = 'debug');
-
-syncMain(syncLogger, db);
+syncMain(global.syncLogger, db);

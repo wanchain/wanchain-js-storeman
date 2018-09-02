@@ -4,8 +4,9 @@ const fs = require('fs');
 const solc = require('solc');
 let Web3 = require('web3');
 let web3 = new Web3(null);
-let SolidityEvent = require("web3/lib/web3/event.js");
-let SolidityFunction = require("web3/lib/web3/function.js");
+// let SolidityEvent = require("web3/lib/web3/event.js");
+// let SolidityFunction = require("web3/lib/web3/function.js");
+let wanUtil = require('wanchain-util');
 
 module.exports = class Contract {
   constructor(abi, contractAddr) {
@@ -41,25 +42,54 @@ module.exports = class Contract {
     return conInstance[contractFunc];
   }
 
-  getFuncSignature(funcName) {
-    return this.abi.filter((json) => {
-      return json.type === 'funciton' && json.name === funcName;
-    }).map((json) => {
-      return new SolidityFunction(null, json, null);
-    }).map((func) => {
-      return func.signature();
-    })
+  getcommandString(funcName) {
+    for (var i = 0; i < this.abi.length; ++i) {
+      let item = this.abi[i];
+      if (item.name == funcName) {
+        let command = funcName + '(';
+        for (var j = 0; j < item.inputs.length; ++j) {
+          if (j != 0) {
+            command = command + ',';
+          }
+          command = command + item.inputs[j].type;
+        }
+        command = command + ')';
+        return command;
+      }
+    }
   }
 
-  getEventSignature(eventName) {
-    return this.abi.filter((json) => {
-      return json.type === 'event' && json.name === eventName;
-    }).map((json) => {
-      return new SolidityFunction(null, json, null);
-    }).map((event) => {
-      return event.signature();
-    })
+  commandSha3(command) {
+    return wanUtil.sha3(command, 256);
   }
+
+  getFuncSignature(funcName) {
+    return this.commandSha3(this.getcommandString(funcName)).slice(0, 4).toString('hex');
+  }
+  getEventSignature(funcName) {
+    return '0x' + this.commandSha3(this.getcommandString(funcName)).toString('hex');
+  }
+
+  // getFuncSignature(funcName) {
+  //   return this.abi.filter((json) => {
+  //     return json.type === 'funciton' && json.name === funcName;
+  //   }).map((json) => {
+  //     return new SolidityFunction(null, json, null);
+  //   }).map((func) => {
+  //     return func.signature();
+  //   })
+  // }
+
+  // getEventSignature(eventName) {
+  //   return this.abi.filter((json) => {
+  //     return json.type === 'event' && json.name === eventName;
+  //   }).map((json) => {
+  //     return new SolidityEvent(null, json, null);
+  //   }).map((event) => {
+  //     return event.signature();
+  //   })
+  // }
+
 
   parseEvent(log) {
 

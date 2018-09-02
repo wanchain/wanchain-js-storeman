@@ -1,0 +1,30 @@
+{
+  "name": "wanchain-js-storeman",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wanchain/wanchain-js-storeman.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wanchain/wanchain-js-storeman/issues"
+  },
+  "homepage": "https://github.com/wanchain/wanchain-js-storeman#readme",
+  "dependencies": {
+    "keythereum": "^1.0.4",
+    "mongoose": "^5.2.12",
+    "solc": "^0.4.24",
+    "wanchain-util": "^1.2.0",
+    "web3": "^1.0.0-beta.35",
+    "winston": "^3.0.0",
+    "winston-daily-rotate-file": "^3.3.2",
+    "winston-syslog": "^2.0.0"
+  }
+}
