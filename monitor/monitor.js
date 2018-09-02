@@ -155,12 +155,21 @@ module.exports = class stateAction {
   }
 
   takeAction() {
-    if (!this.checkHashTimeout) {
-      let action = stateDict[this.state].action;
-      let paras = stateDict[this.state].paras;
-      paras.concat([stateDict[this.state].nextState, stateDict[this.state].rollState]);
-      eval(`action` + "(" + `...para` + ")");
-    }
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!this.checkHashTimeout) {
+          let action = stateDict[this.state].action;
+          let paras = stateDict[this.state].paras;
+          paras.concat([stateDict[this.state].nextState, stateDict[this.state].rollState]);
+          await eval(`action` + "(" + `...para` + ")");
+          resolve();
+        }
+      } catch (err) {
+        this.logger.error("There is takeAction error", err);
+        reject(err);
+      }
+    })
+
   }
 
   takeIntervention() {
@@ -260,7 +269,7 @@ module.exports = class stateAction {
     })
   }
 
-  async function checkStoremanTransOnline(eventName, transHashName, nextState, rollState) {
+  async checkStoremanTransOnline(eventName, transHashName, nextState, rollState) {
     try {
       console.log("********************************** checkStoremanTransOnline checkEvent**********************************", eventName, this.record.hashX);
       if (eventName !== null) {

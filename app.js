@@ -289,7 +289,7 @@ async function syncMain(logger, db) {
   }
 }
 
-monitorRecord(record) {
+function monitorRecord(record) {
   let stateAction = new stateAction(record, global.monitorRecord, db);
   stateAction.takeAction();
 }

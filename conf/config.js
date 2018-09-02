@@ -4,13 +4,16 @@ const pwd = process.env.MONGO_PWD;
 const dbUrl = `mongodb://localhost:27017`;
 
 const config = {
-  // ethWeb3Url: "http://localhost:8545",
-  // wanWeb3Url: "http://localhost:8545",
-  ethWeb3Url: "http://18.236.235.133:18545",
-  wanWeb3Url: "http://18.236.235.133:8545",
+	// ethWeb3Url: "http://localhost:8545",
+	// wanWeb3Url: "http://localhost:8545",
+	ethWeb3Url: "http://18.236.235.133:18545",
+	wanWeb3Url: "http://18.236.235.133:8545",
 
-  crossEthDbUrl: dbUrl + "/crossEthChain"
-
+	crossEthDbUrl: dbUrl + "/crossEthChain",
+	email: {
+		"region": "us-west-2",
+		"sender": "monitor@wanchain.org"
+	}
 };
 
 config.erc20Abi = [{"constant": true, "inputs": [], "name": "totalSupply", "outputs": [{"name": "", "type": "uint256"}], "payable": false, "stateMutability": "view", "type": "function"}, {"anonymous": false, "inputs": [{"indexed": true, "name": "_from", "type": "address"}, {"indexed": true, "name": "_to", "type": "address"}, {"indexed": false, "name": "_value", "type": "uint256"}], "name": "Transfer", "type": "event"}, {"anonymous": false, "inputs": [{"indexed": true, "name": "_owner", "type": "address"}, {"indexed": true, "name": "_spender", "type": "address"}, {"indexed": false, "name": "_value", "type": "uint256"}], "name": "Approval", "type": "event"}, {"constant": true, "inputs": [{"name": "_owner", "type": "address"}], "name": "balanceOf", "outputs": [{"name": "balance", "type": "uint256"}], "payable": false, "stateMutability": "view", "type": "function"}, {"constant": false, "inputs": [{"name": "_to", "type": "address"}, {"name": "_value", "type": "uint256"}], "name": "transfer", "outputs": [{"name": "success", "type": "bool"}], "payable": false, "stateMutability": "nonpayable", "type": "function"}, {"constant": false, "inputs": [{"name": "_from", "type": "address"}, {"name": "_to", "type": "address"}, {"name": "_value", "type": "uint256"}], "name": "transferFrom", "outputs": [{"name": "success", "type": "bool"}], "payable": false, "stateMutability": "nonpayable", "type": "function"}, {"constant": false, "inputs": [{"name": "_spender", "type": "address"}, {"name": "_value", "type": "uint256"}], "name": "approve", "outputs": [{"name": "success", "type": "bool"}], "payable": false, "stateMutability": "nonpayable", "type": "function"}, {"constant": true, "inputs": [{"name": "_owner", "type": "address"}, {"name": "_spender", "type": "address"}], "name": "allowance", "outputs": [{"name": "remaining", "type": "uint256"}], "payable": false, "stateMutability": "view", "type": "function"}];
