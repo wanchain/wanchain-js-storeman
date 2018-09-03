@@ -6,6 +6,7 @@ const erc20CrossAgent = require('agent/Erc20CrossAgent.js');
 const sendMail = require('comm/sendMail');
 
 const retryTime = 0;
+const CONFIRM_BLOCK_NUM = 2;
 const tokenAllowance = 1000000000;
 /* action: [functionName, paras, nextState, rollState] */
 var stateDict = {
@@ -120,14 +121,20 @@ var stateDict = {
   waitingIntervention: {
     action: 'takeIntervention',
     paras: [],
-    nextState: '',
-    rollState: ''
+    nextState: 'interventionPending',
+    rollState: 'waitingIntervention'
   },
   transIgnored: {
+    action: 'takeIntervention',
+    paras: [],
+    nextState: 'interventionPending',
+    rollState: ''
+  },
+  interventionPending: {
     action: '',
     paras: [],
     nextState: '',
-    rollState: ''
+    rollState: ''  	
   }
 };
 
@@ -136,18 +143,20 @@ module.exports = class stateAction {
     this.record = record;
     this.hashX = record.hashX;
     this.state = record.status;
-    this.crossDirection = record.crossDirection;
+    this.crossDirection = record.direction;
     this.logger = logger;
     this.db = db;
     this.modelOps = new ModelOps(logger, db);
+    this.logger.debug("********************************** stateAction ********************************** hashX:", this.hashX, "status:", this.state);
   }
 
   updateRecord(content) {
+    this.logger.debug("********************************** updateRecord ********************************** hashX:", this.hashX, "content:", content);
     this.modelOps.saveScannedEvent(this.hashX, content);
   }
 
   updateState(state) {
-    logger.debug("********************************** updateRecord ********************************** hashX:", this.hashX, "status:", status);
+    this.logger.debug("********************************** updateState ********************************** hashX:", this.hashX, "status:", state);
     let content = {
       status: state,
     };
@@ -155,38 +164,44 @@ module.exports = class stateAction {
   }
 
   takeAction() {
+  	let self = this;
     return new Promise(async (resolve, reject) => {
       try {
-        if (!this.checkHashTimeout) {
-          let action = stateDict[this.state].action;
-          let paras = stateDict[this.state].paras;
-          paras.concat([stateDict[this.state].nextState, stateDict[this.state].rollState]);
-          await eval(`action` + "(" + `...para` + ")");
+        if (!self.checkHashTimeout()) {
+          let action = stateDict[self.state].action;
+          if (typeof(self[action]) === "function") {
+            let paras = stateDict[self.state].paras;
+            paras = paras.concat([stateDict[self.state].nextState, stateDict[self.state].rollState]);
+            self.logger.debug("********************************** takeAction ********************************** hashX:", action, paras)
+            await self[action](...paras);
+          }
           resolve();
         }
       } catch (err) {
-        this.logger.error("There is takeAction error", err);
+        self.logger.error("There is takeAction error", err);
         reject(err);
       }
     })
 
   }
 
-  takeIntervention() {
-    let receive;
+  takeIntervention(nextState, rollState) {
+    let receive = "zhanli@wanchain.org";
     try {
-      let mailPro = sendMail(receive, this.record.status, this.record);
+      let mailPro = sendMail(receive, this.record.status, this.record.toString());
       mailPro.then((result) => {
         this.logger.error("send mail successfully, receive:%s subject:%s content:%s\n",
           receive,
           this.record.status,
           this.record);
+        this.updateState(nextState);
       }, (err) => {
         this.logger.error("send mail failed, receive:%s subject:%s content:%s\n error: %s",
           receive,
           this.record.status,
           this.record,
           err);
+        this.updateState(rollState);
       })
     } catch (err) {
       this.logger.error("send mail failed, receive:%s subject:%s content:%s\n error: %s",
@@ -199,17 +214,18 @@ module.exports = class stateAction {
 
   async sendTrans(action, nextState, rollState) {
     let newAgent = new erc20CrossAgent(global.crossToken, this.crossDirection, action, this.record, this.logger);
-    console.log("********************************** sendTrans begin ********************************** hashX:", record.hashX, "action:", action);
+    console.log("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
     let result = {};
     try {
       result = await newAgent.createTrans(action);
-      console.log("********************************** sendTrans done ********************************** hashX:", record.hashX, "action:", action);
+      console.log("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
       monitorLogger.debug("sendTrans result is ", result);
       result.status = nextState;
     } catch (err) {
-      monitorLogger.error("sendTransaction faild, action:", action, ", and record.hashX:", record.hashX);
+      monitorLogger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
       monitorLogger.error("err is", err);
       result.status = rollState;
+      console.log(result);
     }
     this.updateRecord(result);
   }
@@ -217,10 +233,13 @@ module.exports = class stateAction {
   checkHashTimeout() {
     let record = this.record;
     let state = this.state;
-    if (state == "waitingRevoke" ||
-      state == "waitingCrossRevokeConfirming" ||
-      state == "revokeFailed" ||
-      state == "refundFailed") {
+    this.logger.debug("********************************** checkHashTimeout ********************************** hashX:", this.hashX, record.status);
+
+    if (state === "waitingRevoke" ||
+      state === "waitingCrossRevokeConfirming" ||
+      state === "revokeFailed" ||
+      state === "refundFailed" ||
+      state === "waitingIntervention") {
       return false;
     }
 
@@ -235,7 +254,7 @@ module.exports = class stateAction {
       let nowData = new Date().toString();
 
       if (suspendTime <= Date.now()) {
-        console.log("********************************** checkHashTimeout ********************************** hashX", record.hashX, "timestampDate:", timestampDate, "suspendTimeDate:", suspendTimeDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
+        console.log("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "suspendTimeDate:", suspendTimeDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
         if (record.storemanRevokeEvent.length !== 0) {
           this.updateState('revokeFinished');
         } else if (record.storemanRefundEvent.length !== 0) {
@@ -259,23 +278,23 @@ module.exports = class stateAction {
     chain.getTokenAllowance(newAgent.tokenAddr, global.storemanEth, newAgent.contractAddr, (err, result) => {
       if (err === null) {
         if (result < tokenAllowance) {
-          updateState(rollState);
+          this.updateState(rollState);
         } else {
-          updateState(nextState);
+          this.updateState(nextState);
         }
       } else {
-        updateState('checkApprove');
+        this.updateState('checkApprove');
       }
     })
   }
 
   async checkStoremanTransOnline(eventName, transHashName, nextState, rollState) {
     try {
-      console.log("********************************** checkStoremanTransOnline checkEvent**********************************", eventName, this.record.hashX);
+      console.log("********************************** checkStoremanTransOnline checkEvent**********************************", eventName, this.hashX);
       if (eventName !== null) {
         let event = this.record[eventName];
         if (event.length !== 0) {
-          updateState(nextState);
+          this.updateState(nextState);
           return;
         }
       }
@@ -283,14 +302,14 @@ module.exports = class stateAction {
       let receipt;
       let transOnChain;
 
-      if (this.record.crossDirection === 0) {
+      if (this.record.direction === 0) {
         if (eventName === 'storemanRefundEvent') {
           transOnChain = 'eth';
         } else {
           transOnChain = 'wan';
         }
       } else {
-        if (action === 'storemanRefundEvent') {
+        if (eventName === 'storemanRefundEvent') {
           transOnChain = 'wan';
         } else {
           transOnChain = 'eth';
@@ -299,11 +318,11 @@ module.exports = class stateAction {
 
       let chain = (transOnChain === 'wan') ? global.wanChain : global.ethChain;
       let txHash = this.record[transHashName];
-      console.log("********************************** checkStoremanTransOnline checkHash**********************************", this.record.hashX, transHashName, txHash);
+      console.log("********************************** checkStoremanTransOnline checkHash**********************************", this.hashX, transHashName, txHash);
       receipt = await chain.getTransactionConfirmSync(txHash, CONFIRM_BLOCK_NUM);
       if (receipt !== null) {
         let status = (receipt.status !== '0x1') ? rollState : nextState;
-        updateState(status);
+        this.updateState(status);
       }
     } catch (err) {
       monitorLogger.error("checkStoremanTransOnline:", err);
@@ -312,10 +331,10 @@ module.exports = class stateAction {
 
   async checkWalletEventOnline(eventName, nextState) {
     try {
-      console.log("********************************** checkWalletEventOnline **********************************", eventName, this.record.hashX);
+      console.log("********************************** checkWalletEventOnline **********************************", eventName, this.hashX);
       let event = this.record[eventName];
       if (event.length !== 0) {
-        updateState(nextState);
+        this.updateState(nextState);
         return;
       }
     } catch (err) {

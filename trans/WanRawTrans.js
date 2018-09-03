@@ -13,7 +13,7 @@ module.exports = class WanRawTrans extends EthRawTrans {
 			gasPrice: gasPrice,
 			gasLimit: gas,
 			nonce: nonce,
-			txType: this.txType,
+			Txtype: this.txType,
 			value: value
 		}
 	}

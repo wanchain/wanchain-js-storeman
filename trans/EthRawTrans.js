@@ -20,6 +20,12 @@ module.exports = class EthRawTrans {
 		this.txParams.data = data;
 	}
 
+	setValue(value)
+    {
+        this.value = value;
+        this.txParams.value = value;
+    }
+
 	sign(privateKey){
 		let tx;
 		tx = new ethTx(this.txParams);
@@ -35,6 +41,7 @@ module.exports = class EthRawTrans {
 		} else {
 			privateKey = keyStoreDir.getAccount(this.txParams.from).getPrivateKey(password);
 		}
+		console.log("++++++++++++++++++++++++++++++ privateKey ++++++++++++++++++++++++++++++++++", privateKey);
 		if(privateKey){
 			return this.sign(privateKey);
 		} else {

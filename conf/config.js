@@ -9,7 +9,7 @@ const config = {
 	ethWeb3Url: "http://18.236.235.133:18545",
 	wanWeb3Url: "http://18.236.235.133:8545",
 
-	crossEthDbUrl: dbUrl + "/crossEthChain",
+	crossEthDbUrl: dbUrl + "/crossEthChain1",
 	email: {
 		"region": "us-west-2",
 		"sender": "monitor@wanchain.org"

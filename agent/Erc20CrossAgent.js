@@ -9,25 +9,27 @@ const config = require('conf/config.js');
 
 module.exports = class Erc20CrossAgent {
   constructor(crossToken, crossDirection, action = null, record = null, logger = null) {
+  	this.logger = logger;
     let token = config.crossTokenDict[crossToken];
     this.tokenAddr = token.tokenAddr;
+    this.tokenSymbol = token.tokenSymbol;
+    this.crossDirection = crossDirection; /* 0 -- token to Wtoken, 1 -- Wtoken to token */
     let crossInfoInst = config.crossInfoDict[config.crossTypeDict[token.tokenType]];
     this.transChainType = this.getTransChainType(crossDirection, action); /* wan -- trans on wanchain HTLC contract, or, trans on originchain HTLC contract */
 
     let abi = (this.transChainType !== 'wan') ? crossInfoInst.originalChainHtlcAbi : crossInfoInst.wanchainHtlcAbi;
-    let contractAddr = (this.transChainType !== 'wan') ? crossInfoInst.originalChainHtlcAddr : crossInfoInst.wanchainHtlcAddr;
+    this.contractAddr = (this.transChainType !== 'wan') ? crossInfoInst.originalChainHtlcAddr : crossInfoInst.wanchainHtlcAddr;
     let erc20Abi = config.erc20Abi;
 
-    this.contract = new Contract(abi, contractAddr);
+    this.contract = new Contract(abi, this.contractAddr);
     this.tokenContract = new Contract(erc20Abi, this.tokenAddr);
 
-    this.crossDirection = crossDirection; /* 0 -- token to Wtoken, 1 -- Wtoken to token */
     this.crossFunc = (this.crossDirection === 0) ? crossInfoInst.depositFunc : crossInfoInst.withdrawFunc;
     this.crossEvent = (this.crossDirection === 0) ? crossInfoInst.depositEvent : crossInfoInst.withdrawEvent;
     this.approveFunc = 'approve';
 
     if (record !== null) {
-      if (record.hasOwnProperty(x)) {
+      if (record.hasOwnProperty('x')) {
         this.key = record.x;
       }
 
@@ -40,8 +42,10 @@ module.exports = class Erc20CrossAgent {
       let transInfo = this.getTransInfo(action);
       if (this.transChainType === 'wan') {
         this.trans = new wanRawTrans(...transInfo);
+        this.chain = global.wanChain;
       } else {
         this.trans = new ethRawTrans(...transInfo);
+        this.chain = global.ethChain;
       }      
     }
 
@@ -49,12 +53,12 @@ module.exports = class Erc20CrossAgent {
     this.refundEvent = this.contract.getEventSignature(this.crossEvent[1]);
     this.revokeEvent = this.contract.getEventSignature(this.crossEvent[2]);
 
-    // this.depositLockEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[0]);
-    // this.depositRefundEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[1]);
-    // this.depositRevokeEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[2]);
-    // this.withdrawLockEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[0]);
-    // this.withdrawRefundEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[1]);
-    // this.withdrawRevokeEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[2]);
+    this.depositLockEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[0]);
+    this.depositRefundEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[1]);
+    this.depositRevokeEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[2]);
+    this.withdrawLockEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[0]);
+    this.withdrawRefundEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[1]);
+    this.withdrawRevokeEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[2]);
 
     // console.log("this.lockEvent", this.lockEvent);
     // console.log("this.refundEvent", this.refundEvent);
@@ -66,8 +70,6 @@ module.exports = class Erc20CrossAgent {
     // console.log("this.withdrawLockEvent", this.withdrawLockEvent);
     // console.log("this.withdrawRefundEvent", this.withdrawRefundEvent);
     // console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
-
-    this.logger = logger;
   }
 
   setKey(key) {
@@ -78,6 +80,7 @@ module.exports = class Erc20CrossAgent {
   }
 
   getTransChainType(crossDirection, action) {
+
     if (this.crossDirection === 0) {
       if (action === 'refund') {
         return 'eth';
@@ -140,14 +143,14 @@ module.exports = class Erc20CrossAgent {
 
     if (this.transChainType === 'wan') {
       gas = global.wanGasLimit;
-      gasPrice = getWeiFromGwei(global.wanGasPrice);
+      gasPrice = this.getWeiFromGwei(global.wanGasPrice);
     } else {
       gas = global.ethGasLimit;
       gasPrice = global.ethGasPrice;
     }
 
     nonce = this.getNonce();
-    console.log("transInfo is", from, to, gas, gasPrice, nonce, amount, 'hashX:', this.hashKey);
+    this.logger.info("transInfo is: crossDirection- %s, transChainType- %s,\n from- %s, to- %s, gas- %s, gasPrice- %s, nonce- %s, amount- %s, \n hashX- %s", this.crossDirection, this.transChainType, from, to, gas, gasPrice, nonce, amount, this.hashKey);
     return [from, to, gas, gasPrice, nonce, amount];
   }
 
@@ -158,18 +161,18 @@ module.exports = class Erc20CrossAgent {
 
   getLockData() {
     console.log("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
-    //this.logger.debug('getLockData: chainType-', this.chainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey,'crossAddress-', this.crossAddress,'Amount-', this.amount);
-    return this.tokenContract.constructData(this.crossFunc[0], this.tokenAddr, this.hashKey, this.crossAddress, this.amount);
+    this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey,'crossAddress-', this.crossAddress,'Amount-', this.amount);
+    return this.contract.constructData(this.crossFunc[0], this.tokenAddr, this.hashKey, this.crossAddress, this.amount);
   }
   getRefundData() {
     console.log("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
-    //this.logger.debug('getRefundData: chainType-', this.chainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
-    return this.tokenContract.constructData(this.crossFunc[1], this.tokenAddr, this.key);
+    this.logger.debug('getRefundData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
+    return this.contract.constructData(this.crossFunc[1], this.tokenAddr, this.key);
   }
   getRevokeData() {
     console.log("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
-    //this.logger.debug('getRevokeData: chainType-', this.chainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
-    return this.tokenContract.constructData(this.crossFunc[2], this.tokenAddr, this.hashKey);
+    this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
+    return this.contract.constructData(this.crossFunc[2], this.tokenAddr, this.hashKey);
   }
 
   getLockEventTopic() {
@@ -204,7 +207,7 @@ module.exports = class Erc20CrossAgent {
         build = self.buildRevokeData;
       }
 
-      sendTrans(global.password, data, build, (err, result) => {
+      self.sendTrans(global.password, data, build, (err, result) => {
         if (!err && result !== null) {
           resolve(result);
         } else {
@@ -216,26 +219,28 @@ module.exports = class Erc20CrossAgent {
   }
 
   sendTrans(password, data, build, callback) {
-    console.log("********************************** sendTransaction ********************************** hashX", trans.Contract.hashKey);
+    console.log("********************************** sendTransaction ********************************** hashX", this.hashKey);
+    console.log("********************************** setData **********************************", data, "hashX", this.hashKey);
     this.trans.setData(data);
+    this.trans.setValue(0);
 
     let rawTx = this.trans.signFromKeystore(password);
     let self = this;
-    self.chain.sendRawTransaction(rawTx, (err, result) => {
+    this.chain.sendRawTransaction(rawTx, (err, result) => {
       if (!err) {
         self.logger.debug("sendRawTransaction result: ", result);
-        console.log("********************************** sendTransaction success ********************************** hashX", trans.Contract.hashKey);
-        let content = self.build(result);
+        console.log("********************************** sendTransaction success ********************************** hashX", self.hashKey);
+        let content = build(self.hashKey, result);
         callback(err, content);
       } else {
-        console.log("********************************** sendTransaction failed ********************************** hashX", trans.Contract.hashKey);
+        console.log("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
         callback(err, result);
       }
     });
   }
 
-  buildApproveData(result) {
-    console.log("********************************** insertApproveData trans **********************************", trans.Contract.hashKey);
+  buildApproveData(hashKey, result) {
+    console.log("********************************** insertApproveData trans **********************************", hashKey);
 
     let content = {
       // status: 'waitingCrossApproveConfirming',
@@ -246,8 +251,8 @@ module.exports = class Erc20CrossAgent {
     return content;
   }
 
-  buildLockData(result) {
-    console.log("********************************** insertLockData trans **********************************", trans.Contract.hashKey);
+  buildLockData(hashKey, result) {
+    console.log("********************************** insertLockData trans **********************************", hashKey);
 
     let content = {
       // status: 'waitingCrossLockConfirming',
@@ -258,8 +263,8 @@ module.exports = class Erc20CrossAgent {
     return content;
   }
 
-  buildRefundData(result) {
-    console.log("********************************** insertRefundData trans **********************************", trans.Contract.hashKey);
+  buildRefundData(hashKey, result) {
+    console.log("********************************** insertRefundData trans **********************************", hashKey);
 
     let content = {
       // status: 'waitingCrossRefundConfirming',
@@ -270,8 +275,8 @@ module.exports = class Erc20CrossAgent {
     return content;
   }
 
-  buildRevokeData(result) {
-    console.log("********************************** insertRevokeData trans **********************************", trans.Contract.hashKey);
+  buildRevokeData(hashKey, result) {
+    console.log("********************************** insertRevokeData trans **********************************", hashKey);
 
     let content = {
       // status: 'waitingCrossRevokeConfirming',

@@ -50,7 +50,7 @@ const keyStore = {
     // let keyBObj = {version:keystore.version, crypto:keystore.crypto2};
     let keyAObj = {version:keystore.version, crypto:keystore.crypto};
     let privKeyA;
-    let privKeyB;
+    // let privKeyB;
     try {
       privKeyA = keythereum.recover(password, keyAObj);
       // privKeyB = keythereum.recover(password, keyBObj);
@@ -58,7 +58,8 @@ const keyStore = {
       console.log('User Transaction input : ', 'wrong password');
       return null;
     }
-    return [privKeyA,privKeyB];
+    // return [privKeyA,privKeyB];
+    return privKeyA;
   },
   getOTAPrivateKey(address,password,OTAAddress) {
     let privKey = keyStore.getPrivateKey(address, password);
