@@ -8,6 +8,7 @@ const fs = require('fs');
 class WanChain extends baseChain {
   constructor(log, web3) {
     super(log, web3);
+    this.chainType = 'wan';
   }
 
   /**

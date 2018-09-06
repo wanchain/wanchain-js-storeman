@@ -23,7 +23,8 @@ const eventSchema = new Schema({
   },
   x: {
     type: String,
-    lowercase: true
+    lowercase: true,
+    default: '0x'
   },
   from: {
     type: String,
@@ -46,6 +47,7 @@ const eventSchema = new Schema({
   },
   status: {
     type: String, 
+    default: 'init'
     /*
     waitingCross, 
     waitingApprove,

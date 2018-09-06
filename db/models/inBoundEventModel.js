@@ -46,6 +46,7 @@ const eventSchema = new Schema({
   },
   status: {
     type: String, 
+    default: 'init'
     /*
     waitingCross, 
     waitingApprove,

@@ -82,7 +82,7 @@ class baseChain {
     });
   }
 
-  getNonce(address, callback) {
+  getxlxl(address, callback) {
     let log = this.log;
     let theWeb3 = this.theWeb3;
     let nonce = null;
@@ -179,6 +179,7 @@ class baseChain {
   }
 
   sendRawTransaction(signedTx, callback) {
+    console.log("======================================== sendRawTransaction ====================================", this.chainType)
     this.theWeb3.eth.sendRawTransaction(signedTx, callback);
   }
 
@@ -313,9 +314,10 @@ class baseChain {
     return this.getSolInferface(chainSCConfig.erc20Abi, contractAddr, contractFunc);
   }
 
-  getTokenBalance(address, tokenScAddr, callback) {
+  getTokenBalance(address, tokenScAddr, abi, callback) {
+    let log = this.log;
     try {
-      let balanceOf = this.getERC20Interface(tokenScAddr, 'balanceOf');
+      let balanceOf = this.getSolInferface(abi, tokenScAddr, 'balanceOf');
       balanceOf(address, function(err, balance) {
         if (err) {
           log.debug('getTokenBalance at tokenScAddr', tokenScAddr, 'on address ', address, 'failed, and error is ', err);
@@ -332,23 +334,25 @@ class baseChain {
     }
   }
 
-  getTokenAllowance(tokenScAddr, owner, spender, callback) {
+  getTokenAllowance(tokenScAddr, owner, spender, abi) {
+    return new Promise((resolve, reject) =>{
+    let log = this.log;
     try {
-      let allowance = this.getERC20Interface(tokenScAddr, 'allowance');
+      let allowance = this.getSolInferface(abi, tokenScAddr, 'allowance');
       allowance(owner, spender, function(err, allowance) {
         if (err) {
           log.debug('getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
-          callback(err, null);
+          reject(err);
         } else {
           let tokenAllowance = allowance.toString();
           log.debug('getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'the result is ',tokenAllowance);
+          resolve(tokenAllowance);
         }
-        callback(null, tokenAllowance);
       });
     } catch (err) {
       log.debug('getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
-      callback(err, null);
-    }
+    }      
+    });
   }
 
 }

@@ -3,11 +3,15 @@ const pwd = process.env.MONGO_PWD;
 // const dbUrl = `mongodb://${user}:${pwd}@localhost:27017`;
 const dbUrl = `mongodb://localhost:27017`;
 
+const IsLeader = 'true';
+
 const config = {
 	// ethWeb3Url: "http://localhost:8545",
 	// wanWeb3Url: "http://localhost:8545",
 	ethWeb3Url: "http://18.236.235.133:18545",
 	wanWeb3Url: "http://18.236.235.133:8545",
+
+	mpcUrl: "http://18.236.235.133:8545",
 
 	crossEthDbUrl: dbUrl + "/crossEthChain1",
 	email: {

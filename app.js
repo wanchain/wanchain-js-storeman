@@ -22,7 +22,7 @@ global.crossToken = 'WCT';
 global.lastEthNonce = 0;
 global.lastWanNonce = 0;
 global.wanGasPrice = 180;
-global.wanGasLimit = 100000;
+global.wanGasLimit = 1000000;
 global.ethGasLimit = 100000;
 global.lockedTime = 3600;
 global.password = process.env.KEYSTORE_PWD;
@@ -139,11 +139,11 @@ async function splitEvent(chainType, events) {
             storeman: '0x' + event.topics[2].substr(-40, 40),
             value: parseInt(data[1], 16),
             crossAddress: '0x' + data[2].substr(-40, 40),
-            status: (chainType !== 'wan') ? 'waitingCross' : 'checkApprove',
+            // status: (chainType !== 'wan') ? 'waitingCross' : 'checkApprove',
             blockNumber: event.blockNumber,
             timestamp: event.timestamp * 1000,
             suspendTime: (1000 * Number(global.lockedTime) + Number(event.timestamp) * 1000).toString(),
-            HTLCtime: (100000 + 2 * 1000 * Number(global.lockedTime) + Number(event.timestamp) * 1000).toString(),
+            HTLCtime: (1000 * Number(global.lockedTime) + Number(event.timestamp) * 1000).toString(),
             walletLockEvent: event
           };
         } else if ((event.topics[0] === wanCrossContract.depositLockEvent && chainType === 'wan') ||
@@ -152,6 +152,7 @@ async function splitEvent(chainType, events) {
           hashX = event.topics[3].toLowerCase();
           content = {
             // status: 'waitingX',
+            HTLCtime: (1000 * Number(global.lockedTime) + Number(event.timestamp) * 1000).toString(),
             storemanLockTxHash: event.transactionHash.toLowerCase(),
             storemanLockEvent: event
           };
@@ -311,12 +312,13 @@ async function handlerMain(logger, db) {
 
     console.log("********************************** handlerMain start **********************************");
     let option = {
+      hashX : "0xafa04cc3796c4109e5a8d974f0326ee961ea13a8994e49695e7624060269b4ff",
       tokenAddr: config.crossTokenDict[global.crossToken].tokenAddr,
       storeman: {
         $in: [global.storemanEth, global.storemanWan]
       },
       status: {
-        $nin: ['refundFinished', 'revokeFinished', 'transIgnored', 'interventionPending']
+        $nin: ['refundFinished', 'revokeFinished', '1transIgnored', 'interventionPending']
       }
     }
     let history = await modelOps.getEventHistory(option);

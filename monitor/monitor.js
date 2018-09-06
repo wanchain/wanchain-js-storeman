@@ -4,12 +4,19 @@ const ModelOps = require('db/modelOps');
 const Logger = require('comm/logger.js');
 const erc20CrossAgent = require('agent/Erc20CrossAgent.js');
 const sendMail = require('comm/sendMail');
+const config = require('conf/config');
 
 const retryTime = 0;
 const CONFIRM_BLOCK_NUM = 2;
 const tokenAllowance = 1000000000;
 /* action: [functionName, paras, nextState, rollState] */
 var stateDict = {
+  init: {
+    action: 'initState',
+    paras: [],
+    nextState: 'waitingCross',
+    rollState: 'checkApprove'
+  },
   checkApprove: {
     action: 'checkAllowance',
     paras: [],
@@ -18,7 +25,7 @@ var stateDict = {
   },
   waitingApprove: {
     action: 'sendTrans',
-    paras: ['approve'],
+    paras: ['approve', null],
     nextState: 'waitingCrossApproveConfirming',
     rollState: 'approveFailed'
   },
@@ -30,31 +37,31 @@ var stateDict = {
   },
   approveFailed: {
     action: 'sendTrans',
-    paras: ['approve'],
+    paras: ['approve', null],
     nextState: 'waitingCrossApproveConfirming',
     rollState: 'waitingIntervention'
   },
   approveFinished: {
     action: 'sendTrans',
-    paras: ['lock'],
+    paras: ['lock', 'storemanLockEvent'],
     nextState: 'waitingCrossLockConfirming',
-    rollState: 'lockHashFailed'
+    rollState: 'lockFailed'
   },
   waitingCross: {
     action: 'sendTrans',
-    paras: ['lock'],
+    paras: ['lock', 'storemanLockEvent'],
     nextState: 'waitingCrossLockConfirming',
-    rollState: 'lockHashFailed'
+    rollState: 'lockFailed'
   },
   waitingCrossLockConfirming: {
     action: 'checkStoremanTransOnline',
     paras: ['storemanLockEvent', 'storemanLockTxHash'],
     nextState: 'waitingX',
-    rollState: 'lockHashFailed'
+    rollState: 'lockFailed'
   },
-  lockHashFailed: {
+  lockFailed: {
     action: 'sendTrans',
-    paras: ['lock'],
+    paras: ['lock', 'storemanLockEvent'],
     nextState: 'waitingCrossLockConfirming',
     rollState: 'waitingIntervention'
   },
@@ -66,7 +73,7 @@ var stateDict = {
   },
   receivedX: {
     action: 'sendTrans',
-    paras: ['refund'],
+    paras: ['refund', 'storemanRefundEvent'],
     nextState: 'waitingCrossRefundConfirming',
     rollState: 'refundFailed'
   },
@@ -78,7 +85,7 @@ var stateDict = {
   },
   refundFailed: {
     action: 'sendTrans',
-    paras: ['refund'],
+    paras: ['refund', 'storemanRefundEvent'],
     nextState: 'waitingCrossRefundConfirming',
     rollState: 'waitingIntervention'
   },
@@ -96,7 +103,7 @@ var stateDict = {
   },
   waitingRevoke: {
     action: 'sendTrans',
-    paras: ['revoke'],
+    paras: ['revoke', 'storemanRevokeEvent'],
     nextState: 'waitingCrossRevokeConfirming',
     rollState: 'revokeFailed'
   },
@@ -108,7 +115,7 @@ var stateDict = {
   },
   revokeFailed: {
     action: 'sendTrans',
-    paras: ['revoke'],
+    paras: ['revoke', 'storemanRevokeEvent'],
     nextState: 'waitingCrossRevokeConfirming',
     rollState: 'waitingIntervention'
   },
@@ -135,6 +142,10 @@ var stateDict = {
     paras: [],
     nextState: '',
     rollState: ''  	
+    // action: 'sendTrans',
+    // paras: ['refund'],
+    // nextState: 'waitingCrossRefundConfirming',
+    // rollState: 'waitingIntervention'
   }
 };
 
@@ -185,6 +196,13 @@ module.exports = class stateAction {
 
   }
 
+  initState(nextState, rollState) {
+  	if (this.record.walletLockEvent.length !== 0) {
+        let status = (this.record.direction === 0) ? nextState : rollState;
+        this.updateState(status);
+  	}
+  }
+
   takeIntervention(nextState, rollState) {
     let receive = "zhanli@wanchain.org";
     try {
@@ -212,7 +230,17 @@ module.exports = class stateAction {
     }
   }
 
-  async sendTrans(action, nextState, rollState) {
+  async sendTrans(action, eventName, nextState, rollState) {
+  	console.log(this.record);
+
+	if (eventName !== null) {
+		let event = this.record[eventName];
+		if (event.length !== 0) {
+		  this.updateState(nextState);
+		  return;
+		}
+	}
+
     let newAgent = new erc20CrossAgent(global.crossToken, this.crossDirection, action, this.record, this.logger);
     console.log("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
     let result = {};
@@ -235,32 +263,41 @@ module.exports = class stateAction {
     let state = this.state;
     this.logger.debug("********************************** checkHashTimeout ********************************** hashX:", this.hashX, record.status);
 
-    if (state === "waitingRevoke" ||
+    if (state === "2waitingRevoke" ||
       state === "waitingCrossRevokeConfirming" ||
-      state === "revokeFailed" ||
-      state === "refundFailed" ||
-      state === "waitingIntervention") {
+      state === "revokeFailed" ) {
+		if (record.walletRefundEvent.length !== 0) {
+          this.updateState('waitingIntervention');
+          return true;
+        } else {
+          return false;
+        }
+    }
+
+    if (state === "waitingIntervention") {
       return false;
     }
 
     try {
       let HTLCtime = Number(record.HTLCtime);
-      let suspendTime = Number(record.suspendTime);
+      // let suspendTime = Number(record.suspendTime);
       let timestamp = Number(record.timestamp);
 
       let HTLCtimeDate = new Date(HTLCtime).toString();
-      let suspendTimeDate = new Date(suspendTime).toString();
+      // let suspendTimeDate = new Date(suspendTime).toString();
       let timestampDate = new Date(timestamp).toString();
       let nowData = new Date().toString();
 
-      if (suspendTime <= Date.now()) {
-        console.log("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "suspendTimeDate:", suspendTimeDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
+      if (HTLCtime <= Date.now()) {
+        console.log("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
         if (record.storemanRevokeEvent.length !== 0) {
           this.updateState('revokeFinished');
         } else if (record.storemanRefundEvent.length !== 0) {
           this.updateState('refundFinished');
         } else if (record.storemanLockEvent.length === 0) {
           this.updateState('transIgnored');
+        } else if (record.walletRefundEvent.length !== 0) {
+          this.updateState('waitingIntervention');
         } else {
           this.updateState('waitingRevoke');
         }
@@ -274,19 +311,20 @@ module.exports = class stateAction {
 
   checkAllowance(nextState, rollState) {
     let newAgent = new erc20CrossAgent(global.crossToken, 1);
+    // let newAgent = new erc20CrossAgent(global.crossToken, this.crossDirection, 'approve', this.record, this.logger);
     let chain = global.ethChain;
-    chain.getTokenAllowance(newAgent.tokenAddr, global.storemanEth, newAgent.contractAddr, (err, result) => {
-      if (err === null) {
+    await chain.getTokenAllowance(newAgent.tokenAddr, global.storemanEth, newAgent.contractAddr, config.erc20Abi)
+      .then((result) => {
         if (result < tokenAllowance) {
           this.updateState(rollState);
         } else {
           this.updateState(nextState);
         }
-      } else {
+      }).catch(err => {
         this.updateState('checkApprove');
-      }
-    })
+      })
   }
+
 
   async checkStoremanTransOnline(eventName, transHashName, nextState, rollState) {
     try {

@@ -29,7 +29,7 @@ module.exports = class Erc20CrossAgent {
     this.approveFunc = 'approve';
 
     if (record !== null) {
-      if (record.hasOwnProperty('x')) {
+      if (record.x !== '0x') {
         this.key = record.x;
       }
 
@@ -53,6 +53,13 @@ module.exports = class Erc20CrossAgent {
     this.refundEvent = this.contract.getEventSignature(this.crossEvent[1]);
     this.revokeEvent = this.contract.getEventSignature(this.crossEvent[2]);
 
+    this.depositLockFunc = this.contract.getEventSignature(crossInfoInst.depositFunc[0]);
+    this.depositRefundFunc = this.contract.getEventSignature(crossInfoInst.depositFunc[1]);
+    this.depositRevokeFunc = this.contract.getEventSignature(crossInfoInst.depositFunc[2]);
+    this.withdrawLockFunc = this.contract.getEventSignature(crossInfoInst.withdrawFunc[0]);
+    this.withdrawRefundFunc = this.contract.getEventSignature(crossInfoInst.withdrawFunc[1]);
+    this.withdrawRevokeFunc = this.contract.getEventSignature(crossInfoInst.withdrawFunc[2]);
+
     this.depositLockEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[0]);
     this.depositRefundEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[1]);
     this.depositRevokeEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[2]);
@@ -64,12 +71,20 @@ module.exports = class Erc20CrossAgent {
     // console.log("this.refundEvent", this.refundEvent);
     // console.log("this.revokeEvent", this.revokeEvent);
     // console.log("this.contractAddr", this.contractAddr);
-    // console.log("this.depositLockEvent", this.depositLockEvent);
-    // console.log("this.depositRefundEvent", this.depositRefundEvent);
-    // console.log("this.depositRevokeEvent", this.depositRevokeEvent);
-    // console.log("this.withdrawLockEvent", this.withdrawLockEvent);
-    // console.log("this.withdrawRefundEvent", this.withdrawRefundEvent);
-    // console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
+
+    console.log("this.depositLockFunc", this.depositLockFunc);
+    console.log("this.depositRefundFunc", this.depositRefundFunc);
+    console.log("this.depositRevokeFunc", this.depositRevokeFunc);
+    console.log("this.withdrawLockFunc", this.withdrawLockFunc);
+    console.log("this.withdrawRefundFunc", this.withdrawRefundFunc);
+    console.log("this.withdrawRevokeFunc", this.withdrawRevokeFunc);
+
+    console.log("this.depositLockEvent", this.depositLockEvent);
+    console.log("this.depositRefundEvent", this.depositRefundEvent);
+    console.log("this.depositRevokeEvent", this.depositRevokeEvent);
+    console.log("this.withdrawLockEvent", this.withdrawLockEvent);
+    console.log("this.withdrawRefundEvent", this.withdrawRefundEvent);
+    console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
   }
 
   setKey(key) {
@@ -224,6 +239,7 @@ module.exports = class Erc20CrossAgent {
     this.trans.setData(data);
     this.trans.setValue(0);
 
+    console.log(this.trans);
     let rawTx = this.trans.signFromKeystore(password);
     let self = this;
     this.chain.sendRawTransaction(rawTx, (err, result) => {

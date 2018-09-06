@@ -8,8 +8,8 @@ module.exports = class EthRawTrans {
 		this.txParams = {
 			from: from,
 			to: to,
-			gasPrice: gasPrice,
-			gasLimit: gas,
+			gasPrice: Number(gasPrice),
+			gasLimit: Number(gas),
 			nonce: nonce,
 			value: value
 		}
