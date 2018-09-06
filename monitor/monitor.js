@@ -8,7 +8,7 @@ const config = require('conf/config');
 
 const retryTime = 0;
 const CONFIRM_BLOCK_NUM = 2;
-const tokenAllowance = 1000000000;
+const tokenAllowance = 100;
 /* action: [functionName, paras, nextState, rollState] */
 var stateDict = {
   init: {
@@ -36,10 +36,14 @@ var stateDict = {
     rollState: 'approveFailed'
   },
   approveFailed: {
-    action: 'sendTrans',
-    paras: ['approve', null],
-    nextState: 'waitingCrossApproveConfirming',
-    rollState: 'waitingIntervention'
+    // action: 'sendTrans',
+    // paras: ['approve', null],
+    // nextState: 'waitingCrossApproveConfirming',
+    // rollState: 'waitingIntervention'
+        action: 'checkAllowance',
+    paras: [],
+    nextState: 'approveFinished',
+    rollState: 'waitingApprove'
   },
   approveFinished: {
     action: 'sendTrans',
@@ -309,7 +313,7 @@ module.exports = class stateAction {
     return false;
   }
 
-  checkAllowance(nextState, rollState) {
+  async checkAllowance(nextState, rollState) {
     let newAgent = new erc20CrossAgent(global.crossToken, 1);
     // let newAgent = new erc20CrossAgent(global.crossToken, this.crossDirection, 'approve', this.record, this.logger);
     let chain = global.ethChain;

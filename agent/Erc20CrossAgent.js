@@ -34,7 +34,7 @@ module.exports = class Erc20CrossAgent {
       }
 
       this.hashKey = record.hashX;
-      this.amount = record.value;
+      this.amount = Number(record.value);
       this.crossAddress = record.crossAddress;
     }
 
@@ -177,7 +177,15 @@ module.exports = class Erc20CrossAgent {
   getLockData() {
     console.log("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey,'crossAddress-', this.crossAddress,'Amount-', this.amount);
-    return this.contract.constructData(this.crossFunc[0], this.tokenAddr, this.hashKey, this.crossAddress, this.amount);
+            if(this.transChainType === 'wan'){
+                return this.contract.constructData(this.crossFunc[0], this.tokenAddr,this.hashKey,this.crossAddress,this.Amount);
+            }
+            else
+            {
+                return this.contract.constructData(this.crossFunc[0], this.tokenAddr,this.Amount, this.hashKey,this.crossAddress);
+            }
+
+    //return this.contract.constructData(this.crossFunc[0], this.tokenAddr, this.hashKey, this.crossAddress, this.amount);
   }
   getRefundData() {
     console.log("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
