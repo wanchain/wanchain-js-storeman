@@ -40,7 +40,7 @@ var stateDict = {
     // paras: ['approve', null],
     // nextState: 'waitingCrossApproveConfirming',
     // rollState: 'waitingIntervention'
-        action: 'checkAllowance',
+    action: 'checkAllowance',
     paras: [],
     nextState: 'approveFinished',
     rollState: 'waitingApprove'
@@ -61,7 +61,8 @@ var stateDict = {
     action: 'checkStoremanTransOnline',
     paras: ['storemanLockEvent', 'storemanLockTxHash'],
     nextState: 'waitingX',
-    rollState: 'lockFailed'
+    // rollState: 'lockFailed'
+    rollState: 'waitingIntervention'
   },
   lockFailed: {
     action: 'sendTrans',
@@ -79,13 +80,15 @@ var stateDict = {
     action: 'sendTrans',
     paras: ['refund', 'storemanRefundEvent'],
     nextState: 'waitingCrossRefundConfirming',
-    rollState: 'refundFailed'
+    // rollState: 'refundFailed'
+    rollState: 'waitingIntervention'
   },
   waitingCrossRefundConfirming: {
     action: 'checkStoremanTransOnline',
     paras: ['storemanRefundEvent', 'storemanRefundTxHash'],
     nextState: 'refundFinished',
-    rollState: 'refundFailed'
+    // rollState: 'refundFailed'
+    rollState: 'waitingIntervention'
   },
   refundFailed: {
     action: 'sendTrans',
@@ -267,7 +270,7 @@ module.exports = class stateAction {
     let state = this.state;
     this.logger.debug("********************************** checkHashTimeout ********************************** hashX:", this.hashX, record.status);
 
-    if (state === "2waitingRevoke" ||
+    if (state === "waitingRevoke" ||
       state === "waitingCrossRevokeConfirming" ||
       state === "revokeFailed" ) {
 		if (record.walletRefundEvent.length !== 0) {

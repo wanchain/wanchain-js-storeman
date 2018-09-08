@@ -72,19 +72,19 @@ module.exports = class Erc20CrossAgent {
     // console.log("this.revokeEvent", this.revokeEvent);
     // console.log("this.contractAddr", this.contractAddr);
 
-    console.log("this.depositLockFunc", this.depositLockFunc);
-    console.log("this.depositRefundFunc", this.depositRefundFunc);
-    console.log("this.depositRevokeFunc", this.depositRevokeFunc);
-    console.log("this.withdrawLockFunc", this.withdrawLockFunc);
-    console.log("this.withdrawRefundFunc", this.withdrawRefundFunc);
-    console.log("this.withdrawRevokeFunc", this.withdrawRevokeFunc);
+    // console.log("this.depositLockFunc", this.depositLockFunc);
+    // console.log("this.depositRefundFunc", this.depositRefundFunc);
+    // console.log("this.depositRevokeFunc", this.depositRevokeFunc);
+    // console.log("this.withdrawLockFunc", this.withdrawLockFunc);
+    // console.log("this.withdrawRefundFunc", this.withdrawRefundFunc);
+    // console.log("this.withdrawRevokeFunc", this.withdrawRevokeFunc);
 
-    console.log("this.depositLockEvent", this.depositLockEvent);
-    console.log("this.depositRefundEvent", this.depositRefundEvent);
-    console.log("this.depositRevokeEvent", this.depositRevokeEvent);
-    console.log("this.withdrawLockEvent", this.withdrawLockEvent);
-    console.log("this.withdrawRefundEvent", this.withdrawRefundEvent);
-    console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
+    // console.log("this.depositLockEvent", this.depositLockEvent);
+    // console.log("this.depositRefundEvent", this.depositRefundEvent);
+    // console.log("this.depositRevokeEvent", this.depositRevokeEvent);
+    // console.log("this.withdrawLockEvent", this.withdrawLockEvent);
+    // console.log("this.withdrawRefundEvent", this.withdrawRefundEvent);
+    // console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
   }
 
   setKey(key) {
@@ -178,11 +178,11 @@ module.exports = class Erc20CrossAgent {
     console.log("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey,'crossAddress-', this.crossAddress,'Amount-', this.amount);
             if(this.transChainType === 'wan'){
-                return this.contract.constructData(this.crossFunc[0], this.tokenAddr,this.hashKey,this.crossAddress,this.Amount);
+                return this.contract.constructData(this.crossFunc[0], this.tokenAddr,this.hashKey,this.crossAddress,this.amount);
             }
             else
             {
-                return this.contract.constructData(this.crossFunc[0], this.tokenAddr,this.Amount, this.hashKey,this.crossAddress);
+                return this.contract.constructData(this.crossFunc[0], this.tokenAddr,this.amount, this.hashKey,this.crossAddress);
             }
 
     //return this.contract.constructData(this.crossFunc[0], this.tokenAddr, this.hashKey, this.crossAddress, this.amount);

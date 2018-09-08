@@ -14,8 +14,8 @@ const {
   sleep
 } = require('comm/lib');
 
-const SAFE_BLOCK_NUM = 5;
-const CONFIRM_BLOCK_NUM = 2;
+const SAFE_BLOCK_NUM = 1;
+const CONFIRM_BLOCK_NUM = 1;
 const INTERVAL_TIME = 15 * 1000;
 
 global.crossToken = 'WCT';
@@ -312,13 +312,13 @@ async function handlerMain(logger, db) {
 
     console.log("********************************** handlerMain start **********************************");
     let option = {
-      hashX : "0xafa04cc3796c4109e5a8d974f0326ee961ea13a8994e49695e7624060269b4ff",
+      // hashX : "0xafa04cc3796c4109e5a8d974f0326ee961ea13a8994e49695e7624060269b4ff",
       tokenAddr: config.crossTokenDict[global.crossToken].tokenAddr,
       storeman: {
         $in: [global.storemanEth, global.storemanWan]
       },
       status: {
-        $nin: ['refundFinished', 'revokeFinished', '1transIgnored', 'interventionPending']
+        $nin: ['refundFinished', 'revokeFinished', 'transIgnored', 'interventionPending']
       }
     }
     let history = await modelOps.getEventHistory(option);
