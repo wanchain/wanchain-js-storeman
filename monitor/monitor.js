@@ -8,7 +8,11 @@ const config = require('conf/config');
 
 const retryTime = 0;
 const CONFIRM_BLOCK_NUM = 2;
-const tokenAllowance = 100;
+const tokenAllowance = 2; /* unit ether*/
+
+function getWeiFromEther(ether) {
+    return ether * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
+  }
 /* action: [functionName, paras, nextState, rollState] */
 var stateDict = {
   init: {
@@ -21,7 +25,19 @@ var stateDict = {
     action: 'checkAllowance',
     paras: [],
     nextState: 'approveFinished',
-    rollState: 'waitingApprove'
+    rollState: 'approveZero'
+  },
+  approveZero: {
+    action: 'sendTrans',
+    paras: ['approveZero', null],
+    nextState: 'waitingApproveZeroConfirming',
+    rollState: 'approveFailed'    
+  },
+  waitingApproveZeroConfirming: {
+    action: 'checkStoremanTransOnline',
+    paras: [null, 'storemanApproveTxHash'],
+    nextState: 'waitingApprove',
+    rollState: 'approveFailed'
   },
   waitingApprove: {
     action: 'sendTrans',
@@ -43,7 +59,7 @@ var stateDict = {
     action: 'checkAllowance',
     paras: [],
     nextState: 'approveFinished',
-    rollState: 'waitingApprove'
+    rollState: 'waitingIntervention'
   },
   approveFinished: {
     action: 'sendTrans',
@@ -133,10 +149,10 @@ var stateDict = {
     rollState: ''
   },
   waitingIntervention: {
-    action: 'takeIntervention',
-    paras: [],
-    nextState: 'interventionPending',
-    rollState: 'waitingIntervention'
+    // action: 'takeIntervention',
+    // paras: [],
+    // nextState: 'interventionPending',
+    // rollState: 'waitingIntervention'
   },
   transIgnored: {
     action: 'takeIntervention',
@@ -149,10 +165,6 @@ var stateDict = {
     paras: [],
     nextState: '',
     rollState: ''  	
-    // action: 'sendTrans',
-    // paras: ['refund'],
-    // nextState: 'waitingCrossRefundConfirming',
-    // rollState: 'waitingIntervention'
   }
 };
 
@@ -322,7 +334,7 @@ module.exports = class stateAction {
     let chain = global.ethChain;
     await chain.getTokenAllowance(newAgent.tokenAddr, global.storemanEth, newAgent.contractAddr, config.erc20Abi)
       .then((result) => {
-        if (result < tokenAllowance) {
+        if (result < getWeiFromEther(tokenAllowance)) {
           this.updateState(rollState);
         } else {
           this.updateState(nextState);

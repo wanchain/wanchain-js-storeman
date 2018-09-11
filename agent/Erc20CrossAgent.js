@@ -6,6 +6,10 @@ let wanRawTrans = require("trans/WanRawTrans.js");
 const ModelOps = require('db/modelOps');
 const config = require('conf/config.js');
 
+const tokenAllowance = 2;
+function getWeiFromEther(ether) {
+    return ether * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
+}
 
 module.exports = class Erc20CrossAgent {
   constructor(crossToken, crossDirection, action = null, record = null, logger = null) {
@@ -145,7 +149,7 @@ module.exports = class Erc20CrossAgent {
     let gasPrice;
     let nonce;
 
-    if (action === 'approve') {
+    if (action === 'approve' || action === 'approveZero') {
       from = global.storemanEth;
     } else if (action === 'refund') {
       from = (this.crossDirection === 0) ? global.storemanEth : global.storemanWan;
@@ -153,7 +157,13 @@ module.exports = class Erc20CrossAgent {
       from = (this.crossDirection === 0) ? global.storemanWan : global.storemanEth;
     }
 
-    to = (action === 'approve') ? this.tokenAddr : this.contractAddr;
+    to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
+
+    if (action === 'approve') {
+      this.amount = Number(getWeiFromEther(tokenAllowance));
+    } else if (action === 'approveZero') {
+      this.amount = 0;
+    }
     amount = this.amount;
 
     if (this.transChainType === 'wan') {
@@ -216,7 +226,7 @@ module.exports = class Erc20CrossAgent {
     let build;
 
     return new Promise((resolve, reject) => {
-      if (action === 'approve') {
+      if (action === 'approve' || action === 'approveZero') {
         data = self.getApproveData();
         build = self.buildApproveData;
       } else if (action === 'lock') {

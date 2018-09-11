@@ -23,7 +23,7 @@ global.lastEthNonce = 0;
 global.lastWanNonce = 0;
 global.wanGasPrice = 180;
 global.wanGasLimit = 1000000;
-global.ethGasLimit = 100000;
+global.ethGasLimit = 470000;
 global.lockedTime = 3600;
 global.password = process.env.KEYSTORE_PWD;
 
@@ -253,7 +253,7 @@ async function syncMain(logger, db) {
 
     try {
       curBlock = await chain.getBlockNumberSync();
-      logger.info("Current block is:", curBlock);
+      logger.info("Current block is:", curBlock, chainType);
     } catch (err) {
       logger.error("getBlockNumberSync from ethereum:", err);
     }
@@ -278,6 +278,7 @@ async function syncMain(logger, db) {
 
     try {
       curBlock = await chain.getBlockNumberSync();
+      logger.info("Current block is:", curBlock, chainType);
     } catch (err) {
       logger.error("getBlockNumberSync from wanchain:", err);
     }
@@ -312,7 +313,7 @@ async function handlerMain(logger, db) {
 
     console.log("********************************** handlerMain start **********************************");
     let option = {
-      // hashX : "0xafa04cc3796c4109e5a8d974f0326ee961ea13a8994e49695e7624060269b4ff",
+      // hashX : "0x5509ebd015bf950152d6f5a1b798134ee5b077f88c59e69227a44a0dd8dee949",
       tokenAddr: config.crossTokenDict[global.crossToken].tokenAddr,
       storeman: {
         $in: [global.storemanEth, global.storemanWan]

@@ -161,6 +161,7 @@ class baseChain {
   getBlockNumberSync() {
     let log = this.log;
     let theWeb3 = this.theWeb3;
+    let chainType = this.chainType;
 
     return new Promise(function (resolve, reject) {
       try {
@@ -168,7 +169,7 @@ class baseChain {
           if (err) {
             reject(err);
           } else {
-            log.debug('getBlockNumber successfully with result: ', blockNumber);
+            log.debug('getBlockNumber successfully with result: ', blockNumber, chainType);
             resolve(blockNumber);
           }
         });
