@@ -21,7 +21,7 @@ module.exports = class mpc {
     if (config.mpcUrl.indexOf("http://")) {
       this.web3 = new Web3(new Web3.providers.HttpProvider(config.mpcUrl));
     } else {
-      this.web3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl));
+      this.web3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl, net));
     }
   }
 
