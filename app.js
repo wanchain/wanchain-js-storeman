@@ -24,7 +24,7 @@ global.lastWanNonce = 0;
 global.wanGasPrice = 180;
 global.wanGasLimit = 1000000;
 global.ethGasLimit = 470000;
-global.lockedTime = 3600;
+global.lockedTime = 1800;
 global.password = process.env.KEYSTORE_PWD;
 
 let wanCrossContract = new Erc20CrossAgent(global.crossToken, 0);
@@ -35,7 +35,7 @@ console.log(originCrossContract.contractAddr);
 console.log(originCrossContract.transChainType);
 
 global.storemanEth = "0xc27ecd85faa4ae80bf5e28daf91b605db7be1ba8";
-global.storemanWan = "0x55ccc7a38f900a1e00f0a4c1e466ec36e7592024";
+global.storemanWan = "0xb755dc08ee919f9d80ecac014ad0a7e1d0b3b231";
 
 global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 global.monitorLogger = new Logger("monitorLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
@@ -137,8 +137,8 @@ async function splitEvent(chainType, events) {
             from: '0x' + event.topics[1].substr(-40, 40),
             toHtlcAddr: event.address.toLowerCase(),
             storeman: '0x' + event.topics[2].substr(-40, 40),
-            value: parseInt(data[1], 16),
-            crossAddress: '0x' + data[2].substr(-40, 40),
+            value: parseInt(data[0], 16),
+            crossAddress: '0x' + data[1].substr(-40, 40),
             // status: (chainType !== 'wan') ? 'waitingCross' : 'checkApprove',
             blockNumber: event.blockNumber,
             timestamp: event.timestamp * 1000,
@@ -162,7 +162,7 @@ async function splitEvent(chainType, events) {
           hashX = event.topics[3].toLowerCase();
           data = splitData(event.data);
           content = {
-            x: '0x' + data[1],
+            x: '0x' + data[0],
             walletRefundEvent: event,
             // status: 'receivedX',
           };
@@ -178,7 +178,7 @@ async function splitEvent(chainType, events) {
         } else if ((event.topics[0] === originCrossContract.depositRevokeEvent && chainType === 'eth') ||
           (event.topics[0] === wanCrossContract.withdrawRevokeEvent && chainType === 'wan')) {
           console.log("********************************** 5: found wallet revoke transaction ********************************** hashX", event.topics[3]);
-          hashX = event.topics[3].toLowerCase();
+          hashX = event.topics[2].toLowerCase();
           content = {
             walletRevokeEvent: event,
             // status: 'waitingRevoke',
@@ -186,7 +186,7 @@ async function splitEvent(chainType, events) {
         } else if ((event.topics[0] === wanCrossContract.depositRevokeEvent && chainType === 'wan') ||
           (event.topics[0] === originCrossContract.withdrawRevokeEvent && chainType === 'eth')) {
           console.log("********************************** 6: found storeman revoke transaction ********************************** hashX", event.topics[3]);
-          hashX = event.topics[3].toLowerCase();
+          hashX = event.topics[2].toLowerCase();
           content = {
             // status: 'revokeFinished',
             storemanRevokeTxHash: event.transactionHash.toLowerCase(),
@@ -334,7 +334,7 @@ async function handlerMain(logger, db) {
       }
     }
 
-    await sleep(INTERVAL_TIME);
+    await sleep(2 * INTERVAL_TIME);
   }
 }
 

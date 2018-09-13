@@ -96,8 +96,8 @@ var stateDict = {
     action: 'sendTrans',
     paras: ['refund', 'storemanRefundEvent'],
     nextState: 'waitingCrossRefundConfirming',
-    // rollState: 'refundFailed'
-    rollState: 'waitingIntervention'
+    rollState: 'refundFailed'
+    // rollState: 'waitingIntervention'
   },
   waitingCrossRefundConfirming: {
     action: 'checkStoremanTransOnline',
@@ -134,7 +134,8 @@ var stateDict = {
     action: 'checkStoremanTransOnline',
     paras: ['storemanRevokeEvent', 'storemanRevokeTxHash'],
     nextState: 'revokeFinished',
-    rollState: 'revokeFailed'
+    // rollState: 'revokeFailed'
+    rollState: 'waitingIntervention'
   },
   revokeFailed: {
     action: 'sendTrans',

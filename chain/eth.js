@@ -6,7 +6,7 @@ const config = require('conf/config');
 class EthChain extends baseChain {
   constructor(log, web3) {
     super(log, web3);
-    this.chainType = 'eth';
+    this.chainType = 'ETH';
   }
 
   tokenLock(xHash, callback) {
