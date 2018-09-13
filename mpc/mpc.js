@@ -18,10 +18,10 @@ module.exports = class mpc {
       SignType: signType
     }
 
-    if (config.mpcUrl.indexOf("http://")) {
+    if (config.mpcUrl.indexOf("http://") > 0) {
       this.web3 = new Web3(new Web3.providers.HttpProvider(config.mpcUrl));
     } else {
-      this.web3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl, net));
+      this.web3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl));
     }
   }
 
