@@ -34,8 +34,10 @@ console.log(wanCrossContract.transChainType);
 console.log(originCrossContract.contractAddr);
 console.log(originCrossContract.transChainType);
 
-global.storemanEth = "0xc27ecd85faa4ae80bf5e28daf91b605db7be1ba8";
-global.storemanWan = "0xb755dc08ee919f9d80ecac014ad0a7e1d0b3b231";
+// global.storemanEth = "0xc27ecd85faa4ae80bf5e28daf91b605db7be1ba8";
+// global.storemanWan = "0x55ccc7a38f900a1e00f0a4c1e466ec36e7592024";
+global.storemanEth = "0x7d6cb38c1c4da18ec91c2d5975c67149f96bc88e";
+global.storemanWan = "0xfb6fa10f18e3645e917b4fdabbd48e983bfa37c9";
 
 global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 global.monitorLogger = new Logger("monitorLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');

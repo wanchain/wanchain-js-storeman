@@ -1,5 +1,11 @@
 "use strict"
 
+let Contract = require("contract/Contract.js");
+let ethRawTrans = require("trans/EthRawTrans.js");
+let wanRawTrans = require("trans/WanRawTrans.js");
+const ModelOps = require('db/modelOps');
+const config = require('conf/config.js');
+
 module.exports = class EthCrossAgent {
 	contstructor() {
 
@@ -17,7 +23,30 @@ module.exports = class EthCrossAgent {
 	sendRefundTrans(){}
 	sendRevokeTrans(){}
 
-	insertLockData(trans){}
-	insertRefundData(trans){}
-	insertRevokeData(trans){}
+  buildLockData(hashKey, result) {
+    console.log("********************************** insertLockData trans **********************************", hashKey);
+
+    let content = {
+      storemanLockTxHash: result.toLowerCase()
+    }
+    return content;
+  }
+
+  buildRefundData(hashKey, result) {
+    console.log("********************************** insertRefundData trans **********************************", hashKey);
+
+    let content = {
+      storemanRefundTxHash: result.toLowerCase()
+    }
+    return content;
+  }
+
+  buildRevokeData(hashKey, result) {
+    console.log("********************************** insertRevokeData trans **********************************", hashKey);
+
+    let content = {
+      storemanRevokeTxHash: result.toLowerCase()
+    }
+    return content;
+  }
 }

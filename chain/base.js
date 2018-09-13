@@ -8,6 +8,10 @@ class baseChain {
     this.theWeb3 = theWeb3;
   }
 
+  getNetworkId() {
+    return theWeb3.version.network;
+  }
+
   getScEvent(address, topics, fromBlk, toBlk, callback) {
     let filterValue = {
       fromBlock: fromBlk,

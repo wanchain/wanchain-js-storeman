@@ -265,10 +265,16 @@ module.exports = class stateAction {
     console.log("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
     let result = {};
     try {
-      result = await newAgent.createTrans(action);
-      console.log("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
-      monitorLogger.debug("sendTrans result is ", result);
-      result.status = nextState;
+      newAgent.createTrans(action);
+      if (config.isLeader) {
+        result = await newAgent.sendTransSync();
+        console.log("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
+        monitorLogger.debug("sendTrans result is ", result);
+        result.status = nextState;
+      } else {
+        newAgent.validateTrans();
+      }
+
     } catch (err) {
       monitorLogger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
       monitorLogger.error("err is", err);
@@ -355,6 +361,10 @@ module.exports = class stateAction {
           this.updateState(nextState);
           return;
         }
+      }
+
+      if(!config.isLeader) {
+        return;
       }
 
       let receipt;

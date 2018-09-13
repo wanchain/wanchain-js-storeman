@@ -3,6 +3,7 @@
 let Contract = require("contract/Contract.js");
 let ethRawTrans = require("trans/EthRawTrans.js");
 let wanRawTrans = require("trans/WanRawTrans.js");
+let MPC = require("mpc/mpc.js");
 const ModelOps = require('db/modelOps');
 const config = require('conf/config.js');
 
@@ -32,6 +33,7 @@ module.exports = class Erc20CrossAgent {
     this.crossEvent = (this.crossDirection === 0) ? crossInfoInst.depositEvent : crossInfoInst.withdrawEvent;
     this.approveFunc = 'approve';
 
+    this.isLeader = config.IsLeader;
     if (record !== null) {
       if (record.x !== '0x') {
         this.key = record.x;
@@ -249,7 +251,36 @@ module.exports = class Erc20CrossAgent {
     this.trans.setData(data);
     this.trans.setValue(0);
 
-    console.log(this.trans);
+    try {
+      let chainId = this.chain.getNetworkId();
+      let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
+
+      if (this.isLeader) {
+        let signature = await mpc.signViaMpc();
+
+        let rawTx = this.trans.serialize(signature);
+
+        let self = this;
+        this.chain.sendRawTransaction(rawTx, (err, result) => {
+          if (!err) {
+            self.logger.debug("sendRawTransaction result: ", result);
+            console.log("********************************** sendTransaction success ********************************** hashX", self.hashKey);
+            let content = build(self.hashKey, result);
+            callback(err, content);
+          } else {
+            console.log("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
+            callback(err, result);
+          }
+        });
+      } else {
+        await mpc.addValidMpcTxRaw();
+        callback(null, '0x');
+      }
+    } catch (err) {
+      console.log("********************************** sendTransaction ********************************** hashX", this.hashKey, err);
+      callback(err, null);
+    }
+
     let rawTx = this.trans.signFromKeystore(password);
     let self = this;
     this.chain.sendRawTransaction(rawTx, (err, result) => {

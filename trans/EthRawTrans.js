@@ -12,7 +12,7 @@ module.exports = class EthRawTrans {
 			gasLimit: Number(gas),
 			nonce: nonce,
 			value: value
-		}
+		};
 	}
 
 	setData(data){
@@ -26,10 +26,21 @@ module.exports = class EthRawTrans {
         this.txParams.value = value;
     }
 
+    serialize(signature) {
+		let tx;
+		tx = new ethTx(this.txParams);
+		Object.assign(tx, sig);
+		
+		const serializedTx = tx.serialize();
+		return '0x' + serializedTx.toString('hex');
+    }
+
 	sign(privateKey){
 		let tx;
 		tx = new ethTx(this.txParams);
+		// console.log("++++++++++++++++++++++++++++++ tx ++++++++++++++++++++++++++++++++++", tx);
 		tx.sign(privateKey);
+		// console.log("++++++++++++++++++++++++++++++ tx ++++++++++++++++++++++++++++++++++", tx);
 		const serializedTx = tx.serialize();
 		return '0x' + serializedTx.toString('hex');
 	}

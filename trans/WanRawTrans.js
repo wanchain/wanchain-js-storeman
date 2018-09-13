@@ -15,14 +15,16 @@ module.exports = class WanRawTrans extends EthRawTrans {
 			nonce: nonce,
 			Txtype: this.txType,
 			value: value
-		}
+		};
 	}
 
 	sign(privateKey){
 		let tx;
 		let wanTx = wanUtil.wanchainTx;
 		tx = new wanTx(this.txParams);
+				// console.log("++++++++++++++++++++++++++++++ tx ++++++++++++++++++++++++++++++++++", tx);
 		tx.sign(privateKey);
+				// console.log("++++++++++++++++++++++++++++++ tx ++++++++++++++++++++++++++++++++++", tx);
 		const serializedTx = tx.serialize();
 		return '0x' + serializedTx.toString('hex');
 	}
