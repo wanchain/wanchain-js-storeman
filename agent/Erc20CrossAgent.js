@@ -214,97 +214,84 @@ module.exports = class Erc20CrossAgent {
     return [this.revokeEvent, null, this.hashKey];
   }
 
-  async createTrans(action) {
-    let self = this;
-    let data;
-    let build;
+  createTrans(action) {
+    if (action === 'approve' || action === 'approveZero') {
+      this.data = this.getApproveData();
+      this.build = this.buildApproveData;
+    } else if (action === 'lock') {
+      this.data = this.getLockData();
+      this.build = this.buildLockData;
+    } else if (action === 'refund') {
+      this.data = this.getRefundData();
+      this.build = this.buildRefundData;
+    } else if (action === 'revoke') {
+      this.data = this.getRevokeData();
+      this.build = this.buildRevokeData;
+    }
+
+    console.log("********************************** setData **********************************", this.data, "hashX", this.hashKey);
+    this.trans.setData(data);
+    this.trans.setValue(0);
+  }
+
+  async sendTransSync() {
 
     return new Promise((resolve, reject) => {
-      if (action === 'approve' || action === 'approveZero') {
-        data = self.getApproveData();
-        build = self.buildApproveData;
-      } else if (action === 'lock') {
-        data = self.getLockData();
-        build = self.buildLockData;
-      } else if (action === 'refund') {
-        data = self.getRefundData();
-        build = self.buildRefundData;
-      } else if (action === 'revoke') {
-        data = self.getRevokeData();
-        build = self.buildRevokeData;
-      }
-
-      self.sendTrans(global.password, data, build, (err, result) => {
+      this.sendTrans((err, result) => {
         if (!err && result !== null) {
           resolve(result);
         } else {
           reject(err);
         }
-      })
-
-    })
+      });
+    });
   }
 
-  sendTrans(password, data, build, callback) {
+  sendTrans(callback) {
     console.log("********************************** sendTransaction ********************************** hashX", this.hashKey);
-    console.log("********************************** setData **********************************", data, "hashX", this.hashKey);
-    this.trans.setData(data);
-    this.trans.setValue(0);
 
     try {
       let chainId = this.chain.getNetworkId();
       let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
+      let signature = await mpc.signViaMpc();
 
-      if (this.isLeader) {
-        let signature = await mpc.signViaMpc();
+      let rawTx = this.trans.serialize(signature);
 
-        let rawTx = this.trans.serialize(signature);
-
-        let self = this;
-        this.chain.sendRawTransaction(rawTx, (err, result) => {
-          if (!err) {
-            self.logger.debug("sendRawTransaction result: ", result);
-            console.log("********************************** sendTransaction success ********************************** hashX", self.hashKey);
-            let content = build(self.hashKey, result);
-            callback(err, content);
-          } else {
-            console.log("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
-            callback(err, result);
-          }
-        });
-      } else {
-        await mpc.addValidMpcTxRaw();
-        callback(null, '0x');
-      }
+      let self = this;
+      this.chain.sendRawTransaction(rawTx, (err, result) => {
+        if (!err) {
+          self.logger.debug("sendRawTransaction result: ", result);
+          console.log("********************************** sendTransaction success ********************************** hashX", self.hashKey);
+          let content = self.build(self.hashKey, result);
+          callback(err, content);
+        } else {
+          console.log("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
+          callback(err, result);
+        }
+      });
     } catch (err) {
       console.log("********************************** sendTransaction ********************************** hashX", this.hashKey, err);
       callback(err, null);
     }
+  }
 
-    let rawTx = this.trans.signFromKeystore(password);
-    let self = this;
-    this.chain.sendRawTransaction(rawTx, (err, result) => {
-      if (!err) {
-        self.logger.debug("sendRawTransaction result: ", result);
-        console.log("********************************** sendTransaction success ********************************** hashX", self.hashKey);
-        let content = build(self.hashKey, result);
-        callback(err, content);
-      } else {
-        console.log("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
-        callback(err, result);
-      }
-    });
+  validateTrans() {
+    console.log("********************************** validateTrans ********************************** hashX", this.hashKey);
+    let chainId = this.chain.getNetworkId();
+    let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
+    try {
+      mpc.addValidMpcTxRaw();
+    } catch (err) {
+      console.log("********************************** validateTrans failed ********************************** hashX", this.hashKey, err);
+    }
   }
 
   buildApproveData(hashKey, result) {
     console.log("********************************** insertApproveData trans **********************************", hashKey);
 
     let content = {
-      // status: 'waitingCrossApproveConfirming',
       storemanApproveTxHash: result.toLowerCase()
     }
-    // this.logger.debug("insertApproveData storemanApproveTxHash: ", result);
-    // this.modelOps.saveScannedEvent(this.hashKey, content);
     return content;
   }
 
@@ -312,11 +299,8 @@ module.exports = class Erc20CrossAgent {
     console.log("********************************** insertLockData trans **********************************", hashKey);
 
     let content = {
-      // status: 'waitingCrossLockConfirming',
       storemanLockTxHash: result.toLowerCase()
     }
-    // this.logger.debug("insertLockData storemanLockTxHash: ", result);
-    // this.modelOps.saveScannedEvent(this.hashKey, content);
     return content;
   }
 
@@ -324,11 +308,8 @@ module.exports = class Erc20CrossAgent {
     console.log("********************************** insertRefundData trans **********************************", hashKey);
 
     let content = {
-      // status: 'waitingCrossRefundConfirming',
       storemanRefundTxHash: result.toLowerCase()
     }
-    // this.logger.debug("insertRefundData storemanRefundTxHash: ", result);
-    // this.modelOps.saveScannedEvent(this.hashKey, content);
     return content;
   }
 
@@ -336,11 +317,8 @@ module.exports = class Erc20CrossAgent {
     console.log("********************************** insertRevokeData trans **********************************", hashKey);
 
     let content = {
-      // status: 'waitingCrossRevokeConfirming',
       storemanRevokeTxHash: result.toLowerCase()
     }
-    // this.logger.debug("insertRevokeData storemanRevokeTxHash: ", result);
-    // this.modelOps.saveScannedEvent(this.hashKey, content);
     return content;
   }
 }
