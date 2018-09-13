@@ -45,9 +45,17 @@ global.monitorLogger = new Logger("monitorLogger", "log/storemanAgent.log", "log
 function getChain(chainType) {
   let chain = chainType.toLowerCase();
   if (chain === 'eth') {
-    return new EthChain(global.syncLogger, new Web3(new Web3.providers.HttpProvider(config.ethWeb3Url)));
+    if (config.ethWeb3Url.indexOf("http://")) {
+      return new EthChain(global.syncLogger, new Web3(new Web3.providers.HttpProvider(config.ethWeb3Url)));
+    } else {
+      return new EthChain(global.syncLogger, new Web3(new Web3.providers.IpcProvider(config.ethWeb3Url)));
+    }
   } else if (chain === 'wan') {
-    return new WanChain(global.syncLogger, new Web3(new Web3.providers.HttpProvider(config.wanWeb3Url)));
+    if (config.wanWeb3Url.indexOf("http://")) {
+      return new WanChain(global.syncLogger, new Web3(new Web3.providers.HttpProvider(config.wanWeb3Url)));
+    } else {
+      return new WanChain(global.syncLogger, new Web3(new Web3.providers.IpcProvider(config.wanWeb3Url)));
+    }
   } else {
     return null;
   }

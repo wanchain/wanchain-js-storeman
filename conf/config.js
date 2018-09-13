@@ -8,10 +8,12 @@ const isLeader = false;
 const config = {
 	// ethWeb3Url: "http://localhost:8545",
 	// wanWeb3Url: "http://localhost:8545",
-	ethWeb3Url: "http://18.236.235.133:18545",
-	wanWeb3Url: "http://18.236.235.133:8545",
+	// ethWeb3Url: "http://18.236.235.133:18545",
+	// wanWeb3Url: "http://18.236.235.133:8545",
 	// mpcUrl: "http://18.236.235.133:8545",
 
+	ethWeb3Url: "/home/ubuntu/rinkebyData/geth.ipc",
+	wanWeb3Url: "/home/ubuntu/.wanchain/gwan.ipc",
 	mpcUrl: "/home/ubuntu/.wanchain/gwan.ipc",
 
 	crossEthDbUrl: dbUrl + "/crossEthChain",
