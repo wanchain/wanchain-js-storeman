@@ -234,7 +234,7 @@ module.exports = class Erc20CrossAgent {
     this.trans.setValue(0);
   }
 
-  async sendTransSync() {
+  sendTransSync() {
 
     return new Promise((resolve, reject) => {
       this.sendTrans((err, result) => {
@@ -247,7 +247,7 @@ module.exports = class Erc20CrossAgent {
     });
   }
 
-  sendTrans(callback) {
+  async sendTrans(callback) {
     console.log("********************************** sendTransaction ********************************** hashX", this.hashKey);
 
     try {

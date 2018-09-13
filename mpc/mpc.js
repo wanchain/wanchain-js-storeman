@@ -8,7 +8,7 @@ module.exports = class mpc {
     this.sendTxArgs = {
       From: trans.from,
       To: trans.to,
-      Gas: trans.gasLimit，
+      Gas: trans.gasLimit,
       GasPrice: trans.gasPrice,
       Nonce: trans.nonce,
       Value: trans.value,
