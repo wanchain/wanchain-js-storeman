@@ -274,6 +274,7 @@ module.exports = class stateAction {
         result.status = nextState;
       } else {
         await newAgent.validateTrans();
+        result.status = nextState;
       }
 
     } catch (err) {

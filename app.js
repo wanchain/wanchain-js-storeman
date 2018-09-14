@@ -19,6 +19,8 @@ const SAFE_BLOCK_NUM = 1;
 const CONFIRM_BLOCK_NUM = 1;
 const INTERVAL_TIME = 15 * 1000;
 
+global.handlingList = {};
+
 global.crossToken = 'WCT';
 global.lastEthNonce = 0;
 global.lastWanNonce = 0;
@@ -312,8 +314,14 @@ async function syncMain(logger, db) {
 
 function monitorRecord(record) {
   let stateAction = new StateAction(record, global.monitorLogger, db);
-  stateAction.takeAction().catch(err => global.monitorLogger.error(err));
-
+  stateAction.takeAction()
+    .then(result => {
+      if (global.handlingList[record.hashX]) {
+        console.log("handlingList delete already handled hashX", record.hashX);
+        delete global.handlingList[record.hashX];
+      }
+    })
+    .catch(err => global.monitorLogger.error(err));
 }
 
 async function handlerMain(logger, db) {
@@ -335,9 +343,17 @@ async function handlerMain(logger, db) {
     }
     let history = await modelOps.getEventHistory(option);
     logger.debug('history length is ', history.length);
+    logger.debug('handlingList length is ', Object.keys(global.handlingList).length);
 
     for (let i = 0; i < history.length; i++) {
       let record = history[i];
+
+      let cur = Date.now();
+      if (global.handlingList[record.hashX]) {
+        continue;
+      }
+      global.handlingList[record.hashX] = cur;
+
       try {
         monitorRecord(record);
       } catch (error) {

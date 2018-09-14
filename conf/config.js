@@ -3,8 +3,6 @@ const pwd = process.env.MONGO_PWD;
 // const dbUrl = `mongodb://${user}:${pwd}@localhost:27017`;
 const dbUrl = `mongodb://localhost:27017`;
 
-const isLeader = false;
-
 const config = {
 	// ethWeb3Url: "http://localhost:8545",
 	// wanWeb3Url: "http://localhost:8545",
@@ -15,6 +13,8 @@ const config = {
 	ethWeb3Url: "/home/ubuntu/rinkebyData/geth.ipc",
 	wanWeb3Url: "/home/ubuntu/.wanchain/gwan.ipc",
 	mpcUrl: "/home/ubuntu/.wanchain/gwan.ipc",
+
+	isLeader: false,
 
 	crossEthDbUrl: dbUrl + "/crossEthChain",
 	email: {
