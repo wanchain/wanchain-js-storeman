@@ -1,6 +1,7 @@
 "use strict"
 
 const Web3 = require("web3");
+var net = require('net');
 const config = require('conf/config');
 
 module.exports = class mpc {
@@ -21,7 +22,7 @@ module.exports = class mpc {
     if (config.mpcUrl.indexOf("http://") > 0) {
       this.web3 = new Web3(new Web3.providers.HttpProvider(config.mpcUrl));
     } else {
-      this.web3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl));
+      this.web3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl, net));
     }
   }
 
