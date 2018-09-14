@@ -230,7 +230,7 @@ module.exports = class Erc20CrossAgent {
     }
 
     console.log("********************************** setData **********************************", this.data, "hashX", this.hashKey);
-    this.trans.setData(data);
+    this.trans.setData(this.data);
     this.trans.setValue(0);
   }
 
@@ -254,7 +254,7 @@ module.exports = class Erc20CrossAgent {
       let chainId = this.chain.getNetworkId();
       let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
       let signature = await mpc.signViaMpc();
-
+      console.log("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, signature);
       let rawTx = this.trans.serialize(signature);
 
       let self = this;

@@ -29,7 +29,10 @@ module.exports = class EthRawTrans {
     serialize(signature) {
 		let tx;
 		tx = new ethTx(this.txParams);
-		Object.assign(tx, sig);
+		console.log("111111111111", tx);
+		console.log("2222222222222222",signature);
+		Object.assign(tx, signature);
+		console.log("333333333333333333",tx);
 		
 		const serializedTx = tx.serialize();
 		return '0x' + serializedTx.toString('hex');

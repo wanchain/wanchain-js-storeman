@@ -84,7 +84,8 @@ var stateDict = {
     action: 'sendTrans',
     paras: ['lock', 'storemanLockEvent'],
     nextState: 'waitingCrossLockConfirming',
-    rollState: 'waitingIntervention'
+    // rollState: 'waitingIntervention'
+    rollState: 'lockFailed'
   },
   waitingX: {
     action: 'checkWalletEventOnline',
