@@ -8,13 +8,14 @@ const ModelOps = require('db/modelOps');
 const config = require('conf/config.js');
 
 const tokenAllowance = 4;
+
 function getWeiFromEther(ether) {
-    return ether * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
+  return ether * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
 }
 
 module.exports = class Erc20CrossAgent {
   constructor(crossToken, crossDirection, action = null, record = null, logger = null) {
-  	this.logger = logger;
+    this.logger = logger;
     let token = config.crossTokenDict[crossToken];
     this.tokenAddr = token.tokenAddr;
     this.tokenSymbol = token.tokenSymbol;
@@ -52,7 +53,7 @@ module.exports = class Erc20CrossAgent {
       } else {
         this.trans = new ethRawTrans(...transInfo);
         this.chain = global.ethChain;
-      }      
+      }
     }
 
     this.lockEvent = this.contract.getEventSignature(this.crossEvent[0]);
@@ -188,7 +189,7 @@ module.exports = class Erc20CrossAgent {
 
   getLockData() {
     console.log("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
-    this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey,'crossAddress-', this.crossAddress,'Amount-', this.amount);
+    this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
     return this.contract.constructData(this.crossFunc[0], this.tokenAddr, this.hashKey, this.crossAddress, this.amount);
   }
   getRefundData() {
@@ -251,10 +252,11 @@ module.exports = class Erc20CrossAgent {
     console.log("********************************** sendTransaction ********************************** hashX", this.hashKey);
 
     try {
-      let chainId = this.chain.getNetworkId();
+      let chainId = await this.chain.getNetworkId();
       let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
       let signature = await mpc.signViaMpc();
       console.log("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, signature);
+      console.log(this.trans);
       let rawTx = this.trans.serialize(signature);
 
       let self = this;
@@ -275,11 +277,12 @@ module.exports = class Erc20CrossAgent {
     }
   }
 
-  validateTrans() {
+  async validateTrans() {
     console.log("********************************** validateTrans ********************************** hashX", this.hashKey);
-    let chainId = this.chain.getNetworkId();
-    let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
     try {
+      let chainId = await this.chain.getNetworkId();
+      let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
+
       mpc.addValidMpcTxRaw();
     } catch (err) {
       console.log("********************************** validateTrans failed ********************************** hashX", this.hashKey, err);

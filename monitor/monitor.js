@@ -273,7 +273,7 @@ module.exports = class stateAction {
         monitorLogger.debug("sendTrans result is ", result);
         result.status = nextState;
       } else {
-        newAgent.validateTrans();
+        await newAgent.validateTrans();
       }
 
     } catch (err) {

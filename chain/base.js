@@ -8,8 +8,24 @@ class baseChain {
     this.theWeb3 = theWeb3;
   }
 
+
   getNetworkId() {
-    return theWeb3.version.network;
+    let log = this.log;
+
+    return new Promise((resolve, reject)=> {
+      try {
+        this.theWeb3.getNetWork((err, result) => {
+          if(!err) {
+            log.debug("getNetWork result is", result);
+            resolve(result);
+          } else {
+            reject(err);
+          }
+        })
+      } catch (err) {
+        reject(err);
+      };
+    });
   }
 
   getScEvent(address, topics, fromBlk, toBlk, callback) {
