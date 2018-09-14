@@ -1,6 +1,7 @@
 "use strict"
 
 const Web3 = require("web3");
+const web3Mpc = require("mpc/web3Mpc.js");
 var net = require('net');
 const config = require('conf/config');
 
@@ -19,17 +20,18 @@ module.exports = class mpc {
       SignType: signType
     }
 
+    web3Mpc.extend(Web3);
     if (config.mpcUrl.indexOf("http://") > 0) {
-      this.web3 = new Web3(new Web3.providers.HttpProvider(config.mpcUrl));
+      this.mpcWeb3 = new Web3(new Web3.providers.HttpProvider(config.mpcUrl));
     } else {
-      this.web3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl, net));
+      this.mpcWeb3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl, net));
     }
   }
 
   signViaMpc() {
     return new Promise((resolve, reject) => {
       try {
-        mpcWeb3.storeman.signMpcTransaction(this.sendTxArgs, (err, result) => {
+        this.mpcWeb3.storeman.signMpcTransaction(this.sendTxArgs, (err, result) => {
           if (!err) {
             console.log("********************************** mpc signViaMpc successfully **********************************", result);
             resolve(result);
@@ -49,7 +51,7 @@ module.exports = class mpc {
   addValidMpcTxRaw() {
     return new Promise((resolve, reject) => {
       try {
-        mpcWeb3.storeman.addValidMpcTxRaw(this.sendTxArgs, (err, result) => {
+        this.mpcWeb3.storeman.addValidMpcTxRaw(this.sendTxArgs, (err, result) => {
           if (!err) {
             console.log("********************************** mpc addValidMpcTxRawaddValidMpcTxRawaddValidMpcTxRaw successfully **********************************", result);
             resolve(result);
