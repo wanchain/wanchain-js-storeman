@@ -207,8 +207,9 @@ module.exports = class stateAction {
             self.logger.debug("********************************** takeAction ********************************** hashX:", action, paras)
             await self[action](...paras);
           }
-          resolve();
+          // resolve();
         }
+        resolve();
       } catch (err) {
         self.logger.error("There is takeAction error", err);
         reject(err);
