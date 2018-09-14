@@ -254,10 +254,10 @@ module.exports = class Erc20CrossAgent {
     try {
       let chainId = await this.chain.getNetworkId();
       let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
-      let signature = await mpc.signViaMpc();
-      console.log("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, signature);
+      let rawTx = await mpc.signViaMpc();
+      console.log("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, rawTx);
       console.log(this.trans);
-      let rawTx = this.trans.serialize(signature);
+      // let rawTx = this.trans.serialize(signature);
 
       let self = this;
       this.chain.sendRawTransaction(rawTx, (err, result) => {

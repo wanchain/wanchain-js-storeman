@@ -6,7 +6,7 @@ var net = require('net');
 const config = require('conf/config');
 
 module.exports = class mpc {
-  constructor(trans, chainType, chainId, signType = 'hash') {
+  constructor(trans, chainType, chainId) {
     this.sendTxArgs = {
       From: trans.from,
       To: trans.to,
@@ -16,8 +16,7 @@ module.exports = class mpc {
       Value: '0x' + trans.value.toString(16),
       Data: trans.data,
       ChainType: chainType,
-      ChainID: '0x' + chainId.toString(16),
-      SignType: signType
+      ChainID: '0x' + chainId.toString(16)
     }
 console.log(this.sendTxArgs);
     this.mpcWeb3 = new Web3();
