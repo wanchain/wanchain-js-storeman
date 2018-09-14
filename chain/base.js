@@ -14,7 +14,7 @@ class baseChain {
 
     return new Promise((resolve, reject)=> {
       try {
-        this.theWeb3.getNetWork((err, result) => {
+        this.theWeb3.version.getNetWork((err, result) => {
           if(!err) {
             log.debug("getNetWork result is", result);
             resolve(result);
