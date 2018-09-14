@@ -10,22 +10,26 @@ module.exports = class mpc {
     this.sendTxArgs = {
       From: trans.from,
       To: trans.to,
-      Gas: trans.gasLimit,
-      GasPrice: trans.gasPrice,
-      Nonce: trans.nonce,
-      Value: trans.value,
+      Gas: '0x' + trans.gasLimit.toString(16),
+      GasPrice: '0x' + trans.gasPrice.toString(16),
+      Nonce: '0x' + trans.nonce.toString(16),
+      Value: '0x' + trans.value.toString(16),
       Data: trans.data,
       ChainType: chainType,
-      ChainID: chainId,
+      ChainID: '0x' + chainId.toString(16),
       SignType: signType
     }
-
-    web3Mpc.extend(Web3);
+console.log(this.sendTxArgs);
+    this.mpcWeb3 = new Web3();
+    //web3Mpc.extend(Web3);
     if (config.mpcUrl.indexOf("http://") > 0) {
-      this.mpcWeb3 = new Web3(new Web3.providers.HttpProvider(config.mpcUrl));
+      //this.mpcWeb3 = new Web3(new Web3.providers.HttpProvider(config.mpcUrl));
+      this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(config.mpcUrl));
     } else {
-      this.mpcWeb3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl, net));
+      //this.mpcWeb3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl, net));
+      this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(config.mpcUrl, net));
     }
+    web3Mpc.extend(this.mpcWeb3);
   }
 
   signViaMpc() {
@@ -51,6 +55,7 @@ module.exports = class mpc {
   addValidMpcTxRaw() {
     return new Promise((resolve, reject) => {
       try {
+console.log(this.mpcWeb3.storeman);
         this.mpcWeb3.storeman.addValidMpcTxRaw(this.sendTxArgs, (err, result) => {
           if (!err) {
             console.log("********************************** mpc addValidMpcTxRawaddValidMpcTxRawaddValidMpcTxRaw successfully **********************************", result);
