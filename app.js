@@ -27,6 +27,7 @@ global.lastWanNonce = 0;
 global.wanGasPrice = 180;
 global.wanGasLimit = 1000000;
 global.ethGasLimit = 470000;
+
 global.lockedTime = 1800;
 global.password = process.env.KEYSTORE_PWD;
 
@@ -39,8 +40,8 @@ console.log(originCrossContract.transChainType);
 
 // global.storemanEth = "0xc27ecd85faa4ae80bf5e28daf91b605db7be1ba8";
 // global.storemanWan = "0x55ccc7a38f900a1e00f0a4c1e466ec36e7592024";
-global.storemanEth = "0x7d6cb38c1c4da18ec91c2d5975c67149f96bc88e";
-global.storemanWan = "0xfb6fa10f18e3645e917b4fdabbd48e983bfa37c9";
+global.storemanEth = "0xa89f7702fb9f237aad805e8f99a2793f58e81242";
+global.storemanWan = "0xaf52acd143a7bc349d5ebb9188559e7ba9fca9dd";
 
 global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 global.monitorLogger = new Logger("monitorLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
