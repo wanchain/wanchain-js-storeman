@@ -14,7 +14,7 @@ function getWeiFromEther(ether) {
 }
 
 module.exports = class Erc20CrossAgent {
-  async constructor(crossToken, crossDirection, action = null, record = null, logger = null) {
+  constructor(crossToken, crossDirection, action = null, record = null, logger = null) {
     this.logger = logger;
     let token = config.crossTokenDict[crossToken];
     this.tokenAddr = token.tokenAddr;
@@ -35,6 +35,7 @@ module.exports = class Erc20CrossAgent {
     this.approveFunc = 'approve';
 
     this.isLeader = config.IsLeader;
+
     if (record !== null) {
       if (record.x !== '0x') {
         this.key = record.x;
@@ -43,17 +44,6 @@ module.exports = class Erc20CrossAgent {
       this.hashKey = record.hashX;
       this.amount = Number(record.value);
       this.crossAddress = record.crossAddress;
-    }
-
-    if (action !== null) {
-      let transInfo = await this.getTransInfo(action);
-      if (this.transChainType === 'wan') {
-        this.trans = new wanRawTrans(...transInfo);
-        this.chain = global.wanChain;
-      } else {
-        this.trans = new ethRawTrans(...transInfo);
-        this.chain = global.ethChain;
-      }
     }
 
     this.lockEvent = this.contract.getEventSignature(this.crossEvent[0]);
@@ -117,6 +107,19 @@ module.exports = class Erc20CrossAgent {
       }
     }
   }
+
+  async initAgentTransInfo(action) {
+    if (action !== null) {
+      let transInfo = await this.getTransInfo(action);
+      if (this.transChainType === 'wan') {
+        this.trans = new wanRawTrans(...transInfo);
+        this.chain = global.wanChain;
+      } else {
+        this.trans = new ethRawTrans(...transInfo);
+        this.chain = global.ethChain;
+      }
+    }
+  } 
 
   getWeiFromEther(ether) {
     return ether * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;

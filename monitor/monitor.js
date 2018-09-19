@@ -286,6 +286,7 @@ module.exports = class stateAction {
       for (var action of actionArray) {
         let newAgent = new erc20CrossAgent(global.crossToken, this.crossDirection, action, this.record, this.logger);
         console.log("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
+        await newAgent.initAgentTransInfo(action);
 
         newAgent.createTrans(action);
         if (config.isLeader) {
