@@ -297,7 +297,7 @@ module.exports = class stateAction {
       }
 
       result.status = nextState;
-    } catch {
+    } catch (err) {
       monitorLogger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
       monitorLogger.error("err is", err);
       result.status = rollState;
