@@ -83,6 +83,10 @@ const eventSchema = new Schema({
     type: Number,
     default: 0
   },
+  transConfirmed: {
+    type: Number,
+    default: 0
+  },
   walletLockEvent: {
     type: Array,
     default: []

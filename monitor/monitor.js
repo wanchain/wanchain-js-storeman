@@ -6,7 +6,10 @@ const erc20CrossAgent = require('agent/Erc20CrossAgent.js');
 const sendMail = require('comm/sendMail');
 const config = require('conf/config');
 
-const retryTime = 0;
+const retryTimes = 0;
+const confirmTimes = 5;
+global.waitTime = 600;
+
 const CONFIRM_BLOCK_NUM = 2;
 const tokenAllowance = 2; /* unit ether*/
 
@@ -25,41 +28,47 @@ var stateDict = {
     action: 'checkAllowance',
     paras: [],
     nextState: 'approveFinished',
-    rollState: 'approveZero'
+    rollState: 'waitingApproveLock'
   },
-  approveZero: {
+  // approveZero: {
+  //   action: 'sendTrans',
+  //   paras: ['approveZero', null],
+  //   nextState: 'waitingApproveZeroConfirming',
+  //   rollState: 'approveFailed'    
+  // },
+  // waitingApproveZeroConfirming: {
+  //   action: 'checkStoremanTransOnline',
+  //   paras: [null, 'storemanApproveTxHash'],
+  //   nextState: 'waitingApprove',
+  //   rollState: 'approveFailed'
+  // },
+  // waitingApprove: {
+  //   action: 'sendTrans',
+  //   paras: ['approve', null],
+  //   nextState: 'waitingCrossApproveConfirming',
+  //   rollState: 'approveFailed'
+  // },
+  // waitingCrossApproveConfirming: {
+  //   action: 'checkStoremanTransOnline',
+  //   paras: [null, 'storemanApproveTxHash'],
+  //   nextState: 'approveFinished',
+  //   rollState: 'approveFailed'
+  // },
+  // approveFailed: {
+  //   // action: 'sendTrans',
+  //   // paras: ['approve', null],
+  //   // nextState: 'waitingCrossApproveConfirming',
+  //   // rollState: 'waitingIntervention'
+  //   action: 'checkAllowance',
+  //   paras: [],
+  //   nextState: 'approveFinished',
+  //   rollState: 'waitingIntervention'
+  // },
+  waitingApproveLock: {
     action: 'sendTrans',
-    paras: ['approveZero', null],
-    nextState: 'waitingApproveZeroConfirming',
-    rollState: 'approveFailed'    
-  },
-  waitingApproveZeroConfirming: {
-    action: 'checkStoremanTransOnline',
-    paras: [null, 'storemanApproveTxHash'],
-    nextState: 'waitingApprove',
-    rollState: 'approveFailed'
-  },
-  waitingApprove: {
-    action: 'sendTrans',
-    paras: ['approve', null],
-    nextState: 'waitingCrossApproveConfirming',
-    rollState: 'approveFailed'
-  },
-  waitingCrossApproveConfirming: {
-    action: 'checkStoremanTransOnline',
-    paras: [null, 'storemanApproveTxHash'],
-    nextState: 'approveFinished',
-    rollState: 'approveFailed'
-  },
-  approveFailed: {
-    // action: 'sendTrans',
-    // paras: ['approve', null],
-    // nextState: 'waitingCrossApproveConfirming',
-    // rollState: 'waitingIntervention'
-    action: 'checkAllowance',
-    paras: [],
-    nextState: 'approveFinished',
-    rollState: 'waitingIntervention'
+    paras: [['approveZero', 'approve', 'lock'], 'storemanLockEvent'],
+    nextState: 'waitingCrossLockConfirming',
+    rollState: 'lockFailed'
   },
   approveFinished: {
     action: 'sendTrans',
@@ -252,38 +261,49 @@ module.exports = class stateAction {
     }
   }
 
-  async sendTrans(action, eventName, nextState, rollState) {
-  	console.log(this.record);
+  async sendTrans(actionArray, eventName, nextState, rollState) {
+    console.log(this.record);
 
-	if (eventName !== null) {
-		let event = this.record[eventName];
-		if (event.length !== 0) {
-		  this.updateState(nextState);
-		  return;
-		}
-	}
+    if (eventName !== null) {
+      let event = this.record[eventName];
+      if (event.length !== 0) {
+        this.updateState(nextState);
+        return;
+      }
+    }
 
-    let newAgent = new erc20CrossAgent(global.crossToken, this.crossDirection, action, this.record, this.logger);
-    console.log("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
+    if (!Array.isArray(actionArray)) {
+      actionArray = [actionArray];
+    } else {
+      actionArray = [...actionArray];
+    }
+
     let result = {};
+
     try {
-      newAgent.createTrans(action);
-      if (config.isLeader) {
-        result = await newAgent.sendTransSync();
-        console.log("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
-        monitorLogger.debug("sendTrans result is ", result);
-        result.status = nextState;
-      } else {
-        await newAgent.validateTrans();
-        result.status = nextState;
+      for (var action of actionArray) {
+        let newAgent = new erc20CrossAgent(global.crossToken, this.crossDirection, action, this.record, this.logger);
+        console.log("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
+
+        newAgent.createTrans(action);
+        if (config.isLeader) {
+          let content = await newAgent.sendTransSync();
+          console.log("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
+          monitorLogger.debug("sendTrans result is ", content);
+          Object.assign(result, content);
+        } else {
+          await newAgent.validateTrans();
+        }
       }
 
-    } catch (err) {
+      result.status = nextState;
+    } catch {
       monitorLogger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
       monitorLogger.error("err is", err);
       result.status = rollState;
       console.log(result);
     }
+
     this.updateRecord(result);
   }
 
@@ -338,6 +358,8 @@ module.exports = class stateAction {
     return false;
   }
 
+  checkWaitTimeout() {}
+
   async checkAllowance(nextState, rollState) {
     let newAgent = new erc20CrossAgent(global.crossToken, 1);
     // let newAgent = new erc20CrossAgent(global.crossToken, this.crossDirection, 'approve', this.record, this.logger);
@@ -353,7 +375,6 @@ module.exports = class stateAction {
         this.updateState('checkApprove');
       })
   }
-
 
   async checkStoremanTransOnline(eventName, transHashName, nextState, rollState) {
     try {
