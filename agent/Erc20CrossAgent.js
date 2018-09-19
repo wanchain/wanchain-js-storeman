@@ -14,7 +14,7 @@ function getWeiFromEther(ether) {
 }
 
 module.exports = class Erc20CrossAgent {
-  constructor(crossToken, crossDirection, action = null, record = null, logger = null) {
+  async constructor(crossToken, crossDirection, action = null, record = null, logger = null) {
     this.logger = logger;
     let token = config.crossTokenDict[crossToken];
     this.tokenAddr = token.tokenAddr;
@@ -46,7 +46,7 @@ module.exports = class Erc20CrossAgent {
     }
 
     if (action !== null) {
-      let transInfo = this.getTransInfo(action);
+      let transInfo = await this.getTransInfo(action);
       if (this.transChainType === 'wan') {
         this.trans = new wanRawTrans(...transInfo);
         this.chain = global.wanChain;
@@ -127,31 +127,39 @@ module.exports = class Erc20CrossAgent {
   }
 
   async getNonce() {
-    if (this.transChainType === 'wan') {
-      if (global.wanNonceRenew) {
-        global.wanNonce = await global.wanChain.getNonceSync(global.storemanWan);
-        global.lastWanNonce = parseInt(global.wanNonce, 16);
-        global.wanNonceRenew = false;
-      } else if (global.lastWanNonce === 0) {
-        global.wanNonce = await global.wanChain.getNonceIncludePendingSync(global.storemanWan);
-        global.lastWanNonce = parseInt(global.wanNonce, 16);
-      } else {
-        global.lastWanNonce++;
+    return new Promise((resolve, reject) => {
+      try {
+        if (this.transChainType === 'wan') {
+          if (global.wanNonceRenew) {
+            global.wanNonce = await global.wanChain.getNonceSync(global.storemanWan);
+            global.lastWanNonce = parseInt(global.wanNonce, 16);
+            global.wanNonceRenew = false;
+          } else if (global.lastWanNonce === 0) {
+            global.wanNonce = await global.wanChain.getNonceIncludePendingSync(global.storemanWan);
+            global.lastWanNonce = parseInt(global.wanNonce, 16);
+          } else {
+            global.lastWanNonce++;
+          }
+          resolve(global.lastWanNonce);
+        } else {
+          if (global.ethNonceRenew) {
+            global.ethNonce = await global.ethChain.getNonceSync(global.storemanWan);
+            global.lastEthNonce = parseInt(global.ethNonce, 16);
+            global.ethNonceRenew = false;
+          } else if (global.lastEthNonce === 0) {
+            global.ethNonce = await global.ethChain.getNonceIncludePendingSync(global.storemanEth);
+            global.lastEthNonce = parseInt(global.ethNonce, 16);
+          } else {
+            global.lastEthNonce++;
+          }
+          resolve(global.lastEthNonce);
+        }
+      } catch (err) {
+        console.log("getNonce failed", err);
+        reject(err);
       }
-      return global.lastWanNonce;
-    } else {
-      if (global.ethNonceRenew) {
-        global.ethNonce = await global.ethChain.getNonceSync(global.storemanWan);
-        global.lastEthNonce = parseInt(global.ethNonce, 16);
-        global.ethNonceRenew = false;
-      } else if (global.lastEthNonce === 0) {
-        global.ethNonce = await global.ethChain.getNonceIncludePendingSync(global.storemanEth);
-        global.lastEthNonce = parseInt(global.ethNonce, 16);
-      } else {
-        global.lastEthNonce++;
-      }
-      return global.lastEthNonce;
-    }
+
+    });
   }
 
   async getTransInfo(action) {
@@ -162,37 +170,43 @@ module.exports = class Erc20CrossAgent {
     let gasPrice;
     let nonce;
 
-    if (action === 'approve' || action === 'approveZero') {
-      from = global.storemanEth;
-    } else if (action === 'refund') {
-      from = (this.crossDirection === 0) ? global.storemanEth : global.storemanWan;
-    } else {
-      from = (this.crossDirection === 0) ? global.storemanWan : global.storemanEth;
-    }
+    return new Promise((resolve, reject) => {
+      try {
+        if (action === 'approve' || action === 'approveZero') {
+          from = global.storemanEth;
+        } else if (action === 'refund') {
+          from = (this.crossDirection === 0) ? global.storemanEth : global.storemanWan;
+        } else {
+          from = (this.crossDirection === 0) ? global.storemanWan : global.storemanEth;
+        }
 
-    to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
+        to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
 
-    if (action === 'approve') {
-      this.amount = Number(getWeiFromEther(tokenAllowance));
-    } else if (action === 'approveZero') {
-      this.amount = 0;
-    }
-    amount = this.amount;
+        if (action === 'approve') {
+          this.amount = Number(getWeiFromEther(tokenAllowance));
+        } else if (action === 'approveZero') {
+          this.amount = 0;
+        }
+        amount = this.amount;
 
-    if (this.transChainType === 'wan') {
-      gas = global.wanGasLimit;
-      gasPrice = this.getWeiFromGwei(global.wanGasPrice);
-    } else {
-      gas = global.ethGasLimit;
-      global.ethGasPrice = await global.ethChain.getGasPriceSync();
-      gasPrice = global.ethGasPrice;
-    }
+        if (this.transChainType === 'wan') {
+          gas = global.wanGasLimit;
+          gasPrice = this.getWeiFromGwei(global.wanGasPrice);
+        } else {
+          gas = global.ethGasLimit;
+          global.ethGasPrice = await global.ethChain.getGasPriceSync();
+          gasPrice = global.ethGasPrice;
+        }
 
-    nonce = this.getNonce();
-    this.logger.info("transInfo is: crossDirection- %s, transChainType- %s,\n from- %s, to- %s, gas- %s, gasPrice- %s, nonce- %s, amount- %s, \n hashX- %s", this.crossDirection, this.transChainType, from, to, gas, gasPrice, nonce, amount, this.hashKey);
-    return [from, to, gas, gasPrice, nonce, amount];
+        nonce = this.getNonce();
+        this.logger.info("transInfo is: crossDirection- %s, transChainType- %s,\n from- %s, to- %s, gas- %s, gasPrice- %s, nonce- %s, amount- %s, \n hashX- %s", this.crossDirection, this.transChainType, from, to, gas, gasPrice, nonce, amount, this.hashKey);
+        resolve([from, to, gas, gasPrice, nonce, amount]);
+      } catch (err) {
+        console.log("getTransInfo failed", err);
+        reject(err);
+      }
+    });
   }
-
   getApproveData() {
     console.log("********************************** funcInterface **********************************", this.approveFunc);
     return this.tokenContract.constructData(this.approveFunc, this.contractAddr, this.amount);
