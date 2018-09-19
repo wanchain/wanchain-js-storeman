@@ -201,7 +201,7 @@ module.exports = class Erc20CrossAgent {
           gasPrice = global.ethGasPrice;
         }
 
-        nonce = this.getNonce();
+        nonce = await this.getNonce();
         this.logger.info("transInfo is: crossDirection- %s, transChainType- %s,\n from- %s, to- %s, gas- %s, gasPrice- %s, nonce- %s, amount- %s, \n hashX- %s", this.crossDirection, this.transChainType, from, to, gas, gasPrice, nonce, amount, this.hashKey);
         resolve([from, to, gas, gasPrice, nonce, amount]);
       } catch (err) {
