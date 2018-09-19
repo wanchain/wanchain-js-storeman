@@ -303,8 +303,8 @@ module.exports = class stateAction {
     } catch (err) {
       monitorLogger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
       monitorLogger.error("err is", err);
-      if (result.transRetried <= global.retryTimes) {
-        result.transRetried = result.transRetried + 1;
+      if (this.record.transRetried <= global.retryTimes) {
+        result.transRetried = this.record.transRetried + 1;
         result.status = rollState[0];
       } else {
         result.transRetried = 0;
