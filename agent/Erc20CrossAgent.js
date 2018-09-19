@@ -129,8 +129,8 @@ module.exports = class Erc20CrossAgent {
     return ether * 1000 * 1000 * 1000;
   }
 
-  async getNonce() {
-    return new Promise((resolve, reject) => {
+  getNonce() {
+    return new Promise(async (resolve, reject) => {
       try {
         if (this.transChainType === 'wan') {
           if (global.wanNonceRenew) {
@@ -165,7 +165,7 @@ module.exports = class Erc20CrossAgent {
     });
   }
 
-  async getTransInfo(action) {
+  getTransInfo(action) {
     let from;
     let to;
     let amount;
@@ -173,7 +173,7 @@ module.exports = class Erc20CrossAgent {
     let gasPrice;
     let nonce;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         if (action === 'approve' || action === 'approveZero') {
           from = global.storemanEth;
