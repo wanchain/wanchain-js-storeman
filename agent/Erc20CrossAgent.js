@@ -126,16 +126,26 @@ module.exports = class Erc20CrossAgent {
     return ether * 1000 * 1000 * 1000;
   }
 
-  getNonce() {
+  async getNonce() {
     if (this.transChainType === 'wan') {
-      if (global.lastWanNonce === 0) {
+      if (global.wanNonceRenew) {
+        global.wanNonce = await global.wanChain.getNonceSync(global.storemanWan);
+        global.lastWanNonce = parseInt(global.wanNonce, 16);
+        global.wanNonceRenew = false;
+      } else if (global.lastWanNonce === 0) {
+        global.wanNonce = await global.wanChain.getNonceIncludePendingSync(global.storemanWan);
         global.lastWanNonce = parseInt(global.wanNonce, 16);
       } else {
         global.lastWanNonce++;
       }
       return global.lastWanNonce;
     } else {
-      if (global.lastEthNonce === 0) {
+      if (global.ethNonceRenew) {
+        global.ethNonce = await global.ethChain.getNonceSync(global.storemanWan);
+        global.lastEthNonce = parseInt(global.ethNonce, 16);
+        global.ethNonceRenew = false;
+      } else if (global.lastEthNonce === 0) {
+        global.ethNonce = await global.ethChain.getNonceIncludePendingSync(global.storemanEth);
         global.lastEthNonce = parseInt(global.ethNonce, 16);
       } else {
         global.lastEthNonce++;
@@ -144,7 +154,7 @@ module.exports = class Erc20CrossAgent {
     }
   }
 
-  getTransInfo(action) {
+  async getTransInfo(action) {
     let from;
     let to;
     let amount;
@@ -174,6 +184,7 @@ module.exports = class Erc20CrossAgent {
       gasPrice = this.getWeiFromGwei(global.wanGasPrice);
     } else {
       gas = global.ethGasLimit;
+      global.ethGasPrice = await global.ethChain.getGasPriceSync();
       gasPrice = global.ethGasPrice;
     }
 
@@ -242,6 +253,20 @@ module.exports = class Erc20CrossAgent {
         if (!err && result !== null) {
           resolve(result);
         } else {
+          if (err.hasOwnProperty("message") && 
+            (err.message === 'nonce too low' || err.message === 'replacement transaction underpriced')) {
+            if (this.transChainType === 'wan') {
+              global.lastWanNonce = 0;
+            } else {
+              global.lastEthNonce = 0;
+            }
+          } else {
+            if (this.transChainType === 'wan') {
+              global.lastWanNonce--;
+            } else {
+              global.lastEthNonce--;
+            }
+          }
           reject(err);
         }
       });

@@ -7,7 +7,11 @@ const sendMail = require('comm/sendMail');
 const config = require('conf/config');
 
 const retryTimes = 0;
-const confirmTimes = 5;
+const confirmTimes = 10;
+
+global.wanNonceRenew = false;
+global.ethNonceRenew = false;
+
 global.waitTime = 600;
 
 const CONFIRM_BLOCK_NUM = 2;
@@ -27,7 +31,7 @@ var stateDict = {
   checkApprove: {
     action: 'checkAllowance',
     paras: [],
-    nextState: 'approveFinished',
+    nextState: 'waitingCross',
     rollState: 'waitingApproveLock'
   },
   // approveZero: {
@@ -68,34 +72,33 @@ var stateDict = {
     action: 'sendTrans',
     paras: [['approveZero', 'approve', 'lock'], 'storemanLockEvent'],
     nextState: 'waitingCrossLockConfirming',
-    rollState: 'lockFailed'
+    rollState: ['waitingApproveLock', 'waitingIntervention']
   },
-  approveFinished: {
-    action: 'sendTrans',
-    paras: ['lock', 'storemanLockEvent'],
-    nextState: 'waitingCrossLockConfirming',
-    rollState: 'lockFailed'
-  },
+  // approveFinished: {
+  //   action: 'sendTrans',
+  //   paras: ['lock', 'storemanLockEvent'],
+  //   nextState: 'waitingCrossLockConfirming',
+  //   rollState: ['approveFinished', 'waitingIntervention']
+  // },
   waitingCross: {
     action: 'sendTrans',
     paras: ['lock', 'storemanLockEvent'],
     nextState: 'waitingCrossLockConfirming',
-    rollState: 'lockFailed'
+    rollState: ['waitingCross', 'waitingIntervention']
   },
   waitingCrossLockConfirming: {
     action: 'checkStoremanTransOnline',
     paras: ['storemanLockEvent', 'storemanLockTxHash'],
     nextState: 'waitingX',
     // rollState: 'lockFailed'
-    rollState: 'waitingIntervention'
+    rollState: ['init', 'waitingIntervention']
   },
-  lockFailed: {
-    action: 'sendTrans',
-    paras: ['lock', 'storemanLockEvent'],
-    nextState: 'waitingCrossLockConfirming',
-    // rollState: 'waitingIntervention'
-    rollState: 'lockFailed'
-  },
+  // lockFailed: {
+  //   action: 'sendTrans',
+  //   paras: ['lock', 'storemanLockEvent'],
+  //   nextState: 'waitingCrossLockConfirming',
+  //   rollState: 'waitingIntervention'
+  // },
   waitingX: {
     action: 'checkWalletEventOnline',
     paras: ['walletRefundEvent'],
@@ -106,22 +109,21 @@ var stateDict = {
     action: 'sendTrans',
     paras: ['refund', 'storemanRefundEvent'],
     nextState: 'waitingCrossRefundConfirming',
-    rollState: 'refundFailed'
-    // rollState: 'waitingIntervention'
+    rollState: ['receivedX', 'waitingIntervention']
   },
   waitingCrossRefundConfirming: {
     action: 'checkStoremanTransOnline',
     paras: ['storemanRefundEvent', 'storemanRefundTxHash'],
     nextState: 'refundFinished',
     // rollState: 'refundFailed'
-    rollState: 'waitingIntervention'
+    rollState: ['receivedX', 'waitingIntervention']
   },
-  refundFailed: {
-    action: 'sendTrans',
-    paras: ['refund', 'storemanRefundEvent'],
-    nextState: 'waitingCrossRefundConfirming',
-    rollState: 'waitingIntervention'
-  },
+  // refundFailed: {
+  //   action: 'sendTrans',
+  //   paras: ['refund', 'storemanRefundEvent'],
+  //   nextState: 'waitingCrossRefundConfirming',
+  //   rollState: 'waitingIntervention'
+  // },
   refundFinished: {
     action: '',
     paras: [],
@@ -138,21 +140,21 @@ var stateDict = {
     action: 'sendTrans',
     paras: ['revoke', 'storemanRevokeEvent'],
     nextState: 'waitingCrossRevokeConfirming',
-    rollState: 'revokeFailed'
+    rollState: ['waitingRevoke', 'waitingIntervention']
   },
   waitingCrossRevokeConfirming: {
     action: 'checkStoremanTransOnline',
     paras: ['storemanRevokeEvent', 'storemanRevokeTxHash'],
     nextState: 'revokeFinished',
     // rollState: 'revokeFailed'
-    rollState: 'waitingIntervention'
+    rollState: ['waitingRevoke', 'waitingIntervention']
   },
-  revokeFailed: {
-    action: 'sendTrans',
-    paras: ['revoke', 'storemanRevokeEvent'],
-    nextState: 'waitingCrossRevokeConfirming',
-    rollState: 'waitingIntervention'
-  },
+  // revokeFailed: {
+  //   action: 'sendTrans',
+  //   paras: ['revoke', 'storemanRevokeEvent'],
+  //   nextState: 'waitingCrossRevokeConfirming',
+  //   rollState: 'waitingIntervention'
+  // },
   revokeFinished: {
     action: '',
     paras: [],
@@ -295,12 +297,18 @@ module.exports = class stateAction {
           await newAgent.validateTrans();
         }
       }
-
+      result.transRetried = 0;
       result.status = nextState;
     } catch (err) {
       monitorLogger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
       monitorLogger.error("err is", err);
-      result.status = rollState;
+      if (result.transRetried <= global.retryTimes) {
+        result.transRetried = result.transRetried + 1;
+        result.status = rollState[0];
+      } else {
+        result.transRetried = 0;
+        result.status = rollState[1];
+      }
       console.log(result);
     }
 
@@ -377,44 +385,76 @@ module.exports = class stateAction {
   }
 
   async checkStoremanTransOnline(eventName, transHashName, nextState, rollState) {
+    let content = {};
+    let transOnChain;
+
+    if (this.record.direction === 0) {
+      if (eventName === 'storemanRefundEvent') {
+        transOnChain = 'eth';
+      } else {
+        transOnChain = 'wan';
+      }
+    } else {
+      if (eventName === 'storemanRefundEvent') {
+        transOnChain = 'wan';
+      } else {
+        transOnChain = 'eth';
+      }
+    }
+
     try {
       console.log("********************************** checkStoremanTransOnline checkEvent**********************************", eventName, this.hashX);
+
       if (eventName !== null) {
         let event = this.record[eventName];
+        let transConfirmed = this.record.transConfirmed;
+
         if (event.length !== 0) {
-          this.updateState(nextState);
+          content = {
+            status: nextState,
+            transConfirmed: 0
+          }
+          this.updateRecord(content);
+          return;
+        }
+        if (transConfirmed > global.confirmTimes) {
+          content = {
+            status: rollState[0],
+            transConfirmed: 0
+          }
+          if (transOnChain === 'wan') {
+            global.wanNonceRenew = true;
+          } else if (transOnChain === 'eth') {
+            global.ethNonceRenew = true;
+          }
+
+          this.updateRecord(content);
           return;
         }
       }
 
-      if(!config.isLeader) {
+      if (!config.isLeader) {
         return;
       }
 
       let receipt;
-      let transOnChain;
-
-      if (this.record.direction === 0) {
-        if (eventName === 'storemanRefundEvent') {
-          transOnChain = 'eth';
-        } else {
-          transOnChain = 'wan';
-        }
-      } else {
-        if (eventName === 'storemanRefundEvent') {
-          transOnChain = 'wan';
-        } else {
-          transOnChain = 'eth';
-        }
-      }
-
       let chain = (transOnChain === 'wan') ? global.wanChain : global.ethChain;
       let txHash = this.record[transHashName];
       console.log("********************************** checkStoremanTransOnline checkHash**********************************", this.hashX, transHashName, txHash);
       receipt = await chain.getTransactionConfirmSync(txHash, CONFIRM_BLOCK_NUM);
       if (receipt !== null) {
-        let status = (receipt.status !== '0x1') ? rollState : nextState;
-        this.updateState(status);
+        if (receipt.status === '0x1') {
+          content = {
+            status: nextState,
+            transConfirmed: 0
+          }
+        } else {
+          content = {
+            status: rollState[1],
+            transConfirmed: 0
+          }
+        }
+        this.updateState(content);
       }
     } catch (err) {
       monitorLogger.error("checkStoremanTransOnline:", err);

@@ -327,7 +327,7 @@ function monitorRecord(record) {
 
 async function handlerMain(logger, db) {
   // let modelOps = new ModelOps(logger, db);
-  await init();
+  // await init();
   while (1) {
     // await sleep(INTERVAL_TIME);
 
@@ -339,7 +339,7 @@ async function handlerMain(logger, db) {
         $in: [global.storemanEth, global.storemanWan]
       },
       status: {
-        $nin: ['refundFinished', 'revokeFinished', 'transIgnored', 'interventionPending']
+        $nin: ['refundFinished', 'revokeFinished', 'transIgnored', 'waitingIntervention', 'interventionPending']
       }
     }
     let history = await modelOps.getEventHistory(option);

@@ -131,7 +131,7 @@ class baseChain {
             reject(err);
           } else {
             nonce = '0x' + result.toString(16);
-            log.debug('getNonce ', nonce, ' successfully on address ', address);
+            log.debug('getNonceSync ', nonce, ' successfully on address ', address);
             resolve(nonce);
           }
         });
@@ -157,6 +157,28 @@ class baseChain {
     } catch (err) {
       callback(err, nonce);
     }
+  }
+
+  getNonceIncludePendingSync(address) {
+    let log = this.log;
+    let theWeb3 = this.theWeb3;
+    let nonce = null;
+
+    return new Promise(function (resolve, reject) {
+      try {
+        theWeb3.eth.getTransactionCount(address, 'pending', function(err, result) {
+          if (err) {
+            reject(err);
+          } else {
+            nonce = '0x' + result.toString(16);
+            log.debug('getNonceIncludePendingSync ', nonce, ' successfully on address ', address);
+            resolve(nonce);
+          }
+        });
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   getBlockNumber(callback) {
