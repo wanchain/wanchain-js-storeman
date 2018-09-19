@@ -455,7 +455,7 @@ module.exports = class stateAction {
             transConfirmed: 0
           }
         }
-        this.updateState(content);
+        this.updateRecord(content);
       }
     } catch (err) {
       monitorLogger.error("checkStoremanTransOnline:", err);
