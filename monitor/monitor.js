@@ -6,8 +6,8 @@ const erc20CrossAgent = require('agent/Erc20CrossAgent.js');
 const sendMail = require('comm/sendMail');
 const config = require('conf/config');
 
-const retryTimes = 0;
-const confirmTimes = 10;
+global.retryTimes = 0;
+global.confirmTimes = 10;
 
 global.wanNonceRenew = false;
 global.ethNonceRenew = false;
@@ -379,7 +379,7 @@ module.exports = class stateAction {
     let chain = global.ethChain;
     await chain.getTokenAllowance(newAgent.tokenAddr, global.storemanEth, newAgent.contractAddr, config.erc20Abi)
       .then((result) => {
-        if (result < Math.max(getWeiFromEther(tokenAllowance), web3.toBigNumber(this.record.value)) {
+        if (result < Math.max(getWeiFromEther(tokenAllowance), web3.toBigNumber(this.record.value))) {
           this.updateState(rollState);
         } else {
           this.updateState(nextState);

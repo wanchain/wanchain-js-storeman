@@ -126,7 +126,7 @@ module.exports = class Erc20CrossAgent {
   }
 
   getWeiFromGwei(gwei) {
-    return web3.toWei(ether, 'gwei');
+    return web3.toWei(gwei, 'gwei');
   }
 
   getNonce() {
