@@ -375,7 +375,7 @@ module.exports = class stateAction {
     let chain = global.ethChain;
     await chain.getTokenAllowance(newAgent.tokenAddr, global.storemanEth, newAgent.contractAddr, config.erc20Abi)
       .then((result) => {
-        if (result < getWeiFromEther(tokenAllowance) || result < Number(this.record.value)) {
+        if (result < Math.max(getWeiFromEther(tokenAllowance), Number(this.record.value)) {
           this.updateState(rollState);
         } else {
           this.updateState(nextState);
