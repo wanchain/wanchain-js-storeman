@@ -186,7 +186,7 @@ module.exports = class Erc20CrossAgent {
         to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
 
         if (action === 'approve') {
-          this.amount = Math.max(this.amount, Number(getWeiFromEther(approveTokenAllowance));
+          this.amount = Math.max(this.amount, Number(getWeiFromEther(approveTokenAllowance)));
         } else if (action === 'approveZero') {
           this.amount = 0;
         }
