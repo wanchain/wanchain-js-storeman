@@ -7,7 +7,7 @@ let MPC = require("mpc/mpc.js");
 const ModelOps = require('db/modelOps');
 const config = require('conf/config.js');
 
-const tokenAllowance = 4;
+const approveTokenAllowance = 4;
 
 function getWeiFromEther(ether) {
   return ether * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
@@ -186,7 +186,7 @@ module.exports = class Erc20CrossAgent {
         to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
 
         if (action === 'approve') {
-          this.amount = Number(getWeiFromEther(tokenAllowance));
+          this.amount = Math.max(this.amount, Number(getWeiFromEther(approveTokenAllowance));
         } else if (action === 'approveZero') {
           this.amount = 0;
         }
