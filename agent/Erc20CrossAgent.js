@@ -186,7 +186,7 @@ module.exports = class Erc20CrossAgent {
         to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
 
         if (action === 'approve') {
-          this.amount = Math.max(this.amount, getWeiFromEther(approveTokenAllowance));
+          this.amount = Math.max(this.amount, getWeiFromEther(web3.toBigNumber(approveTokenAllowance)));
         } else if (action === 'approveZero') {
           this.amount = 0;
         }
@@ -194,11 +194,11 @@ module.exports = class Erc20CrossAgent {
 
         if (this.transChainType === 'wan') {
           gas = global.wanGasLimit;
-          gasPrice = this.getWeiFromGwei(global.wanGasPrice);
+          gasPrice = this.getWeiFromGwei(web3.toBigNumber(global.wanGasPrice));
         } else {
           gas = global.ethGasLimit;
           gasPrice = await global.ethChain.getGasPriceSync();
-          gasPrice = Math.min(this.getWeiFromGwei(global.ethGasPrice), gasPrice + this.getWeiFromGwei(global.gasPriceDelta));
+          gasPrice = Math.min(this.getWeiFromGwei(web3.toBigNumber(global.ethGasPrice)), gasPrice + this.getWeiFromGwei(web3.toBigNumber(global.gasPriceDelta)));
         }
 
         nonce = await this.getNonce();
