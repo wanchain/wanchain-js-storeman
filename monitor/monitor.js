@@ -17,9 +17,13 @@ global.waitTime = 600;
 const CONFIRM_BLOCK_NUM = 2;
 const tokenAllowance = 2; /* unit ether*/
 
+const Web3 = require("web3");
+const web3 = new Web3();
+
 function getWeiFromEther(ether) {
-    return ether * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
-  }
+  return web3.toWei(ether, 'ether');
+}
+
 /* action: [functionName, paras, nextState, rollState] */
 var stateDict = {
   init: {
@@ -375,7 +379,7 @@ module.exports = class stateAction {
     let chain = global.ethChain;
     await chain.getTokenAllowance(newAgent.tokenAddr, global.storemanEth, newAgent.contractAddr, config.erc20Abi)
       .then((result) => {
-        if (result < Math.max(getWeiFromEther(tokenAllowance), Number(this.record.value)) {
+        if (result < Math.max(getWeiFromEther(tokenAllowance), web3.toBigNumber(this.record.value)) {
           this.updateState(rollState);
         } else {
           this.updateState(nextState);

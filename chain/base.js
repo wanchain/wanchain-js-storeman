@@ -70,7 +70,7 @@ class baseChain {
     try {
       theWeb3.eth.getGasPrice(function(err, result) {
         if (!err) {
-          gasPrice = result.toString(10);
+          gasPrice = result;
           log.debug('getGasPrice ', gasPrice, ' successfully');
         }
         callback(err, gasPrice);
@@ -91,7 +91,7 @@ class baseChain {
           if (err) {
             reject(err);
           } else {
-            gasPrice = result.toString(10);
+            gasPrice = result;
             log.debug('getGasPriceSync ', gasPrice, ' successfully');
             resolve(gasPrice);
           }

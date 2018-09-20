@@ -8,8 +8,8 @@ module.exports = class EthRawTrans {
 		this.txParams = {
 			from: from,
 			to: to,
-			gasPrice: Number(gasPrice),
-			gasLimit: Number(gas),
+			gasPrice: gasPrice,
+			gasLimit: gas,
 			nonce: nonce,
 			value: value
 		};
@@ -29,10 +29,7 @@ module.exports = class EthRawTrans {
     serialize(signature) {
 		let tx;
 		tx = new ethTx(this.txParams);
-		console.log("111111111111", tx);
-		console.log("2222222222222222",signature);
 		Object.assign(tx, signature);
-		console.log("333333333333333333",tx);
 		
 		const serializedTx = tx.serialize();
 		return '0x' + serializedTx.toString('hex');
@@ -41,9 +38,7 @@ module.exports = class EthRawTrans {
 	sign(privateKey){
 		let tx;
 		tx = new ethTx(this.txParams);
-		// console.log("++++++++++++++++++++++++++++++ tx ++++++++++++++++++++++++++++++++++", tx);
 		tx.sign(privateKey);
-		// console.log("++++++++++++++++++++++++++++++ tx ++++++++++++++++++++++++++++++++++", tx);
 		const serializedTx = tx.serialize();
 		return '0x' + serializedTx.toString('hex');
 	}
@@ -55,7 +50,6 @@ module.exports = class EthRawTrans {
 		} else {
 			privateKey = keyStoreDir.getAccount(this.txParams.from).getPrivateKey(password);
 		}
-		console.log("++++++++++++++++++++++++++++++ privateKey ++++++++++++++++++++++++++++++++++", privateKey);
 		if(privateKey){
 			return this.sign(privateKey);
 		} else {

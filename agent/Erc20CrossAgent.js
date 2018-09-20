@@ -3,15 +3,15 @@
 let Contract = require("contract/Contract.js");
 let ethRawTrans = require("trans/EthRawTrans.js");
 let wanRawTrans = require("trans/WanRawTrans.js");
+
 let MPC = require("mpc/mpc.js");
 const ModelOps = require('db/modelOps');
 const config = require('conf/config.js');
 
-const approveTokenAllowance = 4;
+const Web3 = require("web3");
+const web3 = new Web3();
 
-function getWeiFromEther(ether) {
-  return ether * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
-}
+const approveTokenAllowance = 4;
 
 module.exports = class Erc20CrossAgent {
   constructor(crossToken, crossDirection, action = null, record = null, logger = null) {
@@ -42,7 +42,7 @@ module.exports = class Erc20CrossAgent {
       }
 
       this.hashKey = record.hashX;
-      this.amount = Number(record.value);
+      this.amount = web3.toBigNumber(record.value);
       this.crossAddress = record.crossAddress;
     }
 
@@ -122,11 +122,11 @@ module.exports = class Erc20CrossAgent {
   } 
 
   getWeiFromEther(ether) {
-    return ether * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
+    return web3.toWei(ether, 'ether');
   }
 
-  getWeiFromGwei(ether) {
-    return ether * 1000 * 1000 * 1000;
+  getWeiFromGwei(gwei) {
+    return web3.toWei(ether, 'gwei');
   }
 
   getNonce() {
@@ -186,7 +186,7 @@ module.exports = class Erc20CrossAgent {
         to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
 
         if (action === 'approve') {
-          this.amount = Math.max(this.amount, Number(getWeiFromEther(approveTokenAllowance)));
+          this.amount = Math.max(this.amount, getWeiFromEther(approveTokenAllowance));
         } else if (action === 'approveZero') {
           this.amount = 0;
         }
