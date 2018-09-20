@@ -92,7 +92,7 @@ class baseChain {
             reject(err);
           } else {
             gasPrice = result.toString(10);
-            log.debug('getGasPrice ', gasPrice, ' successfully');
+            log.debug('getGasPriceSync ', gasPrice, ' successfully');
             resolve(gasPrice);
           }
         });

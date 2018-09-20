@@ -24,8 +24,10 @@ global.handlingList = {};
 global.crossToken = 'WCT';
 global.lastEthNonce = 0;
 global.lastWanNonce = 0;
+global.ethGasPrice = 50;
+global.gasPriceDelta = 10;
 global.wanGasPrice = 180;
-global.wanGasLimit = 1000000;
+global.wanGasLimit = 470000;
 global.ethGasLimit = 470000;
 
 global.lockedTime = 1800;

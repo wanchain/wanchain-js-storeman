@@ -197,8 +197,8 @@ module.exports = class Erc20CrossAgent {
           gasPrice = this.getWeiFromGwei(global.wanGasPrice);
         } else {
           gas = global.ethGasLimit;
-          global.ethGasPrice = await global.ethChain.getGasPriceSync();
-          gasPrice = global.ethGasPrice;
+          gasPrice = await global.ethChain.getGasPriceSync();
+          gasPrice = Math.min(this.getWeiFromGwei(global.ethGasPrice), gasPrice + this.getWeiFromGwei(global.gasPriceDelta));
         }
 
         nonce = await this.getNonce();
