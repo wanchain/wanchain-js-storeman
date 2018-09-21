@@ -1,10 +1,10 @@
-const config              = require('../conf/config.js');
+const moduleConfig = require('../conf/moduleConfig.js');
 
 const aws = require('aws-sdk');
 const ses = new aws.SES({
   "accessKeyId":      process.env.EMAIL_ACCKEYID,
   "secretAccessKey":  process.env.EMAIL_SECACCKEY,
-  "region":           config.email.region
+  "region":           moduleConfig.email.region
 });
 
 
@@ -39,8 +39,8 @@ const sendMail = (to, subject,message) => {
         Data: subject
       }
     },
-    ReturnPath:   config.email.sender,
-    Source:       config.email.sender
+    ReturnPath:   moduleConfig.email.sender,
+    Source:       moduleConfig.email.sender
   };
   return promisefy(ses.sendEmail, [params]);
 };

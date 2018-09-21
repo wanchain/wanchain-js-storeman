@@ -53,8 +53,7 @@ class ModelOps {
       if (result.length !== 0) {
         blockNumber = result[0].scannedBlockNumber;
       } else {
-        // blockNumber = 0;
-        blockNumber = (chainType === 'wan') ?  1654200 : 2863800;
+        blockNumber = 0;
       }
       return blockNumber;
     } catch (err) {

@@ -8,7 +8,6 @@ class baseChain {
     this.theWeb3 = theWeb3;
   }
 
-
   getNetworkId() {
     let log = this.log;
 

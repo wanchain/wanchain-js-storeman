@@ -1,7 +1,6 @@
 const baseChain = require("chain/base.js");
 // const web3Obj = require('conf/web3Obj.js');
 // const chainSCConfig = require('conf/chainSCConfig.js');
-const config = require('conf/config');
 
 class EthChain extends baseChain {
   constructor(log, web3) {

@@ -4,7 +4,6 @@ let Contract = require("contract/Contract.js");
 let ethRawTrans = require("trans/EthRawTrans.js");
 let wanRawTrans = require("trans/WanRawTrans.js");
 const ModelOps = require('db/modelOps');
-const config = require('conf/config.js');
 
 module.exports = class EthCrossAgent {
 	contstructor() {

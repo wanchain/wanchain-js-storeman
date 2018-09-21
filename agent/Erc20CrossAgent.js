@@ -1,4 +1,7 @@
 "use strict"
+const {
+  getChain
+} = require('comm/lib');
 
 let Contract = require("contract/Contract.js");
 let ethRawTrans = require("trans/EthRawTrans.js");
@@ -6,45 +9,34 @@ let wanRawTrans = require("trans/WanRawTrans.js");
 
 let MPC = require("mpc/mpc.js");
 const ModelOps = require('db/modelOps');
-const config = require('conf/config.js');
+
+const moduleConfig = require('conf/moduleConfig.js');
+const fs = require('fs');
+const config = JSON.parse(fs.readFileSync('conf/config.json'));
 
 const Web3 = require("web3");
 const web3 = new Web3();
 
-const approveTokenAllowance = 4;
+let lastEthNonce = 0;
+let lastWanNonce = 0;
 
 module.exports = class Erc20CrossAgent {
-  constructor(crossToken, crossDirection, action = null, record = null, logger = null) {
+  constructor(crossChain, tokenType, crossDirection, action = null, record = null, logger = null) {
     this.logger = logger;
-    let token = config.crossTokenDict[crossToken];
-    this.tokenAddr = token.tokenAddr;
-    this.tokenSymbol = token.tokenSymbol;
+    this.isLeader = config.IsLeader;
+
+    this.crossChain = crossChain;
     this.crossDirection = crossDirection; /* 0 -- token to Wtoken, 1 -- Wtoken to token */
-    let crossInfoInst = config.crossInfoDict[config.crossTypeDict[token.tokenType]];
+    let crossInfoInst = moduleConfig.crossInfoDict[crossChain][tokenType];
     this.transChainType = this.getTransChainType(crossDirection, action); /* wan -- trans on wanchain HTLC contract, or, trans on originchain HTLC contract */
 
     let abi = (this.transChainType !== 'wan') ? crossInfoInst.originalChainHtlcAbi : crossInfoInst.wanchainHtlcAbi;
     this.contractAddr = (this.transChainType !== 'wan') ? crossInfoInst.originalChainHtlcAddr : crossInfoInst.wanchainHtlcAddr;
-    let erc20Abi = config.erc20Abi;
-
     this.contract = new Contract(abi, this.contractAddr);
-    this.tokenContract = new Contract(erc20Abi, this.tokenAddr);
 
     this.crossFunc = (this.crossDirection === 0) ? crossInfoInst.depositFunc : crossInfoInst.withdrawFunc;
     this.crossEvent = (this.crossDirection === 0) ? crossInfoInst.depositEvent : crossInfoInst.withdrawEvent;
     this.approveFunc = 'approve';
-
-    this.isLeader = config.IsLeader;
-
-    if (record !== null) {
-      if (record.x !== '0x') {
-        this.key = record.x;
-      }
-
-      this.hashKey = record.hashX;
-      this.amount = web3.toBigNumber(record.value);
-      this.crossAddress = record.crossAddress;
-    }
 
     this.lockEvent = this.contract.getEventSignature(this.crossEvent[0]);
     this.refundEvent = this.contract.getEventSignature(this.crossEvent[1]);
@@ -82,6 +74,22 @@ module.exports = class Erc20CrossAgent {
     // console.log("this.withdrawLockEvent", this.withdrawLockEvent);
     // console.log("this.withdrawRefundEvent", this.withdrawRefundEvent);
     // console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
+
+    if (record !== null) {
+      if (record.x !== '0x') {
+        this.key = record.x;
+      }
+
+      this.hashKey = record.hashX;
+      this.amount = web3.toBigNumber(record.value);
+      this.crossAddress = record.crossAddress;
+
+      this.tokenAddr = record.tokenAddr;
+      this.tokenSymbol = record.tokenSymbol;
+      let erc20Abi = moduleConfig.erc20Abi;
+      this.tokenContract = new Contract(erc20Abi, this.tokenAddr);
+    }
+
   }
 
   setKey(key) {
@@ -95,7 +103,7 @@ module.exports = class Erc20CrossAgent {
 
     if (this.crossDirection === 0) {
       if (action === 'refund') {
-        return 'eth';
+        return this.crossChain;
       } else {
         return 'wan';
       }
@@ -103,7 +111,7 @@ module.exports = class Erc20CrossAgent {
       if (action === 'refund') {
         return 'wan';
       } else {
-        return 'eth';
+        return this.crossChain
       }
     }
   }
@@ -113,11 +121,10 @@ module.exports = class Erc20CrossAgent {
       let transInfo = await this.getTransInfo(action);
       if (this.transChainType === 'wan') {
         this.trans = new wanRawTrans(...transInfo);
-        this.chain = global.wanChain;
       } else {
         this.trans = new ethRawTrans(...transInfo);
-        this.chain = global.ethChain;
       }
+      this.chain = getChain(this.transChainType);
     }
   } 
 
@@ -131,31 +138,32 @@ module.exports = class Erc20CrossAgent {
 
   getNonce() {
     return new Promise(async (resolve, reject) => {
+      let nonce = 0;
       try {
         if (this.transChainType === 'wan') {
           if (global.wanNonceRenew) {
-            global.wanNonce = await global.wanChain.getNonceSync(global.storemanWan);
-            global.lastWanNonce = parseInt(global.wanNonce, 16);
+            nonce = await this.chain.getNonceSync(config.storemanWan);
+            lastWanNonce = parseInt(nonce, 16);
             global.wanNonceRenew = false;
-          } else if (global.lastWanNonce === 0) {
-            global.wanNonce = await global.wanChain.getNonceIncludePendingSync(global.storemanWan);
-            global.lastWanNonce = parseInt(global.wanNonce, 16);
+          } else if (lastWanNonce === 0) {
+            nonce = await this.chain.getNonceIncludePendingSync(config.storemanWan);
+            lastWanNonce = parseInt(nonce, 16);
           } else {
-            global.lastWanNonce++;
+            lastWanNonce++;
           }
-          resolve(global.lastWanNonce);
+          resolve(lastWanNonce);
         } else {
           if (global.ethNonceRenew) {
-            global.ethNonce = await global.ethChain.getNonceSync(global.storemanWan);
-            global.lastEthNonce = parseInt(global.ethNonce, 16);
+            nonce = await this.chain.getNonceSync(config.storemanEth);
+            lastEthNonce = parseInt(nonce, 16);
             global.ethNonceRenew = false;
-          } else if (global.lastEthNonce === 0) {
-            global.ethNonce = await global.ethChain.getNonceIncludePendingSync(global.storemanEth);
-            global.lastEthNonce = parseInt(global.ethNonce, 16);
+          } else if (lastEthNonce === 0) {
+            nonce = await this.chain.getNonceIncludePendingSync(config.storemanEth);
+            lastEthNonce = parseInt(nonce, 16);
           } else {
-            global.lastEthNonce++;
+            lastEthNonce++;
           }
-          resolve(global.lastEthNonce);
+          resolve(lastEthNonce);
         }
       } catch (err) {
         console.log("getNonce failed", err);
@@ -176,29 +184,31 @@ module.exports = class Erc20CrossAgent {
     return new Promise(async (resolve, reject) => {
       try {
         if (action === 'approve' || action === 'approveZero') {
-          from = global.storemanEth;
+          from = config.storemanEth;
         } else if (action === 'refund') {
-          from = (this.crossDirection === 0) ? global.storemanEth : global.storemanWan;
+          from = (this.crossDirection === 0) ? config.storemanEth : config.storemanWan;
         } else {
-          from = (this.crossDirection === 0) ? global.storemanWan : global.storemanEth;
+          from = (this.crossDirection === 0) ? config.storemanWan : config.storemanEth;
         }
 
         to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
 
         if (action === 'approve') {
-          this.amount = Math.max(this.amount, getWeiFromEther(web3.toBigNumber(approveTokenAllowance)));
+          this.amount = Math.max(this.amount, getWeiFromEther(web3.toBigNumber(moduleConfig.approveTokenAllowance)));
         } else if (action === 'approveZero') {
           this.amount = 0;
         }
         amount = this.amount;
 
         if (this.transChainType === 'wan') {
-          gas = global.wanGasLimit;
-          gasPrice = this.getWeiFromGwei(web3.toBigNumber(global.wanGasPrice));
+          gas = config.wanGasLimit;
+          gasPrice = this.getWeiFromGwei(web3.toBigNumber(config.wanGasPrice));
         } else {
-          gas = global.ethGasLimit;
-          gasPrice = await global.ethChain.getGasPriceSync();
-          gasPrice = Math.min(this.getWeiFromGwei(web3.toBigNumber(global.ethGasPrice)), gasPrice + this.getWeiFromGwei(web3.toBigNumber(global.gasPriceDelta)));
+          gas = config.ethGasLimit;
+          gasPrice = await this.chain.getGasPriceSync();
+          console.log(this.getWeiFromGwei(web3.toBigNumber(config.ethGasPrice)));
+          console.log(gasPrice + this.getWeiFromGwei(web3.toBigNumber(config.gasPriceDelta)));
+          gasPrice = Math.min(this.getWeiFromGwei(web3.toBigNumber(config.ethGasPrice)), gasPrice + this.getWeiFromGwei(web3.toBigNumber(config.gasPriceDelta)));
         }
 
         nonce = await this.getNonce();
@@ -273,15 +283,15 @@ module.exports = class Erc20CrossAgent {
           if (err.hasOwnProperty("message") && 
             (err.message === 'nonce too low' || err.message === 'replacement transaction underpriced')) {
             if (this.transChainType === 'wan') {
-              global.lastWanNonce = 0;
+              lastWanNonce = 0;
             } else {
-              global.lastEthNonce = 0;
+              lastEthNonce = 0;
             }
           } else {
             if (this.transChainType === 'wan') {
-              global.lastWanNonce--;
+              lastWanNonce--;
             } else {
-              global.lastEthNonce--;
+              lastEthNonce--;
             }
           }
           reject(err);

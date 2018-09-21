@@ -3,7 +3,6 @@ const baseChain = require("chain/base.js");
 // const solc = require('solc');
 const fs = require('fs');
 // const wanUtil = require('wanchain-util');
-// const config = require('conf/conf');
 
 class WanChain extends baseChain {
   constructor(log, web3) {

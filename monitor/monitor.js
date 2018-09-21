@@ -1,21 +1,23 @@
 "use strict";
+const {
+  getChain
+} = require('comm/lib');
 
 const ModelOps = require('db/modelOps');
 const Logger = require('comm/logger.js');
 const erc20CrossAgent = require('agent/Erc20CrossAgent.js');
 const sendMail = require('comm/sendMail');
-const config = require('conf/config');
 
-global.retryTimes = 0;
-global.confirmTimes = 10;
+const fs = require('fs');
+const config = JSON.parse(fs.readFileSync('conf/config.json'));
+const moduleConfig = require('conf/moduleConfig.js');
+
+const retryTimes = 0;
+const retryWaitTime = 600;
+const confirmTimes = 10;
 
 global.wanNonceRenew = false;
 global.ethNonceRenew = false;
-
-global.waitTime = 600;
-
-const CONFIRM_BLOCK_NUM = 2;
-const tokenAllowance = 2; /* unit ether*/
 
 const Web3 = require("web3");
 const web3 = new Web3();
@@ -188,6 +190,8 @@ var stateDict = {
 module.exports = class stateAction {
   constructor(record, logger, db) {
     this.record = record;
+    this.crossChain = record.crossChain;
+    this.tokenType = record.tokenType;
     this.hashX = record.hashX;
     this.state = record.status;
     this.crossDirection = record.direction;
@@ -288,7 +292,7 @@ module.exports = class stateAction {
 
     try {
       for (var action of actionArray) {
-        let newAgent = new erc20CrossAgent(global.crossToken, this.crossDirection, action, this.record, this.logger);
+        let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, this.crossDirection, action, this.record, this.logger);
         console.log("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
 
@@ -307,7 +311,7 @@ module.exports = class stateAction {
     } catch (err) {
       monitorLogger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
       monitorLogger.error("err is", err);
-      if (this.record.transRetried <= global.retryTimes) {
+      if (this.record.transRetried <= retryTimes) {
         result.transRetried = this.record.transRetried + 1;
         result.status = rollState[0];
       } else {
@@ -374,12 +378,11 @@ module.exports = class stateAction {
   checkWaitTimeout() {}
 
   async checkAllowance(nextState, rollState) {
-    let newAgent = new erc20CrossAgent(global.crossToken, 1);
-    // let newAgent = new erc20CrossAgent(global.crossToken, this.crossDirection, 'approve', this.record, this.logger);
-    let chain = global.ethChain;
-    await chain.getTokenAllowance(newAgent.tokenAddr, global.storemanEth, newAgent.contractAddr, config.erc20Abi)
+    let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, 1);
+    let chain = getChain(this.crossChain);
+    await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanEth, newAgent.contractAddr, moduleConfig.erc20Abi)
       .then((result) => {
-        if (result < Math.max(getWeiFromEther(web3.toBigNumber(tokenAllowance)), web3.toBigNumber(this.record.value))) {
+        if (result < Math.max(getWeiFromEther(web3.toBigNumber(moduleConfig.tokenAllowanceThreshold)), web3.toBigNumber(this.record.value))) {
           this.updateState(rollState);
         } else {
           this.updateState(nextState);
@@ -395,7 +398,7 @@ module.exports = class stateAction {
 
     if (this.record.direction === 0) {
       if (eventName === 'storemanRefundEvent') {
-        transOnChain = 'eth';
+        transOnChain = this.crossChain;
       } else {
         transOnChain = 'wan';
       }
@@ -403,7 +406,7 @@ module.exports = class stateAction {
       if (eventName === 'storemanRefundEvent') {
         transOnChain = 'wan';
       } else {
-        transOnChain = 'eth';
+        transOnChain = this.crossChain;
       }
     }
 
@@ -422,14 +425,14 @@ module.exports = class stateAction {
           this.updateRecord(content);
           return;
         }
-        if (transConfirmed > global.confirmTimes) {
+        if (transConfirmed > confirmTimes) {
           content = {
             status: rollState[0],
             transConfirmed: 0
           }
           if (transOnChain === 'wan') {
             global.wanNonceRenew = true;
-          } else if (transOnChain === 'eth') {
+          } else if (transOnChain === this.crossChain) {
             global.ethNonceRenew = true;
           }
 
@@ -443,10 +446,10 @@ module.exports = class stateAction {
       }
 
       let receipt;
-      let chain = (transOnChain === 'wan') ? global.wanChain : global.ethChain;
+      let chain = getChain(transOnChain);
       let txHash = this.record[transHashName];
       console.log("********************************** checkStoremanTransOnline checkHash**********************************", this.hashX, transHashName, txHash);
-      receipt = await chain.getTransactionConfirmSync(txHash, CONFIRM_BLOCK_NUM);
+      receipt = await chain.getTransactionConfirmSync(txHash, moduleConfig.CONFIRM_BLOCK_NUM);
       if (receipt !== null) {
         if (receipt.status === '0x1') {
           content = {

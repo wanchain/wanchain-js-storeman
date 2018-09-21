@@ -1,0 +1,41 @@
+{
+  "ethWeb3Url": "http://18.236.235.133:18545",
+  "wanWeb3Url": "http://18.236.235.133:8545",
+  "mpcUrl": "http://18.236.235.133:8545",
+
+  "isLeader": false,
+
+  "maxEthGasPrice": 50,
+  "gasPriceDelta": 10,
+  "wanGasPrice": 180,
+  "wanGasLimit": 470000,
+  "ethGasLimit": 470000,
+
+  "storemanEth": "0xa89f7702fb9f237aad805e8f99a2793f58e81242",
+  "storemanWan": "0xaf52acd143a7bc349d5ebb9188559e7ba9fca9dd",
+
+  "crossTokens": {
+    "ETH": {
+      "0x": {
+        "tokenType": "COIN",
+        "tokenSymbol": "ETH"
+      },
+      "0xb410aa9124e5623d62cbb82b4fbe38a7230c6590": {
+        "tokenType": "ERC20",
+        "tokenSymbol": "WCT"
+      },
+      "0x7017500899433272b4088afe34c04d742d0ce7df": {
+        "tokenType": "ERC20",
+        "tokenSymbol": "WCT_One"
+      },
+      "0xce7fb657a37afa635f60a4e2c707bb47737d511c": {
+        "tokenType": "ERC20",
+        "tokenSymbol": "WCT_Two"
+      },
+      "0x40e72d86819cef00172db2250cdb222041d12112": {
+        "tokenType": "ERC20",
+        "tokenSymbol": "WCT_Three"
+      }
+    }
+  }
+}

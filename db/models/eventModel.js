@@ -11,8 +11,11 @@ const eventSchema = new Schema({
   direction: {
     type: Number, /*0: deposit, 1: withdraw*/
   },
-  originChain: {
+  crossChain: {
     type: String
+  },
+  tokenType: {
+    type: String,
   },
   tokenSymbol: {
     type: String,
@@ -20,6 +23,9 @@ const eventSchema = new Schema({
   tokenAddr: {
     type: String,
     lowercase: true
+  },
+  originChain: {
+    type: String
   },
   x: {
     type: String,

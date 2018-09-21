@@ -3,7 +3,8 @@
 const Web3 = require("web3");
 const web3Mpc = require("mpc/web3Mpc.js");
 var net = require('net');
-const config = require('conf/config');
+const fs = require('fs');
+const config = JSON.parse(fs.readFileSync('conf/config.json'));
 
 module.exports = class mpc {
   constructor(trans, chainType, chainId) {
@@ -20,12 +21,9 @@ module.exports = class mpc {
     }
 console.log(this.sendTxArgs);
     this.mpcWeb3 = new Web3();
-    //web3Mpc.extend(Web3);
-    if (config.mpcUrl.indexOf("http://") > 0) {
-      //this.mpcWeb3 = new Web3(new Web3.providers.HttpProvider(config.mpcUrl));
+    if (config.mpcUrl.indexOf("http://") !== -1) {
       this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(config.mpcUrl));
     } else {
-      //this.mpcWeb3 = new Web3(new Web3.providers.IpcProvider(config.mpcUrl, net));
       this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(config.mpcUrl, net));
     }
     web3Mpc.extend(this.mpcWeb3);
