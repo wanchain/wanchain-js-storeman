@@ -194,7 +194,7 @@ module.exports = class Erc20CrossAgent {
         to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
 
         if (action === 'approve') {
-          this.amount = Math.max(this.amount, getWeiFromEther(web3.toBigNumber(moduleConfig.approveTokenAllowance)));
+          this.amount = Math.max(this.amount, this.getWeiFromEther(web3.toBigNumber(moduleConfig.approveTokenAllowance)));
         } else if (action === 'approveZero') {
           this.amount = 0;
         }
@@ -206,9 +206,11 @@ module.exports = class Erc20CrossAgent {
         } else {
           gas = config.ethGasLimit;
           gasPrice = await this.chain.getGasPriceSync();
-          console.log(this.getWeiFromGwei(web3.toBigNumber(config.maxEthGasPrice)));
-          console.log(gasPrice + this.getWeiFromGwei(web3.toBigNumber(config.gasPriceDelta)));
-          gasPrice = Math.min(this.getWeiFromGwei(web3.toBigNumber(config.maxEthGasPrice)), web3.toBigNumber(gasPrice + this.getWeiFromGwei(web3.toBigNumber(config.gasPriceDelta))));
+          let gasAddDelta = gasPrice.plus(this.getWeiFromGwei(web3.toBigNumber(config.gasPriceDelta)));
+          let maxEthGasPrice = this.getWeiFromGwei(web3.toBigNumber(config.maxEthGasPrice));
+          console.log(maxEthGasPrice);
+          console.log(gasAddDelta);
+          gasPrice = Math.min(maxEthGasPrice, gasAddDelta);
         }
 
         nonce = await this.getNonce();
