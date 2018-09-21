@@ -4,7 +4,7 @@ const pwd = process.env.MONGO_PWD;
 const dbUrl = `mongodb://localhost:27017`;
 
 const config = {
-	crossEthDbUrl: dbUrl + "/crossEthChain3",
+	crossEthDbUrl: dbUrl + "/crossEthChain",
 	email: {
 		"region": "us-west-2",
 		"sender": "monitor@wanchain.org"
