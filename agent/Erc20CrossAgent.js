@@ -28,7 +28,6 @@ module.exports = class Erc20CrossAgent {
     this.crossChain = crossChain;
     this.crossDirection = crossDirection; /* 0 -- token to Wtoken, 1 -- Wtoken to token */
     let crossInfoInst = moduleConfig.crossInfoDict[crossChain.toUpperCase()][tokenType];
-    console.log(crossInfoInst);
     this.transChainType = this.getTransChainType(crossDirection, action); /* wan -- trans on wanchain HTLC contract, or, trans on originchain HTLC contract */
 
     let abi = (this.transChainType !== 'wan') ? crossInfoInst.originalChainHtlcAbi : crossInfoInst.wanchainHtlcAbi;
