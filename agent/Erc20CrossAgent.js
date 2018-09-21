@@ -23,7 +23,7 @@ let lastWanNonce = 0;
 module.exports = class Erc20CrossAgent {
   constructor(crossChain, tokenType, crossDirection, action = null, record = null, logger = null) {
     this.logger = logger;
-    this.isLeader = config.IsLeader;
+    this.isLeader = config.isLeader;
 
     this.crossChain = crossChain;
     this.crossDirection = crossDirection; /* 0 -- token to Wtoken, 1 -- Wtoken to token */
