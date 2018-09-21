@@ -292,7 +292,7 @@ module.exports = class stateAction {
 
     try {
       for (var action of actionArray) {
-        let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, this.crossDirection, action, this.record, this.logger);
+        let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, this.crossDirection, this.record, action, this.logger);
         console.log("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
 
@@ -378,7 +378,7 @@ module.exports = class stateAction {
   checkWaitTimeout() {}
 
   async checkAllowance(nextState, rollState) {
-    let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, 1);
+    let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, 1, this.record);
     let chain = getChain(this.crossChain);
     await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanEth, newAgent.contractAddr, moduleConfig.erc20Abi)
       .then((result) => {
