@@ -206,9 +206,9 @@ module.exports = class Erc20CrossAgent {
         } else {
           gas = config.ethGasLimit;
           gasPrice = await this.chain.getGasPriceSync();
-          console.log(this.getWeiFromGwei(web3.toBigNumber(config.ethGasPrice)));
+          console.log(this.getWeiFromGwei(web3.toBigNumber(config.maxEthGasPrice)));
           console.log(gasPrice + this.getWeiFromGwei(web3.toBigNumber(config.gasPriceDelta)));
-          gasPrice = Math.min(this.getWeiFromGwei(web3.toBigNumber(config.ethGasPrice)), gasPrice + this.getWeiFromGwei(web3.toBigNumber(config.gasPriceDelta)));
+          gasPrice = Math.min(this.getWeiFromGwei(web3.toBigNumber(config.maxEthGasPrice)), web3.toBigNumber(gasPrice + this.getWeiFromGwei(web3.toBigNumber(config.gasPriceDelta))));
         }
 
         nonce = await this.getNonce();

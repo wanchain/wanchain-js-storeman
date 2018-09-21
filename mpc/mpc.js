@@ -52,13 +52,13 @@ console.log(this.sendTxArgs);
   addValidMpcTxRaw() {
     return new Promise((resolve, reject) => {
       try {
-console.log(this.mpcWeb3.storeman);
+        console.log(this.mpcWeb3.storeman);
         this.mpcWeb3.storeman.addValidMpcTxRaw(this.sendTxArgs, (err, result) => {
           if (!err) {
-            console.log("********************************** mpc addValidMpcTxRawaddValidMpcTxRawaddValidMpcTxRaw successfully **********************************", result);
+            console.log("********************************** mpc addValidMpcTxRaw successfully **********************************", result);
             resolve(result);
           } else {
-            console.log("********************************** mpc addValidMpcTxRawaddValidMpcTxRaw failed **********************************", err);
+            console.log("********************************** mpc addValidMpcTxRaw failed **********************************", err);
             reject(err);
           }
         })
