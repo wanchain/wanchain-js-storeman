@@ -292,15 +292,21 @@ async function syncMain(logger, db) {
 }
 
 function monitorRecord(record) {
-  let stateAction = new StateAction(record, global.monitorLogger, db);
-  stateAction.takeAction()
-    .then(result => {
-      if (handlingList[record.hashX]) {
-        monitorLogger.debug("handlingList delete already handled hashX", record.hashX);
-        delete handlingList[record.hashX];
-      }
-    })
-    .catch(err => global.monitorLogger.error(err));
+  return new Promise(async (resolve, reject) => {
+    let stateAction = new StateAction(record, global.monitorLogger, db);
+    stateAction.takeAction()
+      .then(result => {
+        if (handlingList[record.hashX]) {
+          monitorLogger.debug("handlingList delete already handled hashX", record.hashX);
+          delete handlingList[record.hashX];
+          resolve();
+        }
+      })
+      .catch(err => {
+        global.monitorLogger.error(err);
+        reject(err);
+      });
+  });
 }
 
 async function handlerMain(logger, db) {
@@ -340,9 +346,9 @@ async function handlerMain(logger, db) {
         handlingList[record.hashX] = cur;
 
         try {
-          monitorRecord(record);
+          await monitorRecord(record);
         } catch (error) {
-          logger.error("monitorRecord error:", error);
+          logger.error("monitorRecord error:", record.hashX, error);
         }
       }
     } catch (err) {
