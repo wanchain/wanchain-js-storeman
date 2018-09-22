@@ -13,7 +13,7 @@ const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
 
-const retryTimes = 0;
+const retryTimes = 2;
 const retryWaitTime = 600;
 const confirmTimes = 10;
 
@@ -41,71 +41,24 @@ var stateDict = {
     nextState: 'waitingCross',
     rollState: 'waitingApproveLock'
   },
-  // approveZero: {
-  //   action: 'sendTrans',
-  //   paras: ['approveZero', null],
-  //   nextState: 'waitingApproveZeroConfirming',
-  //   rollState: 'approveFailed'    
-  // },
-  // waitingApproveZeroConfirming: {
-  //   action: 'checkStoremanTransOnline',
-  //   paras: [null, 'storemanApproveTxHash'],
-  //   nextState: 'waitingApprove',
-  //   rollState: 'approveFailed'
-  // },
-  // waitingApprove: {
-  //   action: 'sendTrans',
-  //   paras: ['approve', null],
-  //   nextState: 'waitingCrossApproveConfirming',
-  //   rollState: 'approveFailed'
-  // },
-  // waitingCrossApproveConfirming: {
-  //   action: 'checkStoremanTransOnline',
-  //   paras: [null, 'storemanApproveTxHash'],
-  //   nextState: 'approveFinished',
-  //   rollState: 'approveFailed'
-  // },
-  // approveFailed: {
-  //   // action: 'sendTrans',
-  //   // paras: ['approve', null],
-  //   // nextState: 'waitingCrossApproveConfirming',
-  //   // rollState: 'waitingIntervention'
-  //   action: 'checkAllowance',
-  //   paras: [],
-  //   nextState: 'approveFinished',
-  //   rollState: 'waitingIntervention'
-  // },
   waitingApproveLock: {
     action: 'sendTrans',
     paras: [['approveZero', 'approve', 'lock'], 'storemanLockEvent'],
-    nextState: 'waitingCrossLockConfirming',
+    nextState: ['waitingCrossLockConfirming', 'waitingX'],
     rollState: ['waitingApproveLock', 'waitingIntervention']
   },
-  // approveFinished: {
-  //   action: 'sendTrans',
-  //   paras: ['lock', 'storemanLockEvent'],
-  //   nextState: 'waitingCrossLockConfirming',
-  //   rollState: ['approveFinished', 'waitingIntervention']
-  // },
   waitingCross: {
     action: 'sendTrans',
     paras: ['lock', 'storemanLockEvent'],
-    nextState: 'waitingCrossLockConfirming',
+    nextState: ['waitingCrossLockConfirming', 'waitingX'],
     rollState: ['waitingCross', 'waitingIntervention']
   },
   waitingCrossLockConfirming: {
     action: 'checkStoremanTransOnline',
     paras: ['storemanLockEvent', 'storemanLockTxHash'],
     nextState: 'waitingX',
-    // rollState: 'lockFailed'
     rollState: ['init', 'waitingIntervention']
   },
-  // lockFailed: {
-  //   action: 'sendTrans',
-  //   paras: ['lock', 'storemanLockEvent'],
-  //   nextState: 'waitingCrossLockConfirming',
-  //   rollState: 'waitingIntervention'
-  // },
   waitingX: {
     action: 'checkWalletEventOnline',
     paras: ['walletRefundEvent'],
@@ -115,76 +68,52 @@ var stateDict = {
   receivedX: {
     action: 'sendTrans',
     paras: ['refund', 'storemanRefundEvent'],
-    nextState: 'waitingCrossRefundConfirming',
+    nextState: ['waitingCrossRefundConfirming', 'refundFinished'],
     rollState: ['receivedX', 'waitingIntervention']
   },
   waitingCrossRefundConfirming: {
     action: 'checkStoremanTransOnline',
     paras: ['storemanRefundEvent', 'storemanRefundTxHash'],
     nextState: 'refundFinished',
-    // rollState: 'refundFailed'
     rollState: ['receivedX', 'waitingIntervention']
   },
-  // refundFailed: {
-  //   action: 'sendTrans',
-  //   paras: ['refund', 'storemanRefundEvent'],
-  //   nextState: 'waitingCrossRefundConfirming',
-  //   rollState: 'waitingIntervention'
-  // },
   refundFinished: {
-    action: '',
-    paras: [],
-    nextState: '',
-    rollState: ''
-  },
-  walletRevoked: {
-    action: '',
-    paras: [],
-    nextState: '',
-    rollState: ''
   },
   waitingRevoke: {
     action: 'sendTrans',
     paras: ['revoke', 'storemanRevokeEvent'],
-    nextState: 'waitingCrossRevokeConfirming',
+    nextState: ['waitingCrossRevokeConfirming', 'revokeFinished'],
     rollState: ['waitingRevoke', 'waitingIntervention']
   },
   waitingCrossRevokeConfirming: {
     action: 'checkStoremanTransOnline',
     paras: ['storemanRevokeEvent', 'storemanRevokeTxHash'],
     nextState: 'revokeFinished',
-    // rollState: 'revokeFailed'
     rollState: ['waitingRevoke', 'waitingIntervention']
   },
-  // revokeFailed: {
-  //   action: 'sendTrans',
-  //   paras: ['revoke', 'storemanRevokeEvent'],
-  //   nextState: 'waitingCrossRevokeConfirming',
-  //   rollState: 'waitingIntervention'
-  // },
   revokeFinished: {
-    action: '',
-    paras: [],
-    nextState: '',
-    rollState: ''
   },
   waitingIntervention: {
-    // action: 'takeIntervention',
-    // paras: [],
-    // nextState: 'interventionPending',
-    // rollState: 'waitingIntervention'
-  },
-  transIgnored: {
     action: 'takeIntervention',
     paras: [],
     nextState: 'interventionPending',
-    rollState: ''
+    rollState: 'waitingIntervention'
+  },
+  transIgnored: {
+  },
+  foundLosted: {
+    action: 'takeIntervention',
+    paras: [],
+    nextState: 'transFinished',
+    rollState: 'waitingIntervention'
   },
   interventionPending: {
-    action: '',
+    action: 'initState',
     paras: [],
-    nextState: '',
-    rollState: ''  	
+    nextState: 'waitingCross',
+    rollState: 'checkApprove'
+  },
+  transFinished: {
   }
 };
 
@@ -246,7 +175,19 @@ module.exports = class stateAction {
   }
 
   takeIntervention(nextState, rollState) {
-    let receive = "zhanli@wanchain.org";
+    fs.appendFile(config.issueCollection, this.record, (err) => {
+      if(!err) {
+        this.logger.error("TakeIntervention done of hashX", this.record.hashX);
+        this.updateState(nextState);
+      } else {
+        this.logger.error("TakeIntervention failed of hashX", this.record.hashX, err);
+        this.updateState(rollState);
+      }
+    })
+  }
+
+  takeMailIntervention(nextState, rollState) {
+    let receive = config.mailReceiver;
     try {
       let mailPro = sendMail(receive, this.record.status, this.record.toString());
       mailPro.then((result) => {
@@ -273,12 +214,16 @@ module.exports = class stateAction {
   }
 
   async sendTrans(actionArray, eventName, nextState, rollState) {
-    console.log(this.record);
+    this.logger.debug(this.record);
 
     if (eventName !== null) {
       let event = this.record[eventName];
       if (event.length !== 0) {
-        this.updateState(nextState);
+        let content = {
+          status: nextState[1],
+          transConfirmed: 0
+        }
+        this.updateRecord(content);
         return;
       }
     }
@@ -294,32 +239,32 @@ module.exports = class stateAction {
     try {
       for (var action of actionArray) {
         let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, this.crossDirection, this.record, action, this.logger);
-        console.log("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
+        this.logger.debug("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
 
         newAgent.createTrans(action);
         if (config.isLeader) {
           let content = await newAgent.sendTransSync();
-          console.log("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
-          monitorLogger.debug("sendTrans result is ", content);
+          this.logger.debug("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
+          this.logger.debug("sendTrans result is ", content);
           Object.assign(result, content);
         } else {
           await newAgent.validateTrans();
         }
       }
       result.transRetried = 0;
-      result.status = nextState;
+      result.status = nextState[0];
     } catch (err) {
-      monitorLogger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
-      monitorLogger.error("err is", err);
-      if (this.record.transRetried <= retryTimes) {
+      this.logger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
+      this.logger.error("err is", err);
+      if (this.record.transRetried < retryTimes) {
         result.transRetried = this.record.transRetried + 1;
         result.status = rollState[0];
       } else {
         result.transRetried = 0;
         result.status = rollState[1];
       }
-      console.log(result);
+      this.logger.debug(result);
     }
 
     this.updateRecord(result);
@@ -330,18 +275,16 @@ module.exports = class stateAction {
     let state = this.state;
     this.logger.debug("********************************** checkHashTimeout ********************************** hashX:", this.hashX, record.status);
 
-    if (state === "waitingRevoke" ||
-      state === "waitingCrossRevokeConfirming" ||
-      state === "revokeFailed" ) {
-		if (record.walletRefundEvent.length !== 0) {
-          this.updateState('waitingIntervention');
-          return true;
-        } else {
-          return false;
-        }
+    if (state === "waitingIntervention" || state === "foundLosted") {
+      return false;
     }
 
-    if (state === "waitingIntervention") {
+    if (state === "waitingRevoke" ||
+      state === "waitingCrossRevokeConfirming" ||
+      state === "revokeFailed") {
+      if (record.walletRefundEvent.length !== 0) {
+        this.updateState('foundLosted');
+      } 
       return false;
     }
 
@@ -356,7 +299,7 @@ module.exports = class stateAction {
       let nowData = new Date().toString();
 
       if (HTLCtime <= Date.now()) {
-        console.log("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
+        this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
         if (record.storemanRevokeEvent.length !== 0) {
           this.updateState('revokeFinished');
         } else if (record.storemanRefundEvent.length !== 0) {
@@ -364,14 +307,14 @@ module.exports = class stateAction {
         } else if (record.storemanLockEvent.length === 0) {
           this.updateState('transIgnored');
         } else if (record.walletRefundEvent.length !== 0) {
-          this.updateState('waitingIntervention');
+          this.updateState('foundLosted');
         } else {
           this.updateState('waitingRevoke');
         }
         return true;
       }
     } catch (err) {
-      console.log("checkHashTimeout:", err);
+      this.logger.error("checkHashTimeout:", err);
     }
     return false;
   }
@@ -412,7 +355,7 @@ module.exports = class stateAction {
     }
 
     try {
-      console.log("********************************** checkStoremanTransOnline checkEvent**********************************", eventName, this.hashX);
+      this.logger.debug("********************************** checkStoremanTransOnline checkEvent**********************************", eventName, this.hashX);
 
       if (eventName !== null) {
         let event = this.record[eventName];
@@ -449,7 +392,7 @@ module.exports = class stateAction {
       let receipt;
       let chain = getGlobalChain(transOnChain);
       let txHash = this.record[transHashName];
-      console.log("********************************** checkStoremanTransOnline checkHash**********************************", this.hashX, transHashName, txHash);
+      this.logger.debug("********************************** checkStoremanTransOnline checkHash**********************************", this.hashX, transHashName, txHash);
       receipt = await chain.getTransactionConfirmSync(txHash, moduleConfig.CONFIRM_BLOCK_NUM);
       if (receipt !== null) {
         if (receipt.status === '0x1') {
@@ -466,13 +409,13 @@ module.exports = class stateAction {
         this.updateRecord(content);
       }
     } catch (err) {
-      monitorLogger.error("checkStoremanTransOnline:", err);
+      this.logger.error("checkStoremanTransOnline:", err);
     }
   }
 
   async checkWalletEventOnline(eventName, nextState) {
     try {
-      console.log("********************************** checkWalletEventOnline **********************************", eventName, this.hashX);
+      this.logger.debug("********************************** checkWalletEventOnline **********************************", eventName, this.hashX);
       let event = this.record[eventName];
       if (event.length !== 0) {
         this.updateState(nextState);

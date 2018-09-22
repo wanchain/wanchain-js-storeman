@@ -11,6 +11,9 @@
   "wanGasLimit": 470000,
   "ethGasLimit": 470000,
 
+  "mailReceiver": "zhanli@wanchain.org",
+  "issueCollection": "./issueCollection.txt",
+
   "storemanEth": "0xa89f7702fb9f237aad805e8f99a2793f58e81242",
   "storemanWan": "0xaf52acd143a7bc349d5ebb9188559e7ba9fca9dd",
 

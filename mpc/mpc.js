@@ -24,7 +24,7 @@ module.exports = class mpc {
       ChainType: chainType,
       ChainID: '0x' + chainId.toString(16)
     }
-    console.log(this.sendTxArgs);
+    global.monitorLogger.debug(this.sendTxArgs);
     // this.mpcWeb3 = new Web3();
     // if (config.mpcUrl.indexOf("http://") !== -1) {
     //   this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(config.mpcUrl));
@@ -40,16 +40,16 @@ module.exports = class mpc {
       try {
         this.mpcWeb3.storeman.signMpcTransaction(this.sendTxArgs, (err, result) => {
           if (!err) {
-            console.log("********************************** mpc signViaMpc successfully **********************************", result);
+            global.monitorLogger.debug("********************************** mpc signViaMpc successfully **********************************", result);
             resolve(result);
 
           } else {
-            console.log("********************************** mpc signViaMpc failed **********************************", err);
+            global.monitorLogger.error("********************************** mpc signViaMpc failed **********************************", err);
             reject(err);
           }
         })
       } catch (err) {
-        console.log("********************************** mpc signViaMpc failed **********************************", err);
+        global.monitorLogger.error("********************************** mpc signViaMpc failed **********************************", err);
         reject(err);
       }
     });
@@ -58,18 +58,18 @@ module.exports = class mpc {
   addValidMpcTxRaw() {
     return new Promise((resolve, reject) => {
       try {
-        console.log(this.mpcWeb3.storeman);
+        global.monitorLogger.debug(this.mpcWeb3.storeman);
         this.mpcWeb3.storeman.addValidMpcTxRaw(this.sendTxArgs, (err, result) => {
           if (!err) {
-            console.log("********************************** mpc addValidMpcTxRaw successfully **********************************", result);
+            global.monitorLogger.debug("********************************** mpc addValidMpcTxRaw successfully **********************************", result);
             resolve(result);
           } else {
-            console.log("********************************** mpc addValidMpcTxRaw failed **********************************", err);
+            global.monitorLogger.error("********************************** mpc addValidMpcTxRaw failed **********************************", err);
             reject(err);
           }
         })
       } catch (err) {
-        console.log("********************************** mpc addValidMpcTxRaw failed **********************************", err);
+        global.monitorLogger.error("********************************** mpc addValidMpcTxRaw failed **********************************", err);
         reject(err);
       }
     });

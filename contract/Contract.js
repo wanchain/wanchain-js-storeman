@@ -97,7 +97,6 @@ module.exports = class Contract {
 
   constructData(funcName, ...para) {
     let funcInterface = this.getSolInferface(funcName);
-    console.log("funcInterface", funcInterface);
 
     if (funcInterface) {
       return funcInterface.getData(...para);

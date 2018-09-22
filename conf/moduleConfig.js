@@ -4,7 +4,7 @@ const pwd = process.env.MONGO_PWD;
 const dbUrl = `mongodb://localhost:27017`;
 
 const config = {
-	crossEthDbUrl: dbUrl + "/crossEthChain",
+	crossEthDbUrl: dbUrl + "/crossEthChain3",
 	email: {
 		"region": "us-west-2",
 		"sender": "monitor@wanchain.org"
@@ -14,8 +14,8 @@ const config = {
 config.logServerUrl = '54.149.227.183';
 config.logServerPort = 514;
 
-config.SAFE_BLOCK_NUM = 1;
-config.CONFIRM_BLOCK_NUM = 1;
+config.SAFE_BLOCK_NUM = 2;
+config.CONFIRM_BLOCK_NUM = 2;
 config.INTERVAL_TIME = 15 * 1000;
 
 config.lockedTime = 1800;

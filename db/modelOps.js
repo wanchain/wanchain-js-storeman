@@ -69,8 +69,6 @@ class ModelOps {
   }
 
   syncSaveScannedEvent(hashX, content, callback) {
-    // console.log(hashX);
-    // console.log(content);
     this.dbAccess.updateDocument(this.eventModel, {
       hashX: hashX
     }, content, function(err, result) {

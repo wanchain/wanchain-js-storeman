@@ -57,25 +57,6 @@ module.exports = class Erc20CrossAgent {
     this.withdrawRefundEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[1]);
     this.withdrawRevokeEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[2]);
 
-    // console.log("this.lockEvent", this.lockEvent);
-    // console.log("this.refundEvent", this.refundEvent);
-    // console.log("this.revokeEvent", this.revokeEvent);
-    // console.log("this.contractAddr", this.contractAddr);
-
-    // console.log("this.depositLockFunc", this.depositLockFunc);
-    // console.log("this.depositRefundFunc", this.depositRefundFunc);
-    // console.log("this.depositRevokeFunc", this.depositRevokeFunc);
-    // console.log("this.withdrawLockFunc", this.withdrawLockFunc);
-    // console.log("this.withdrawRefundFunc", this.withdrawRefundFunc);
-    // console.log("this.withdrawRevokeFunc", this.withdrawRevokeFunc);
-
-    // console.log("this.depositLockEvent", this.depositLockEvent);
-    // console.log("this.depositRefundEvent", this.depositRefundEvent);
-    // console.log("this.depositRevokeEvent", this.depositRevokeEvent);
-    // console.log("this.withdrawLockEvent", this.withdrawLockEvent);
-    // console.log("this.withdrawRefundEvent", this.withdrawRefundEvent);
-    // console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
-
     if (record !== null) {
       if (record.x !== '0x') {
         this.key = record.x;
@@ -167,7 +148,7 @@ module.exports = class Erc20CrossAgent {
           resolve(lastEthNonce);
         }
       } catch (err) {
-        console.log("getNonce failed", err);
+        this.logger.error("getNonce failed", err);
         reject(err);
       }
 
@@ -209,8 +190,6 @@ module.exports = class Erc20CrossAgent {
           gasPrice = await this.chain.getGasPriceSync();
           let gasAddDelta = gasPrice.plus(this.getWeiFromGwei(web3.toBigNumber(config.gasPriceDelta)));
           let maxEthGasPrice = this.getWeiFromGwei(web3.toBigNumber(config.maxEthGasPrice));
-          console.log(maxEthGasPrice);
-          console.log(gasAddDelta);
           gasPrice = Math.min(maxEthGasPrice, gasAddDelta);
         }
 
@@ -218,28 +197,28 @@ module.exports = class Erc20CrossAgent {
         this.logger.info("transInfo is: crossDirection- %s, transChainType- %s,\n from- %s, to- %s, gas- %s, gasPrice- %s, nonce- %s, amount- %s, \n hashX- %s", this.crossDirection, this.transChainType, from, to, gas, gasPrice, nonce, amount, this.hashKey);
         resolve([from, to, gas, gasPrice, nonce, amount]);
       } catch (err) {
-        console.log("getTransInfo failed", err);
+        this.logger.error("getTransInfo failed", err);
         reject(err);
       }
     });
   }
   getApproveData() {
-    console.log("********************************** funcInterface **********************************", this.approveFunc);
+    this.logger.debug("********************************** funcInterface **********************************", this.approveFunc);
     return this.tokenContract.constructData(this.approveFunc, this.contractAddr, this.amount);
   }
 
   getLockData() {
-    console.log("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
+    this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
     return this.contract.constructData(this.crossFunc[0], this.tokenAddr, this.hashKey, this.crossAddress, this.amount);
   }
   getRefundData() {
-    console.log("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
+    this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
     this.logger.debug('getRefundData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
     return this.contract.constructData(this.crossFunc[1], this.tokenAddr, this.key);
   }
   getRevokeData() {
-    console.log("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
+    this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
     this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
     return this.contract.constructData(this.crossFunc[2], this.tokenAddr, this.hashKey);
   }
@@ -271,7 +250,7 @@ module.exports = class Erc20CrossAgent {
       this.build = this.buildRevokeData;
     }
 
-    console.log("********************************** setData **********************************", this.data, "hashX", this.hashKey);
+    this.logger.debug("********************************** setData **********************************", this.data, "hashX", this.hashKey);
     this.trans.setData(this.data);
     this.trans.setValue(0);
   }
@@ -304,36 +283,36 @@ module.exports = class Erc20CrossAgent {
   }
 
   async sendTrans(callback) {
-    console.log("********************************** sendTransaction ********************************** hashX", this.hashKey);
+    this.logger.debug("********************************** sendTransaction ********************************** hashX", this.hashKey);
 
     try {
       let chainId = await this.chain.getNetworkId();
       let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
       let rawTx = await mpc.signViaMpc();
-      console.log("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, rawTx);
-      console.log(this.trans);
+      this.logger.debug("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, rawTx);
+      this.logger.debug(this.trans);
       // let rawTx = this.trans.serialize(signature);
 
       let self = this;
       this.chain.sendRawTransaction(rawTx, (err, result) => {
         if (!err) {
           self.logger.debug("sendRawTransaction result: ", result);
-          console.log("********************************** sendTransaction success ********************************** hashX", self.hashKey);
+          this.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
           let content = self.build(self.hashKey, result);
           callback(err, content);
         } else {
-          console.log("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
+          this.logger.error("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
           callback(err, result);
         }
       });
     } catch (err) {
-      console.log("********************************** sendTransaction ********************************** hashX", this.hashKey, err);
+      this.logger.error("********************************** sendTransaction ********************************** hashX", this.hashKey, err);
       callback(err, null);
     }
   }
 
   validateTrans() {
-    console.log("********************************** validateTrans ********************************** hashX", this.hashKey);
+    this.logger.debug("********************************** validateTrans ********************************** hashX", this.hashKey);
     return new Promise(async (resolve, reject) => {
       try {
         let chainId = await this.chain.getNetworkId();
@@ -342,14 +321,14 @@ module.exports = class Erc20CrossAgent {
         mpc.addValidMpcTxRaw();
         resolve();
       } catch (err) {
-        console.log("********************************** validateTrans failed ********************************** hashX", this.hashKey, err);
+        this.logger.error("********************************** validateTrans failed ********************************** hashX", this.hashKey, err);
         reject(err);
       }
     });
   }
 
   buildApproveData(hashKey, result) {
-    console.log("********************************** insertApproveData trans **********************************", hashKey);
+    this.logger.debug("********************************** insertApproveData trans **********************************", hashKey);
 
     let content = {
       storemanApproveTxHash: result.toLowerCase()
@@ -358,7 +337,7 @@ module.exports = class Erc20CrossAgent {
   }
 
   buildLockData(hashKey, result) {
-    console.log("********************************** insertLockData trans **********************************", hashKey);
+    this.logger.debug("********************************** insertLockData trans **********************************", hashKey);
 
     let content = {
       storemanLockTxHash: result.toLowerCase()
@@ -367,7 +346,7 @@ module.exports = class Erc20CrossAgent {
   }
 
   buildRefundData(hashKey, result) {
-    console.log("********************************** insertRefundData trans **********************************", hashKey);
+    this.logger.debug("********************************** insertRefundData trans **********************************", hashKey);
 
     let content = {
       storemanRefundTxHash: result.toLowerCase()
@@ -376,7 +355,7 @@ module.exports = class Erc20CrossAgent {
   }
 
   buildRevokeData(hashKey, result) {
-    console.log("********************************** insertRevokeData trans **********************************", hashKey);
+    this.logger.debug("********************************** insertRevokeData trans **********************************", hashKey);
 
     let content = {
       storemanRevokeTxHash: result.toLowerCase()

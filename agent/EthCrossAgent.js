@@ -23,7 +23,6 @@ module.exports = class EthCrossAgent {
 	sendRevokeTrans(){}
 
   buildLockData(hashKey, result) {
-    console.log("********************************** insertLockData trans **********************************", hashKey);
 
     let content = {
       storemanLockTxHash: result.toLowerCase()
@@ -32,7 +31,6 @@ module.exports = class EthCrossAgent {
   }
 
   buildRefundData(hashKey, result) {
-    console.log("********************************** insertRefundData trans **********************************", hashKey);
 
     let content = {
       storemanRefundTxHash: result.toLowerCase()
@@ -41,7 +39,6 @@ module.exports = class EthCrossAgent {
   }
 
   buildRevokeData(hashKey, result) {
-    console.log("********************************** insertRevokeData trans **********************************", hashKey);
 
     let content = {
       storemanRevokeTxHash: result.toLowerCase()
