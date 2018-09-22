@@ -25,13 +25,13 @@ module.exports = class mpc {
       ChainID: '0x' + chainId.toString(16)
     }
     global.monitorLogger.debug(this.sendTxArgs);
-    // this.mpcWeb3 = new Web3();
-    // if (config.mpcUrl.indexOf("http://") !== -1) {
-    //   this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(config.mpcUrl));
-    // } else {
-    //   this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(config.mpcUrl, net));
-    // }
-    this.mpcWeb3 = getGlobalChain('wan').theWeb3;
+    this.mpcWeb3 = new Web3();
+    if (config.mpcUrl.indexOf("http://") !== -1) {
+      this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(config.mpcUrl));
+    } else {
+      this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(config.mpcUrl, net));
+    }
+    // this.mpcWeb3 = getGlobalChain('wan').theWeb3;
     web3Mpc.extend(this.mpcWeb3);
   }
 
