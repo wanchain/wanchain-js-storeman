@@ -206,14 +206,14 @@ async function splitEvent(chainType, events) {
               };
             } else if ((event.topics[0] === tokenTypeHandler.originCrossAgent.depositRevokeEvent && chainType !== 'wan') ||
               (event.topics[0] === tokenTypeHandler.wanCrossAgent.withdrawRevokeEvent && chainType === 'wan')) {
-              syncLogger.debug("********************************** 5: found wallet revoke transaction ********************************** hashX", event.topics[3]);
+              syncLogger.debug("********************************** 5: found wallet revoke transaction ********************************** hashX", event.topics[2]);
               hashX = event.topics[2].toLowerCase();
               content = {
                 walletRevokeEvent: event,
               };
             } else if ((event.topics[0] === tokenTypeHandler.wanCrossAgent.depositRevokeEvent && chainType === 'wan') ||
               (event.topics[0] === tokenTypeHandler.originCrossAgent.withdrawRevokeEvent && chainType !== 'wan')) {
-              syncLogger.debug("********************************** 6: found storeman revoke transaction ********************************** hashX", event.topics[3]);
+              syncLogger.debug("********************************** 6: found storeman revoke transaction ********************************** hashX", event.topics[2]);
               hashX = event.topics[2].toLowerCase();
               content = {
                 storemanRevokeTxHash: event.transactionHash.toLowerCase(),

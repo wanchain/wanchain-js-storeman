@@ -33,7 +33,7 @@ function initChain(chainType) {
 async function initNonce(chainType) {
   return new Promise(async (resolve, reject) => {
     try {
-      let chainNonce = chainType + 'LastNonce';
+      let chainNonce = chainType.toLowerCase() + 'LastNonce';
       let chainName = chainType.toLowerCase() + "Chain";
       let storemanAddress;
       if (chainType.toLowerCase() === 'wan') {

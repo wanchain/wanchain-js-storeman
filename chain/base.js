@@ -298,7 +298,7 @@ class baseChain {
     let curBlockNum = 0;
     let sleepTime = 30;
 
-    return new Promise(async function(resolve, reject) {
+    return new Promise(async (resolve, reject) => {
       try {
         receipt = await self.getTransactionReceiptSync(txHash);
         if (receipt === null) {
@@ -307,6 +307,7 @@ class baseChain {
         }
 
         curBlockNum = await self.getBlockNumberSync();
+        console.log("/////////////////////////////////////////", receipt);
         let receiptBlockNumber = receipt.blockNumber;
 
         while (receiptBlockNumber + waitBlocks > curBlockNum) {
