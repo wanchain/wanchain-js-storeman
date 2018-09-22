@@ -274,16 +274,14 @@ class baseChain {
         return;
       }
 
-      let numResult = await this.getBlockNumberSync();
-      curBlockNum = numResult.blockNumber;
+      curBlockNum = await this.getBlockNumberSync();
       let receiptBlockNumber = receipt.blockNumber;
 
       while (receiptBlockNumber + waitBlocks > curBlockNum) {
         log.info("getTransactionReceipt was called at block: ", receipt.blockNumber, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
         await sleep(sleepTime * 1000);
         receipt = await this.getTransactionReceiptSync(txHash);
-        numResult = await this.getBlockNumberSync();
-        curBlockNum = numResult.blockNumber;
+        curBlockNum = await this.getBlockNumberSync();
         receiptBlockNumber = receipt.blockNumber;
       }
       callback(null, receipt);
@@ -306,16 +304,14 @@ class baseChain {
           resolve(receipt);
         }
 
-        let numResult = await self.getBlockNumberSync();
-        curBlockNum = numResult.blockNumber;
+        curBlockNum = await self.getBlockNumberSync();
         let receiptBlockNumber = receipt.blockNumber;
 
         while (receiptBlockNumber + waitBlocks > curBlockNum) {
           log.info("getTransactionReceipt was called at block: ", receipt.blockNumber, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
           await sleep(sleepTime * 1000);
           receipt = await self.getTransactionReceiptSync(txHash);
-          numResult = await self.getBlockNumberSync();
-          curBlockNum = numResult.blockNumber;
+          curBlockNum = await self.getBlockNumberSync();
           receiptBlockNumber = receipt.blockNumber;
         }
         resolve(receipt);

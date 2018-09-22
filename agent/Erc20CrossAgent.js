@@ -136,10 +136,8 @@ module.exports = class Erc20CrossAgent {
         } else if (global[chainNonce] === 0) {
           nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
           global[chainNonce] = parseInt(nonce, 16);
-        } else {
-          global[chainNonce]++;
-        }
-        resolve(global[chainNonce]);
+        } 
+        resolve(global[chainNonce]++);
       } catch (err) {
         this.logger.error("getNonce failed", err);
         reject(err);
