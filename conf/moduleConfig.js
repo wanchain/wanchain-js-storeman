@@ -11,6 +11,10 @@ const config = {
 	}
 };
 
+config.retryTimes = 2;
+config.retryWaitTime = 10;
+config.confirmTimes = 10;
+
 config.logServerUrl = '54.149.227.183';
 config.logServerPort = 514;
 

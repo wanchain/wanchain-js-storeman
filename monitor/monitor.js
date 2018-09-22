@@ -13,9 +13,9 @@ const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
 
-const retryTimes = 2;
-const retryWaitTime = 600;
-const confirmTimes = 10;
+const retryTimes = moduleConfig.retryTimes;
+const retryWaitTime = moduleConfig.retryWaitTime;
+const confirmTimes = moduleConfig.confirmTimes;
 
 global.wanNonceRenew = false;
 global.ethNonceRenew = false;

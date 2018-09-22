@@ -259,7 +259,9 @@ async function syncChain(chainType, scAddr, logger, db) {
       try {
         events = await getScEvents(logger, chain, scAddr, topics, from, to);
         logger.info("events: ", events.length);
-        await splitEvent(chainType, events);
+        if (events.length > 0) {
+          await splitEvent(chainType, events);
+        }
         modelOps.saveScannedBlockNumber(chainType, to);
         logger.info("********************************** saveState **********************************", chainType);
       } catch (err) {
@@ -267,7 +269,6 @@ async function syncChain(chainType, scAddr, logger, db) {
         return;
       }
     }
-
 }
 
 async function syncMain(logger, db) {

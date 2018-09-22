@@ -49,7 +49,6 @@ class baseChain {
         topics: topics,
         address: address
       };
-      console.log(filterValue);
       let filter = baseChain.theWeb3.eth.filter(filterValue);
       filter.get(function(err, events) {
         if (err) {
@@ -209,7 +208,7 @@ class baseChain {
           if (err) {
             reject(err);
           } else {
-            log.debug('getBlockNumber successfully with result: ', blockNumber);
+            log.debug('getBlockNumberSync successfully with result: ', blockNumber);
             resolve(blockNumber);
           }
         });
@@ -220,7 +219,7 @@ class baseChain {
   }
 
   sendRawTransaction(signedTx, callback) {
-    console.log("======================================== sendRawTransaction ====================================", this.chainType)
+    this.log.debug("======================================== sendRawTransaction ====================================", this.chainType)
     this.theWeb3.eth.sendRawTransaction(signedTx, callback);
   }
 
