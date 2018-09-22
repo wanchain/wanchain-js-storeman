@@ -18,9 +18,6 @@ const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const Web3 = require("web3");
 const web3 = new Web3();
 
-let lastEthNonce = 0;
-let lastWanNonce = 0;
-
 module.exports = class Erc20CrossAgent {
   constructor(crossChain, tokenType, crossDirection, record = null, action = null, logger = null) {
     this.logger = logger;
@@ -125,27 +122,27 @@ module.exports = class Erc20CrossAgent {
         if (this.transChainType === 'wan') {
           if (global.wanNonceRenew) {
             nonce = await this.chain.getNonceSync(config.storemanWan);
-            lastWanNonce = parseInt(nonce, 16);
+            global.lastWanNonce = parseInt(nonce, 16);
             global.wanNonceRenew = false;
-          } else if (lastWanNonce === 0) {
+          } else if (global.lastWanNonce === 0) {
             nonce = await this.chain.getNonceIncludePendingSync(config.storemanWan);
-            lastWanNonce = parseInt(nonce, 16);
+            global.lastWanNonce = parseInt(nonce, 16);
           } else {
-            lastWanNonce++;
+            global.lastWanNonce++;
           }
-          resolve(lastWanNonce);
+          resolve(global.lastWanNonce);
         } else {
           if (global.ethNonceRenew) {
             nonce = await this.chain.getNonceSync(config.storemanEth);
-            lastEthNonce = parseInt(nonce, 16);
+            global.lastEthNonce = parseInt(nonce, 16);
             global.ethNonceRenew = false;
-          } else if (lastEthNonce === 0) {
+          } else if (global.lastEthNonce === 0) {
             nonce = await this.chain.getNonceIncludePendingSync(config.storemanEth);
-            lastEthNonce = parseInt(nonce, 16);
+            global.lastEthNonce = parseInt(nonce, 16);
           } else {
-            lastEthNonce++;
+            global.lastEthNonce++;
           }
-          resolve(lastEthNonce);
+          resolve(global.lastEthNonce);
         }
       } catch (err) {
         this.logger.error("getNonce failed", err);
@@ -265,15 +262,15 @@ module.exports = class Erc20CrossAgent {
           if (err.hasOwnProperty("message") && 
             (err.message === 'nonce too low' || err.message === 'replacement transaction underpriced')) {
             if (this.transChainType === 'wan') {
-              lastWanNonce = 0;
+              global.lastWanNonce = 0;
             } else {
-              lastEthNonce = 0;
+              global.lastEthNonce = 0;
             }
           } else {
             if (this.transChainType === 'wan') {
-              lastWanNonce--;
+              global.lastWanNonce--;
             } else {
-              lastEthNonce--;
+              global.lastEthNonce--;
             }
           }
           reject(err);

@@ -24,6 +24,9 @@ let tokenList = {};
 
 global.storemanRestart = false;
 
+global.lastEthNonce = 0;
+global.lastWanNonce = 0;
+
 global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 
@@ -94,6 +97,10 @@ async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
     let arr = events.slice(i, end);
     let multiEvents = [...arr].map((event) => {
       return new Promise((resolve, reject) => {
+        if(event === null) {
+          logger.debug("event is null")
+          resolve();
+        }
         chain.getBlockByNumber(event.blockNumber, function(err, block) {
           if (err) {
             reject(err);
@@ -292,21 +299,15 @@ async function syncMain(logger, db) {
 }
 
 function monitorRecord(record) {
-  return new Promise(async (resolve, reject) => {
-    let stateAction = new StateAction(record, global.monitorLogger, db);
-    stateAction.takeAction()
-      .then(result => {
-        if (handlingList[record.hashX]) {
-          monitorLogger.debug("handlingList delete already handled hashX", record.hashX);
-          delete handlingList[record.hashX];
-          resolve();
-        }
-      })
-      .catch(err => {
-        global.monitorLogger.error(err);
-        reject(err);
-      });
-  });
+  let stateAction = new StateAction(record, global.monitorLogger, db);
+  stateAction.takeAction()
+    .then(result => {
+      if (handlingList[record.hashX]) {
+        monitorLogger.debug("handlingList delete already handled hashX", record.hashX);
+        delete handlingList[record.hashX];
+      }
+    })
+    .catch(err => global.monitorLogger.error(err));
 }
 
 async function handlerMain(logger, db) {
@@ -346,9 +347,9 @@ async function handlerMain(logger, db) {
         handlingList[record.hashX] = cur;
 
         try {
-          await monitorRecord(record);
+          monitorRecord(record);
         } catch (error) {
-          logger.error("monitorRecord error:", record.hashX, error);
+          logger.error("monitorRecord error:", error);
         }
       }
     } catch (err) {
