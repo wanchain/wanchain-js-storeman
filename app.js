@@ -75,7 +75,7 @@ async function init() {
   monitorLogger.info(tokenList);
 
   for (let chain in moduleConfig.crossInfoDict) {
-    syncLogger.debug("Nonce of chain:", chain, global[chain + 'LastNonce']);
+    syncLogger.debug("Nonce of chain:", chain, global[chain.toLowerCase() + 'LastNonce']);
   }
   syncLogger.debug("Nonce of chain:", 'WAN', global['wanLastNonce']);
 }
