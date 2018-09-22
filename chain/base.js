@@ -269,7 +269,7 @@ class baseChain {
 
     try {
       receipt = await this.getTransactionReceiptSync(txHash);
-      if (receipt.length !== null) {
+      if (receipt === null) {
         callback(null, receipt);
         return;
       }
@@ -296,12 +296,14 @@ class baseChain {
     let self = this;
     let receipt = null;
     let curBlockNum = 0;
+    let sleepTime = 30;
 
     return new Promise(async function(resolve, reject) {
       try {
         receipt = await self.getTransactionReceiptSync(txHash);
         if (receipt === null) {
           resolve(receipt);
+          return;
         }
 
         curBlockNum = await self.getBlockNumberSync();
