@@ -12,7 +12,9 @@ const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
 
 const {
-  getChain,
+  initChain,
+  getGlobalChain,
+  // getChain,
   sleep
 } = require('comm/lib');
 
@@ -27,6 +29,8 @@ function init() {
   tokenList.wanchainHtlcAddr = [];
   tokenList.supportTokenAddrs = [];
   for (let chain in moduleConfig.crossInfoDict) {
+    initChain(chain);
+    
     tokenList[chain] = {};
 
     tokenList[chain].originalChainHtlcAddr = [];
@@ -245,7 +249,7 @@ async function syncChain(chainType, scAddr, logger, db) {
       return;
     }
 
-    let chain = getChain(chainType);
+    let chain = getGlobalChain(chainType);
     let from = blockNumber;
     let curBlock = 0;
     let topics = [];

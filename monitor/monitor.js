@@ -1,6 +1,7 @@
 "use strict";
 const {
-  getChain
+  // getChain,
+  getGlobalChain
 } = require('comm/lib');
 
 const ModelOps = require('db/modelOps');
@@ -379,7 +380,7 @@ module.exports = class stateAction {
 
   async checkAllowance(nextState, rollState) {
     let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, 1, this.record);
-    let chain = getChain(this.crossChain);
+    let chain = getGlobalChain(this.crossChain);
     await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanEth, newAgent.contractAddr, moduleConfig.erc20Abi)
       .then((result) => {
         if (result < Math.max(getWeiFromEther(web3.toBigNumber(moduleConfig.tokenAllowanceThreshold)), web3.toBigNumber(this.record.value))) {
@@ -446,7 +447,7 @@ module.exports = class stateAction {
       }
 
       let receipt;
-      let chain = getChain(transOnChain);
+      let chain = getGlobalChain(transOnChain);
       let txHash = this.record[transHashName];
       console.log("********************************** checkStoremanTransOnline checkHash**********************************", this.hashX, transHashName, txHash);
       receipt = await chain.getTransactionConfirmSync(txHash, moduleConfig.CONFIRM_BLOCK_NUM);

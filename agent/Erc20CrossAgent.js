@@ -1,6 +1,7 @@
 "use strict"
 const {
-  getChain
+  getGlobalChain,
+//   getChain
 } = require('comm/lib');
 
 let Contract = require("contract/Contract.js");
@@ -118,7 +119,7 @@ module.exports = class Erc20CrossAgent {
 
   async initAgentTransInfo(action) {
     if (action !== null) {
-      this.chain = getChain(this.transChainType);
+      this.chain = getGlobalChain(this.transChainType);
       let transInfo = await this.getTransInfo(action);
       if (this.transChainType === 'wan') {
         this.trans = new wanRawTrans(...transInfo);
@@ -331,16 +332,20 @@ module.exports = class Erc20CrossAgent {
     }
   }
 
-  async validateTrans() {
+  validateTrans() {
     console.log("********************************** validateTrans ********************************** hashX", this.hashKey);
-    try {
-      let chainId = await this.chain.getNetworkId();
-      let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
+    return new Promise(async (resolve, reject) => {
+      try {
+        let chainId = await this.chain.getNetworkId();
+        let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
 
-      mpc.addValidMpcTxRaw();
-    } catch (err) {
-      console.log("********************************** validateTrans failed ********************************** hashX", this.hashKey, err);
-    }
+        mpc.addValidMpcTxRaw();
+        resolve();
+      } catch (err) {
+        console.log("********************************** validateTrans failed ********************************** hashX", this.hashKey, err);
+        reject(err);
+      }
+    });
   }
 
   buildApproveData(hashKey, result) {

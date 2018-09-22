@@ -6,6 +6,11 @@ var net = require('net');
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('conf/config.json'));
 
+const {
+  getGlobalChain,
+//   getChain
+} = require('comm/lib');
+
 module.exports = class mpc {
   constructor(trans, chainType, chainId) {
     this.sendTxArgs = {
@@ -19,13 +24,14 @@ module.exports = class mpc {
       ChainType: chainType,
       ChainID: '0x' + chainId.toString(16)
     }
-console.log(this.sendTxArgs);
-    this.mpcWeb3 = new Web3();
-    if (config.mpcUrl.indexOf("http://") !== -1) {
-      this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(config.mpcUrl));
-    } else {
-      this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(config.mpcUrl, net));
-    }
+    console.log(this.sendTxArgs);
+    // this.mpcWeb3 = new Web3();
+    // if (config.mpcUrl.indexOf("http://") !== -1) {
+    //   this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(config.mpcUrl));
+    // } else {
+    //   this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(config.mpcUrl, net));
+    // }
+    this.mpcWeb3 = getGlobalChain('wan').theWeb3;
     web3Mpc.extend(this.mpcWeb3);
   }
 

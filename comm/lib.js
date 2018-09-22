@@ -6,6 +6,16 @@ const net = require('net');
 const EthChain = require('chain/eth');
 const WanChain = require('chain/wan');
 
+function initChain(chainType) {
+  let chainName = chainType.toLowerCase() + "Chain";
+  global[chainName] = getChain(chainType);
+}
+
+function getGlobalChain(chainType) {
+  let chainName = chainType.toLowerCase() + "Chain";
+  return global[chainName];
+}
+
 function getChain(chainType) {
   let chain = chainType.toLowerCase();
   if (chain === 'eth') {
@@ -34,4 +44,6 @@ function sleep(time) {
 }
 
 exports.sleep = sleep;
+exports.initChain = initChain;
+exports.getGlobalChain = getGlobalChain;
 exports.getChain = getChain;
