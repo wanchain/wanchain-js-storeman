@@ -26,11 +26,12 @@ global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/store
 global.monitorLogger = new Logger("monitorLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 
 function init() {
+  initChain('wan');
   tokenList.wanchainHtlcAddr = [];
   tokenList.supportTokenAddrs = [];
   for (let chain in moduleConfig.crossInfoDict) {
     initChain(chain);
-    
+
     tokenList[chain] = {};
 
     tokenList[chain].originalChainHtlcAddr = [];
@@ -371,4 +372,4 @@ let modelOps = new ModelOps(global.syncLogger, db);
 
 init();
 syncMain(global.syncLogger, db);
-handlerMain(global.monitorLogger, db);
+// handlerMain(global.monitorLogger, db);
