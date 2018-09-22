@@ -6,16 +6,6 @@ const net = require('net');
 const EthChain = require('chain/eth');
 const WanChain = require('chain/wan');
 
-function initChain(chainType) {
-  let chainName = chainType.toLowerCase() + "Chain";
-  global[chainName] = getChain(chainType);
-}
-
-function getGlobalChain(chainType) {
-  let chainName = chainType.toLowerCase() + "Chain";
-  return global[chainName];
-}
-
 function getChain(chainType) {
   let chain = chainType.toLowerCase();
   if (chain === 'eth') {
@@ -35,6 +25,38 @@ function getChain(chainType) {
   }
 }
 
+function initChain(chainType) {
+  let chainName = chainType.toLowerCase() + "Chain";
+  global[chainName] = getChain(chainType);
+}
+
+async function initNonce(chainType) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let chainNonce = chainType + 'LastNonce';
+      let chainName = chainType.toLowerCase() + "Chain";
+      let storemanAddress;
+      if (chainType.toLowerCase() === 'wan') {
+        storemanAddress = config.storemanWan;
+      } else if (chainType.toLowerCase() === 'eth') {
+        storemanAddress = config.storemanEth;
+      } else {
+        return;
+      }
+      let nonce = await global[chainName].getNonceIncludePendingSync(storemanAddress);
+      global[chainNonce] = parseInt(nonce, 16);
+      resolve();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+function getGlobalChain(chainType) {
+  let chainName = chainType.toLowerCase() + "Chain";
+  return global[chainName];
+}
+
 function sleep(time) {
   return new Promise(function(resolve, reject) {
     setTimeout(function() {
@@ -47,3 +69,4 @@ exports.sleep = sleep;
 exports.initChain = initChain;
 exports.getGlobalChain = getGlobalChain;
 exports.getChain = getChain;
+exports.initNonce = initNonce;

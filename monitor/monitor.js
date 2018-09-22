@@ -1,7 +1,8 @@
 "use strict";
 const {
   // getChain,
-  getGlobalChain
+  getGlobalChain,
+  sleep
 } = require('comm/lib');
 
 const ModelOps = require('db/modelOps');
@@ -16,9 +17,6 @@ const moduleConfig = require('conf/moduleConfig.js');
 const retryTimes = moduleConfig.retryTimes;
 const retryWaitTime = moduleConfig.retryWaitTime;
 const confirmTimes = moduleConfig.confirmTimes;
-
-global.wanNonceRenew = false;
-global.ethNonceRenew = false;
 
 const Web3 = require("web3");
 const web3 = new Web3();
@@ -237,6 +235,9 @@ module.exports = class stateAction {
     let result = {};
 
     try {
+      if (this.record.transRetried !== 0) {
+        await sleep(retryWaitTime);
+      }
       for (var action of actionArray) {
         let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, this.crossDirection, this.record, action, this.logger);
         this.logger.debug("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
@@ -374,11 +375,8 @@ module.exports = class stateAction {
             status: rollState[0],
             transConfirmed: 0
           }
-          if (transOnChain === 'wan') {
-            global.wanNonceRenew = true;
-          } else if (transOnChain === this.crossChain) {
-            global.ethNonceRenew = true;
-          }
+
+          global[transOnChain + 'NonceRenew'] = true;
 
           this.updateRecord(content);
           return;

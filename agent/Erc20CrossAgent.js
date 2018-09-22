@@ -118,37 +118,32 @@ module.exports = class Erc20CrossAgent {
   getNonce() {
     return new Promise(async (resolve, reject) => {
       let nonce = 0;
+      let chainNonce = this.transChainType + 'LastNonce';
+      let nonceRenew = this.transChainType + 'NonceRenew';
+      let storemanAddress;
+      if (chainType.toLowerCase() === 'wan') {
+        storemanAddress = config.storemanWan;
+      } else if (chainType.toLowerCase() === 'eth') {
+        storemanAddress = config.storemanEth;
+      } else {
+        return;
+      }
       try {
-        if (this.transChainType === 'wan') {
-          if (global.wanNonceRenew) {
-            nonce = await this.chain.getNonceSync(config.storemanWan);
-            global.lastWanNonce = parseInt(nonce, 16);
-            global.wanNonceRenew = false;
-          } else if (global.lastWanNonce === 0) {
-            nonce = await this.chain.getNonceIncludePendingSync(config.storemanWan);
-            global.lastWanNonce = parseInt(nonce, 16);
-          } else {
-            global.lastWanNonce++;
-          }
-          resolve(global.lastWanNonce);
+        if (global[nonceRenew]) {
+          nonce = await this.chain.getNonceSync(storemanAddress);
+          global[chainNonce] = parseInt(nonce, 16);
+          global[nonceRenew] = false;
+        } else if (global[chainNonce] === 0) {
+          nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
+          global[chainNonce] = parseInt(nonce, 16);
         } else {
-          if (global.ethNonceRenew) {
-            nonce = await this.chain.getNonceSync(config.storemanEth);
-            global.lastEthNonce = parseInt(nonce, 16);
-            global.ethNonceRenew = false;
-          } else if (global.lastEthNonce === 0) {
-            nonce = await this.chain.getNonceIncludePendingSync(config.storemanEth);
-            global.lastEthNonce = parseInt(nonce, 16);
-          } else {
-            global.lastEthNonce++;
-          }
-          resolve(global.lastEthNonce);
+          global[chainNonce]++;
         }
+        resolve(global[chainNonce]);
       } catch (err) {
         this.logger.error("getNonce failed", err);
         reject(err);
       }
-
     });
   }
 
@@ -259,20 +254,9 @@ module.exports = class Erc20CrossAgent {
         if (!err && result !== null) {
           resolve(result);
         } else {
-          if (err.hasOwnProperty("message") && 
-            (err.message === 'nonce too low' || err.message === 'replacement transaction underpriced')) {
-            if (this.transChainType === 'wan') {
-              global.lastWanNonce = 0;
-            } else {
-              global.lastEthNonce = 0;
-            }
-          } else {
-            if (this.transChainType === 'wan') {
-              global.lastWanNonce--;
-            } else {
-              global.lastEthNonce--;
-            }
-          }
+          // if (err.hasOwnProperty("message") &&
+          //   (err.message === 'nonce too low' || err.message === 'replacement transaction underpriced')) {}
+          global[this.transChainType + 'LastNonce'] = 0;
           reject(err);
         }
       });

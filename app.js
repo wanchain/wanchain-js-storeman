@@ -13,6 +13,7 @@ const moduleConfig = require('conf/moduleConfig.js');
 
 const {
   initChain,
+  initNonce,
   getGlobalChain,
   // getChain,
   sleep
@@ -24,20 +25,29 @@ let tokenList = {};
 
 global.storemanRestart = false;
 
-global.lastEthNonce = 0;
-global.lastWanNonce = 0;
+// global.lastEthNonce = 0;
+// global.lastWanNonce = 0;
+// global.wanNonceRenew = false;
+// global.ethNonceRenew = false;
 
 global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 
-function init() {
+async function init() {
   initChain('wan');
+  await initNonce('wan');
+  global.wanNonceRenew = false;
+
+  global.storemanRestart = true;
+
   tokenList.wanchainHtlcAddr = [];
   tokenList.supportTokenAddrs = [];
   for (let chain in moduleConfig.crossInfoDict) {
-    global.storemanRestart = true;
+    
+    global[chain + 'NonceRenew'] = false;
 
     initChain(chain);
+    await initNonce(chain);
 
     tokenList[chain] = {};
 
@@ -46,7 +56,7 @@ function init() {
 
     for (let token in config["crossTokens"][chain]) {
       tokenList.supportTokenAddrs.push(token);
-      tokenList[chain].supportTokens[token] = config["crossTokens"][chain][token].tokenSymbol;     
+      tokenList[chain].supportTokens[token] = config["crossTokens"][chain][token].tokenSymbol;
     }
 
     for (let tokenType in moduleConfig.crossInfoDict[chain]) {
@@ -63,6 +73,11 @@ function init() {
     }
   }
   monitorLogger.info(tokenList);
+
+  for (let chain in moduleConfig.crossInfoDict) {
+    syncLogger.debug("Nonce of chain:", chain, global[chain + 'LastNonce']);
+  }
+  syncLogger.debug("Nonce of chain:", 'WAN', global['wanLastNonce']);
 }
 
 function splitData(string) {
@@ -375,6 +390,10 @@ db.on('connected', function(err) {
 
 let modelOps = new ModelOps(global.syncLogger, db);
 
-init();
-syncMain(global.syncLogger, db);
-handlerMain(global.monitorLogger, db);
+async function main() {
+  await init();
+  syncMain(global.syncLogger, db);
+  handlerMain(global.monitorLogger, db);
+}
+
+main();

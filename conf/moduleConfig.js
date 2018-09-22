@@ -11,7 +11,7 @@ const config = {
 	}
 };
 
-config.retryTimes = 2;
+config.retryTimes = 5;
 config.retryWaitTime = 10;
 config.confirmTimes = 10;
 
