@@ -372,4 +372,4 @@ let modelOps = new ModelOps(global.syncLogger, db);
 
 init();
 syncMain(global.syncLogger, db);
-// handlerMain(global.monitorLogger, db);
+handlerMain(global.monitorLogger, db);
