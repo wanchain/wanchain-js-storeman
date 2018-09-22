@@ -121,9 +121,9 @@ module.exports = class Erc20CrossAgent {
       let chainNonce = this.transChainType + 'LastNonce';
       let nonceRenew = this.transChainType + 'NonceRenew';
       let storemanAddress;
-      if (chainType.toLowerCase() === 'wan') {
+      if (this.transChainType.toLowerCase() === 'wan') {
         storemanAddress = config.storemanWan;
-      } else if (chainType.toLowerCase() === 'eth') {
+      } else if (this.transChainType.toLowerCase() === 'eth') {
         storemanAddress = config.storemanEth;
       } else {
         return;
