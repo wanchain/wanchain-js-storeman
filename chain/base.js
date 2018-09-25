@@ -311,7 +311,6 @@ class baseChain {
         }
 
         curBlockNum = await self.getBlockNumberSync();
-        console.log("/////////////////////////////////////////", receipt);
         let receiptBlockNumber = receipt.blockNumber;
 
         while (receiptBlockNumber + waitBlocks > curBlockNum) {
