@@ -1,6 +1,10 @@
-const {
-  sleep
-} = require('comm/lib');
+function sleep(time) {
+  return new Promise(function(resolve, reject) {
+    setTimeout(function() {
+      resolve();
+    }, time);
+  })
+}
 
 class baseChain {
   constructor(log, theWeb3) {
