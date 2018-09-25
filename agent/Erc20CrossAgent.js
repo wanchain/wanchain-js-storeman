@@ -1,6 +1,7 @@
 "use strict"
 const {
   getGlobalChain,
+  sleep
 //   getChain
 } = require('comm/lib');
 
@@ -17,6 +18,9 @@ const config = JSON.parse(fs.readFileSync('conf/config.json'));
 
 const Web3 = require("web3");
 const web3 = new Web3();
+
+global.mutex_nonce = false;
+global.nonce_second = false;
 
 module.exports = class Erc20CrossAgent {
   constructor(crossChain, tokenType, crossDirection, record = null, action = null, logger = null) {
@@ -116,7 +120,13 @@ module.exports = class Erc20CrossAgent {
   }
 
   getNonce() {
+
     return new Promise(async (resolve, reject) => {
+
+      while (global.mutex_nonce) {
+        sleep(3);
+      }
+      global.mutex_nonce = true;
       let nonce = 0;
       let chainNonce = this.transChainType + 'LastNonce';
       let nonceRenew = this.transChainType + 'NonceRenew';
@@ -126,6 +136,7 @@ module.exports = class Erc20CrossAgent {
       } else if (this.transChainType.toLowerCase() === 'eth') {
         storemanAddress = config.storemanEth;
       } else {
+        global.mutex_nonce = false;
         return;
       }
       try {
@@ -133,13 +144,21 @@ module.exports = class Erc20CrossAgent {
           nonce = await this.chain.getNonceSync(storemanAddress);
           global[chainNonce] = parseInt(nonce, 16);
           global[nonceRenew] = false;
+          global.nonce_second = true;
         } else if (global[chainNonce] === 0) {
           nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
           global[chainNonce] = parseInt(nonce, 16);
+          global.nonce_second = true;
+        } else if (global.nonce_second) {
+          nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
+          global[chainNonce] = parseInt(nonce, 16);
+          global.nonce_second = false;
         } 
+        global.mutex_nonce = false;
         resolve(global[chainNonce]++);
       } catch (err) {
         this.logger.error("getNonce failed", err);
+        global.mutex_nonce = false;
         reject(err);
       }
     });
