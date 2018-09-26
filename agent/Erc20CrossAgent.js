@@ -10,7 +10,7 @@ let ethRawTrans = require("trans/EthRawTrans.js");
 let wanRawTrans = require("trans/WanRawTrans.js");
 
 let MPC = require("mpc/mpc.js");
-const ModelOps = require('db/modelOps');
+// const ModelOps = require('db/modelOps');
 
 const moduleConfig = require('conf/moduleConfig.js');
 const fs = require('fs');
@@ -20,7 +20,7 @@ const Web3 = require("web3");
 const web3 = new Web3();
 
 global.mutex_nonce = false;
-global.nonce_second = false;
+global.nonce_pending = false;
 
 module.exports = class Erc20CrossAgent {
   constructor(crossChain, tokenType, crossDirection, record = null, action = null, logger = null) {
@@ -144,15 +144,15 @@ module.exports = class Erc20CrossAgent {
           nonce = await this.chain.getNonceSync(storemanAddress);
           global[chainNonce] = parseInt(nonce, 16);
           global[nonceRenew] = false;
-          global.nonce_second = true;
+          global.nonce_pending = true;
         } else if (global[chainNonce] === 0) {
           nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
           global[chainNonce] = parseInt(nonce, 16);
-          global.nonce_second = true;
-        } else if (global.nonce_second) {
+          global.nonce_pending = true;
+        } else if (global.nonce_pending) {
           nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
           global[chainNonce] = parseInt(nonce, 16);
-          global.nonce_second = false;
+          global.nonce_pending = false;
         } 
         global.mutex_nonce = false;
         resolve(global[chainNonce]++);
