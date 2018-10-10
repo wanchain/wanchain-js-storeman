@@ -5,6 +5,7 @@ const Logger = require('comm/logger.js');
 const mongoose = require('mongoose');
 const ModelOps = require('db/modelOps');
 const Erc20CrossAgent = require("agent/Erc20CrossAgent.js");
+const EthCrossAgent = require("agent/EthCrossAgent.js");
 const StateAction = require("monitor/monitor.js");
 
 const fs = require('fs');
@@ -25,10 +26,12 @@ let tokenList = {};
 
 global.storemanRestart = false;
 
-// global.lastEthNonce = 0;
-// global.lastWanNonce = 0;
-// global.wanNonceRenew = false;
-// global.ethNonceRenew = false;
+global.agentDict = {
+  ETH: {
+    COIN: EthCrossAgent,
+    ERC20: Erc20CrossAgent
+  }
+}
 
 global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
@@ -40,42 +43,43 @@ async function init() {
 
   global.storemanRestart = true;
 
-  tokenList.wanchainHtlcAddr = [];
+  // tokenList.wanchainHtlcAddr = [];
   tokenList.supportTokenAddrs = [];
-  for (let chain in moduleConfig.crossInfoDict) {
+  for (let crossChain in moduleConfig.crossInfoDict) {
     
-    global[chain + 'NonceRenew'] = false;
+    global[crossChain + 'NonceRenew'] = false;
 
-    initChain(chain);
-    await initNonce(chain);
+    initChain(crossChain);
+    await initNonce(crossChain);
 
-    tokenList[chain] = {};
+    tokenList[crossChain] = {};
 
-    tokenList[chain].originalChainHtlcAddr = [];
-    tokenList[chain].supportTokens = {};
+    // tokenList[crossChain].originalChainHtlcAddr = [];
+    tokenList[crossChain].supportTokens = {};
 
-    for (let token in config["crossTokens"][chain]) {
+    for (let token in config["crossTokens"][crossChain]) {
       tokenList.supportTokenAddrs.push(token);
-      tokenList[chain].supportTokens[token] = config["crossTokens"][chain][token].tokenSymbol;
+      tokenList[crossChain].supportTokens[token] = config["crossTokens"][crossChain][token].tokenSymbol;
     }
 
-    for (let tokenType in moduleConfig.crossInfoDict[chain]) {
-      tokenList[chain][tokenType] = {};
+    for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
+      tokenList[crossChain][tokenType] = {};
 
-      tokenList[chain][tokenType].wanchainHtlcAddr = moduleConfig.crossInfoDict[chain][tokenType].wanchainHtlcAddr;
-      tokenList[chain][tokenType].originalChainHtlcAddr = moduleConfig.crossInfoDict[chain][tokenType].originalChainHtlcAddr;
+      tokenList[crossChain][tokenType].wanchainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr;
+      tokenList[crossChain][tokenType].originalChainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr;
 
-      tokenList.wanchainHtlcAddr.push(moduleConfig.crossInfoDict[chain][tokenType].wanchainHtlcAddr);
-      tokenList[chain].originalChainHtlcAddr.push(moduleConfig.crossInfoDict[chain][tokenType].originalChainHtlcAddr);
+      // tokenList.wanchainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr);
+      // tokenList[crossChain].originalChainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr);
 
-      tokenList[chain][tokenType].wanCrossAgent = new Erc20CrossAgent(chain, tokenType, 0);
-      tokenList[chain][tokenType].originCrossAgent = new Erc20CrossAgent(chain, tokenType, 1);
+      tokenList[crossChain][tokenType].wanCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 0);
+      tokenList[crossChain][tokenType].originCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 1);
+      tokenList[crossChain][tokenType].lockedTime = tokenList[crossChain][tokenType].wanCrossAgent.getLockedTime();
     }
   }
   monitorLogger.info(tokenList);
 
-  for (let chain in moduleConfig.crossInfoDict) {
-    syncLogger.debug("Nonce of chain:", chain, global[chain.toLowerCase() + 'LastNonce']);
+  for (let crossChain in moduleConfig.crossInfoDict) {
+    syncLogger.debug("Nonce of chain:", crossChain, global[crossChain.toLowerCase() + 'LastNonce']);
   }
   syncLogger.debug("Nonce of chain:", 'WAN', global['wanLastNonce']);
 }
@@ -138,7 +142,53 @@ async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
   return events;
 }
 
-async function splitEvent(chainType, events) {
+async function splitEvent(chainType, crossChain, tokenType, events) {
+  let multiEvents = [...events].map((event) => {
+    return new Promise((resolve, reject) => {
+      try {
+        let tokenTypeHandler = tokenList[crossChain][tokenType];
+        let lockedTime = tokenList[crossChain][tokenType].lockedTime; 
+        let crossAgent;
+        if (chainType === 'wan') {
+          crossAgent = tokenTypeHandler.wanCrossAgent;
+        } else {
+          crossAgent = tokenTypeHandler.originCrossAgent;
+        }
+
+        let decodeEvent = crossAgent.contract.parseEvent(event);
+        let content;
+        if (decodeEvent === null) {
+          resolve();
+          return;
+        } else {
+          content = crossAgent.getDecodeEventDbData(chainType, crossChain, tokenType, decodeEvent, event, lockedTime);
+        }
+
+        if (content !== null) {
+          try {
+            modelOps.saveScannedEvent(...content);
+          } catch (err) {
+            syncLogger.error("********************************** saveScannedEvent faild, try another time **********************************", err);
+            modelOps.saveScannedEvent(...content);
+          }
+        }
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    });
+  });
+
+  try {
+    await Promise.all(multiEvents);
+    syncLogger.debug("********************************** splitEvent done **********************************");
+  } catch (err) {
+    global.syncLogger.error("splitEvent", err);
+    return Promise.reject(err);
+  }
+}
+
+async function splitEvent1(chainType, events) {
   let multiEvents = [...events].map((event) => {
     return new Promise((resolve, reject) => {
       try {
@@ -156,6 +206,11 @@ async function splitEvent(chainType, events) {
             if ((event.topics[0] === tokenTypeHandler.originCrossAgent.depositLockEvent && chainType !== 'wan') ||
               (event.topics[0] === tokenTypeHandler.wanCrossAgent.withdrawLockEvent && chainType === 'wan')) {
               syncLogger.debug("********************************** 1: found new wallet lock transaction ********************************** hashX", event.topics[3]);
+              
+              console.log(event);
+              let decodeLog = tokenTypeHandler.originCrossAgent.contract.parseEvent(event);
+              console.log(decodeLog);
+
               hashX = event.topics[3].toLowerCase();
               data = splitData(event.data);
               tokenAddr = (chainType !== 'wan') ? '0x' + data[2].substr(-40, 40) : '0x' + data[3].substr(-40, 40);
@@ -247,8 +302,8 @@ async function splitEvent(chainType, events) {
   }
 }
 
-async function syncChain(chainType, scAddr, logger, db) {
-  logger.debug("********************************** syncChain **********************************", chainType);
+async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
+  logger.debug("********************************** syncChain **********************************", chainType, crossChain, tokenType);
   let blockNumber = 0;
     try {
       blockNumber = await modelOps.getScannedBlockNumberSync(chainType);
@@ -282,10 +337,10 @@ async function syncChain(chainType, scAddr, logger, db) {
         events = await getScEvents(logger, chain, scAddr, topics, from, to);
         logger.info("events: ", events.length);
         if (events.length > 0) {
-          await splitEvent(chainType, events);
+          await splitEvent(chainType, crossChain, tokenType, events);
         }
         modelOps.saveScannedBlockNumber(chainType, to);
-        logger.info("********************************** saveState **********************************", chainType);
+        logger.info("********************************** saveState **********************************", chainType, crossChain, tokenType);
       } catch (err) {
         logger.error("getScEvents from :", chainType, err);
         return;
@@ -298,11 +353,12 @@ async function syncMain(logger, db) {
 
   while (1) {
     try {
-      for (let chain in moduleConfig.crossInfoDict) {
-        syncChain(chain.toLowerCase(), tokenList[chain].originalChainHtlcAddr, logger, db);
+      for (let crossChain in moduleConfig.crossInfoDict) {
+        for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
+          syncChain(crossChain.toLowerCase(), crossChain, tokenType, tokenList[crossChain][tokenType].originalChainHtlcAddr, logger, db);
+          syncChain('wan', crossChain, tokenType, tokenList[crossChain][tokenType].wanchainHtlcAddr, logger, db);
+        }
       }
-
-      syncChain('wan', tokenList.wanchainHtlcAddr, logger, db);
     } catch (err) {
       logger.error("syncMain failed:", err);
       await sleep(moduleConfig.INTERVAL_TIME);

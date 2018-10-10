@@ -4,8 +4,8 @@ const fs = require('fs');
 const solc = require('solc');
 let Web3 = require('web3');
 let web3 = new Web3(null);
-// let SolidityEvent = require("web3/lib/web3/event.js");
-// let SolidityFunction = require("web3/lib/web3/function.js");
+let SolidityEvent = require("web3/lib/web3/event.js");
+let SolidityFunction = require("web3/lib/web3/function.js");
 let wanUtil = require('wanchain-util');
 
 module.exports = class Contract {
@@ -59,40 +59,56 @@ module.exports = class Contract {
     }
   }
 
-  commandSha3(command) {
-    return wanUtil.sha3(command, 256);
-  }
-
-  getFuncSignature(funcName) {
-    return this.commandSha3(this.getcommandString(funcName)).slice(0, 4).toString('hex');
-  }
-  getEventSignature(funcName) {
-    return '0x' + this.commandSha3(this.getcommandString(funcName)).toString('hex');
-  }
+  // commandSha3(command) {
+  //   return wanUtil.sha3(command, 256);
+  // }
 
   // getFuncSignature(funcName) {
-  //   return this.abi.filter((json) => {
-  //     return json.type === 'funciton' && json.name === funcName;
-  //   }).map((json) => {
-  //     return new SolidityFunction(null, json, null);
-  //   }).map((func) => {
-  //     return func.signature();
-  //   })
+  //   return this.commandSha3(this.getcommandString(funcName)).slice(0, 4).toString('hex');
+  // }
+  // getEventSignature(funcName) {
+  //   return '0x' + this.commandSha3(this.getcommandString(funcName)).toString('hex');
   // }
 
-  // getEventSignature(eventName) {
-  //   return this.abi.filter((json) => {
-  //     return json.type === 'event' && json.name === eventName;
-  //   }).map((json) => {
-  //     return new SolidityEvent(null, json, null);
-  //   }).map((event) => {
-  //     return event.signature();
-  //   })
-  // }
+  getFuncSignature(funcName) {
+    return this.abi.filter((json) => {
+      return json.type === 'funciton' && json.name === funcName;
+    }).map((json) => {
+      return new SolidityFunction(null, json, null);
+    }).map((func) => {
+      return func.signature();
+    })
+  }
 
+  getEventSignature(eventName) {
+    return this.abi.filter((json) => {
+      return json.type === 'event' && json.name === eventName;
+    }).map((json) => {
+      return new SolidityEvent(null, json, null);
+    }).map((event) => {
+      return event.signature();
+    })
+  }
 
-  parseEvent(log) {
-
+  parseEvent(event) {
+    if (event === null) {
+      return event;
+    }
+    let decoders = this.abi.filter((json) => {
+      return json.type === 'event';
+    }).map((json) => {
+      // note first and third params only required only by enocde and execute;
+      // so don't call those!
+      return new SolidityEvent(null, json, null);
+    });
+    let decoder = decoders.find((decoder) => {
+      return (decoder.signature() === event.topics[0].replace("0x", ""));
+    });
+    if (decoder) {
+      return decoder.decode(event);
+    } else {
+      return null;
+    }
   }
 
   constructData(funcName, ...para) {

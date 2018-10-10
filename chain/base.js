@@ -352,6 +352,12 @@ class baseChain {
     return conInstance[contractFunc];
   }
 
+  getSolVar(abi, contractAddr, varName) {
+    let contract = this.theWeb3.eth.contract(abi);
+    let conInstance = contract.at(contractAddr);
+    return conInstance[varName];
+  }
+
   getERC20Interface(contractAddr, contractFunc) {
     return this.getSolInferface(chainSCConfig.erc20Abi, contractAddr, contractFunc);
   }

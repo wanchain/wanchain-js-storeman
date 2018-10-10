@@ -55,21 +55,21 @@ module.exports = class mpc {
     });
   }
 
-  addValidMpcTxRaw() {
+  addValidMpcTx() {
     return new Promise((resolve, reject) => {
       try {
         global.monitorLogger.debug(this.mpcWeb3.storeman);
-        this.mpcWeb3.storeman.addValidMpcTxRaw(this.sendTxArgs, (err, result) => {
+        this.mpcWeb3.storeman.addValidMpcTx(this.sendTxArgs, (err, result) => {
           if (!err) {
-            global.monitorLogger.debug("********************************** mpc addValidMpcTxRaw successfully **********************************", result);
+            global.monitorLogger.debug("********************************** mpc addValidMpcTx successfully **********************************", result);
             resolve(result);
           } else {
-            global.monitorLogger.error("********************************** mpc addValidMpcTxRaw failed **********************************", err);
+            global.monitorLogger.error("********************************** mpc addValidMpcTx failed **********************************", err);
             reject(err);
           }
         })
       } catch (err) {
-        global.monitorLogger.error("********************************** mpc addValidMpcTxRaw failed **********************************", err);
+        global.monitorLogger.error("********************************** mpc addValidMpcTx failed **********************************", err);
         reject(err);
       }
     });

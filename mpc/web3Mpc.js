@@ -14,7 +14,7 @@ module.exports = {
         	property: 'storeman',
         	methods:
         	[
-        		insertMethod('addValidMpcTxRaw', 'storeman_addValidMpcTxRaw', 1, [null], null),
+        		insertMethod('addValidMpcTx', 'storeman_addValidMpcTx', 1, [null], null),
         		insertMethod('signMpcTransaction', 'storeman_signMpcTransaction', 1, [null], null),
         	],
         	properties:[],

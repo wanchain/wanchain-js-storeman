@@ -7,7 +7,7 @@ const {
 
 const ModelOps = require('db/modelOps');
 const Logger = require('comm/logger.js');
-const erc20CrossAgent = require('agent/Erc20CrossAgent.js');
+// const erc20CrossAgent = require('agent/Erc20CrossAgent.js');
 const sendMail = require('comm/sendMail');
 
 const fs = require('fs');
@@ -167,8 +167,13 @@ module.exports = class stateAction {
 
   initState(nextState, rollState) {
   	if (this.record.walletLockEvent.length !== 0) {
-        let status = (this.record.direction === 0) ? nextState : rollState;
-        this.updateState(status);
+      let status;
+      if(this.record.tokenType === 'COIN') {
+        status = nextState;
+      } else {
+        status = (this.record.direction === 0) ? nextState : rollState;
+      }
+      this.updateState(status);
   	}
   }
 
@@ -239,12 +244,12 @@ module.exports = class stateAction {
         await sleep(retryWaitTime);
       }
       for (var action of actionArray) {
-        let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, this.crossDirection, this.record, action, this.logger);
+        let newAgent = new global.agentDict[this.crossChain.toUpperCase()][this.tokenType](this.crossChain, this.tokenType, this.crossDirection, this.record, action);
         this.logger.debug("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
 
         newAgent.createTrans(action);
-        if (config.isLeader) {
+        if (config.isLeader || !(moduleConfig.mpcSignature)) {
           let content = await newAgent.sendTransSync();
           this.logger.debug("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
           this.logger.debug("sendTrans result is ", content);
@@ -323,7 +328,7 @@ module.exports = class stateAction {
   checkWaitTimeout() {}
 
   async checkAllowance(nextState, rollState) {
-    let newAgent = new erc20CrossAgent(this.crossChain, this.tokenType, 1, this.record);
+    let newAgent = new new global.agentDict[this.crossChain.toUpperCase()][this.tokenType](this.crossChain, this.tokenType, 1, this.record);
     let chain = getGlobalChain(this.crossChain);
     await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanEth, newAgent.contractAddr, moduleConfig.erc20Abi)
       .then((result) => {
@@ -383,7 +388,7 @@ module.exports = class stateAction {
         }
       }
 
-      if (!config.isLeader) {
+      if (!config.isLeader && moduleConfig.mpcSignature) {
         return;
       }
 
