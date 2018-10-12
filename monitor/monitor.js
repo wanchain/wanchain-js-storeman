@@ -391,7 +391,7 @@ module.exports = class stateAction {
 
       if (!config.isLeader && moduleConfig.mpcSignature) {
         content = {
-          transConfirmed: transConfirmed + 1;
+          transConfirmed: transConfirmed + 1
         }
         this.updateRecord(content);
         return;
@@ -416,7 +416,7 @@ module.exports = class stateAction {
         }
       } else {
           content = {
-            transConfirmed: transConfirmed + 1;
+            transConfirmed: transConfirmed + 1
           }
       }
       this.updateRecord(content);
