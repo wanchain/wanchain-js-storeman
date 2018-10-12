@@ -14,8 +14,8 @@
   "mailReceiver": "zhanli@wanchain.org",
   "issueCollection": "./issueCollection.txt",
 
-  "storemanEth": "0x38b6c9a1575c90ceabbfe31b204b6b3a3ce4b3d9",
-  "storemanWan": "0x765854f97f7a3b6762240c329331a870b65edd96",
+  "storemanEth": "0x41623962c5d44565de623d53eb677e0f300467d2",
+  "storemanWan": "0x06daa9379cbe241a84a65b217a11b38fe3b4b063",
 
   "crossTokens": {
     "ETH": {
