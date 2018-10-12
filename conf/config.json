@@ -1,7 +1,7 @@
 {
-  "ethWeb3Url": "/home/ubuntu/rinkebyData/geth.ipc",
-  "wanWeb3Url": "/home/ubuntu/.wanchain/gwan.ipc",
-  "mpcUrl": "/home/ubuntu/.wanchain/gwan.ipc",
+  "ethWeb3Url": "http://localhost:18545",
+  "wanWeb3Url": "http://localhost:8545",
+  "mpcUrl": "http://localhost:8545",
 
   "isLeader": false,
 
