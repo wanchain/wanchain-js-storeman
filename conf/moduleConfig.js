@@ -15,7 +15,7 @@ config.mpcSignature = true;
 
 config.retryTimes = 5;
 config.retryWaitTime = 60;
-config.confirmTimes = 10;
+config.confirmTimes = 60;
 
 config.logServerUrl = '54.149.227.183';
 config.logServerPort = 514;
