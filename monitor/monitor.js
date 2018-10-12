@@ -345,6 +345,7 @@ module.exports = class stateAction {
   async checkStoremanTransOnline(eventName, transHashName, nextState, rollState) {
     let content = {};
     let transOnChain;
+    let transConfirmed;
 
     if (this.record.direction === 0) {
       if (eventName === 'storemanRefundEvent') {
@@ -365,7 +366,7 @@ module.exports = class stateAction {
 
       if (eventName !== null) {
         let event = this.record[eventName];
-        let transConfirmed = this.record.transConfirmed;
+        transConfirmed = this.record.transConfirmed;
 
         if (event.length !== 0) {
           content = {
@@ -389,6 +390,10 @@ module.exports = class stateAction {
       }
 
       if (!config.isLeader && moduleConfig.mpcSignature) {
+        content = {
+          transConfirmed: transConfirmed + 1;
+        }
+        this.updateRecord(content);
         return;
       }
 
@@ -409,8 +414,12 @@ module.exports = class stateAction {
             transConfirmed: 0
           }
         }
-        this.updateRecord(content);
+      } else {
+          content = {
+            transConfirmed: transConfirmed + 1;
+          }
       }
+      this.updateRecord(content);
     } catch (err) {
       this.logger.error("checkStoremanTransOnline:", err);
     }
