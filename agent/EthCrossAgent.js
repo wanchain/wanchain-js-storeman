@@ -275,7 +275,7 @@ module.exports = class EthCrossAgent {
     this.logger.debug("********************************** setData **********************************", this.data, "hashX", this.hashKey);
     this.trans.setData(this.data);
     if (this.crossDirection === 1 && action === 'lock'){
-      this.trans.setValue('0x' + this.amount.toString(16));
+      this.trans.setValue(this.amount.toString(16));
     } else {
       this.trans.setValue(0);
     }
