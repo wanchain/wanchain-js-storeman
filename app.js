@@ -73,7 +73,7 @@ async function init() {
 
       tokenList[crossChain][tokenType].wanCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 0);
       tokenList[crossChain][tokenType].originCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 1);
-      tokenList[crossChain][tokenType].lockedTime = tokenList[crossChain][tokenType].wanCrossAgent.getLockedTime();
+      tokenList[crossChain][tokenType].lockedTime = await tokenList[crossChain][tokenType].wanCrossAgent.getLockedTime();
     }
   }
   monitorLogger.info(tokenList);
