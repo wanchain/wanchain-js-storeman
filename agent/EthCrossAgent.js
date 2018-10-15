@@ -114,11 +114,20 @@ module.exports = class EthCrossAgent {
 
   getLockedTime() {
     // return Number(this.chain.getSolVar(this.contract.abi, this.contractAddr, 'lockedTime')());
-    return new Promise(async (resolve, reject) => {
-      try{
-        let lockedTime = await this.chain.getSolVarSync(this.contract.abi, this.contractAddr, 'lockedTime')();
-        resolve(Number(lockedTime));
-      } catch(err) {
+    return new Promise((resolve, reject) => {
+      try {
+        let getLockedTime = this.chain.getSolVar(this.contract.abi, this.contractAddr, 'lockedTime');
+
+        getLockedTime((err, result) => {
+          if (!err) {
+            this.logger.debug("getLockedTime successfully");
+            resolve(Number(result));
+          } else {
+            this.logger.error("getLockedTime error:", err);
+            reject(err);
+          }
+        });
+      } catch (err) {
         this.logger.error("getLockedTime error:", err);
         reject(err);
       }
