@@ -129,7 +129,7 @@ module.exports = class EthCrossAgent {
     return new Promise(async (resolve, reject) => {
       this.logger.debug("getNonce begin!")
       while (global.mutex_nonce) {
-        sleep(3);
+        await sleep(3);
       }
       this.logger.debug("mutex_nonce true");
       global.mutex_nonce = true;
