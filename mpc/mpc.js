@@ -12,7 +12,7 @@ const {
 } = require('comm/lib');
 
 module.exports = class mpc {
-  constructor(trans, chainType, chainId) {
+  constructor(trans, chainType, chainId, hashX) {
     this.sendTxArgs = {
       From: trans.from,
       To: trans.to,
@@ -23,7 +23,8 @@ module.exports = class mpc {
       Data: trans.data,
       ChainType: chainType,
       ChainID: '0x' + chainId.toString(16)
-    }
+    };
+    this.hashX = hashX;
     global.monitorLogger.debug(this.sendTxArgs);
     this.mpcWeb3 = new Web3();
     if (config.mpcUrl.indexOf("http://") !== -1) {
@@ -40,16 +41,16 @@ module.exports = class mpc {
       try {
         this.mpcWeb3.storeman.signMpcTransaction(this.sendTxArgs, (err, result) => {
           if (!err) {
-            global.monitorLogger.debug("********************************** mpc signViaMpc successfully **********************************", result);
+            global.monitorLogger.debug("********************************** mpc signViaMpc successfully **********************************", result, "hashX:", this.hashX);
             resolve(result);
 
           } else {
-            global.monitorLogger.error("********************************** mpc signViaMpc failed **********************************", err);
+            global.monitorLogger.error("********************************** mpc signViaMpc failed **********************************", err, "hashX:", this.hashX);
             reject(err);
           }
         })
       } catch (err) {
-        global.monitorLogger.error("********************************** mpc signViaMpc failed **********************************", err);
+        global.monitorLogger.error("********************************** mpc signViaMpc failed **********************************", err, "hashX:", this.hashX);
         reject(err);
       }
     });
@@ -61,15 +62,15 @@ module.exports = class mpc {
         global.monitorLogger.debug(this.mpcWeb3.storeman);
         this.mpcWeb3.storeman.addValidMpcTx(this.sendTxArgs, (err, result) => {
           if (!err) {
-            global.monitorLogger.debug("********************************** mpc addValidMpcTx successfully **********************************", result);
+            global.monitorLogger.debug("********************************** mpc addValidMpcTx successfully **********************************", result, "hashX:", this.hashX);
             resolve(result);
           } else {
-            global.monitorLogger.error("********************************** mpc addValidMpcTx failed **********************************", err);
+            global.monitorLogger.error("********************************** mpc addValidMpcTx failed **********************************", err, "hashX:", this.hashX);
             reject(err);
           }
         })
       } catch (err) {
-        global.monitorLogger.error("********************************** mpc addValidMpcTx failed **********************************", err);
+        global.monitorLogger.error("********************************** mpc addValidMpcTx failed **********************************", err, "hashX:", this.hashX);
         reject(err);
       }
     });

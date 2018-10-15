@@ -304,7 +304,7 @@ module.exports = class EthCrossAgent {
       let rawTx;
       if(moduleConfig.mpcSignature) {
         let chainId = await this.chain.getNetworkId();
-        let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
+        let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
         rawTx = await mpc.signViaMpc();
         this.logger.debug("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, rawTx);
       } else {
@@ -339,7 +339,7 @@ module.exports = class EthCrossAgent {
     return new Promise(async (resolve, reject) => {
       try {
         let chainId = await this.chain.getNetworkId();
-        let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId);
+        let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
 
         mpc.addValidMpcTx();
         resolve();
