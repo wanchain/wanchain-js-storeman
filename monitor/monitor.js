@@ -328,7 +328,7 @@ module.exports = class stateAction {
   checkWaitTimeout() {}
 
   async checkAllowance(nextState, rollState) {
-    let newAgent = new new global.agentDict[this.crossChain.toUpperCase()][this.tokenType](this.crossChain, this.tokenType, 1, this.record);
+    let newAgent = new global.agentDict[this.crossChain.toUpperCase()][this.tokenType](this.crossChain, this.tokenType, 1, this.record);
     let chain = getGlobalChain(this.crossChain);
     await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanEth, newAgent.contractAddr, moduleConfig.erc20Abi)
       .then((result) => {

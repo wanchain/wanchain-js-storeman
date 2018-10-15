@@ -467,7 +467,7 @@ module.exports = class EthCrossAgent {
       }
       return [hashX, content];
     } catch (err) {
-      this.logger.error("some wrong happened during getDecodeEventDbData", chainType, crossChain, tokenType, decodeEvent);
+      this.logger.error("some wrong happened during getDecodeEventDbData", chainType, crossChain, tokenType, decodeEvent, err);
       return null;
     }
   }
