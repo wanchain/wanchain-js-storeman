@@ -127,10 +127,11 @@ module.exports = class EthCrossAgent {
   getNonce() {
 
     return new Promise(async (resolve, reject) => {
-
+      this.logger.debug("getNonce begin!")
       while (global.mutex_nonce) {
         sleep(3);
       }
+      this.logger.debug("mutex_nonce true");
       global.mutex_nonce = true;
       let nonce = 0;
       let chainNonce = this.transChainType + 'LastNonce';
@@ -141,6 +142,7 @@ module.exports = class EthCrossAgent {
       } else if (this.transChainType.toLowerCase() === 'eth') {
         storemanAddress = config.storemanEth;
       } else {
+        this.logger.debug("mutex_nonce false");
         global.mutex_nonce = false;
         return;
       }
@@ -159,10 +161,12 @@ module.exports = class EthCrossAgent {
           global[chainNonce] = parseInt(nonce, 16);
           global.nonce_pending = false;
         } 
+        this.logger.debug("mutex_nonce false");
         global.mutex_nonce = false;
         resolve(global[chainNonce]++);
       } catch (err) {
         this.logger.error("getNonce failed", err);
+        this.logger.debug("mutex_nonce false");
         global.mutex_nonce = false;
         reject(err);
       }
@@ -329,7 +333,7 @@ module.exports = class EthCrossAgent {
         }
       });
     } catch (err) {
-      this.logger.error("********************************** sendTransaction ********************************** hashX", this.hashKey, err);
+      this.logger.error("********************************** sendTransaction failed ********************************** hashX", this.hashKey, err);
       callback(err, null);
     }
   }
