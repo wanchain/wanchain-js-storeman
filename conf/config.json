@@ -38,6 +38,18 @@
       "0x40e72d86819cef00172db2250cdb222041d12112": {
         "tokenType": "ERC20",
         "tokenSymbol": "WCT_Three"
+      },
+      "0x54950025d1854808b09277fe082b54682b11a50b":{
+        "tokenType": "ERC20",
+        "tokenSymbol": "MKR"
+      },
+      "0xdbf193627ee704d38495c2f5eb3afc3512eafa4c":{
+        "tokenType": "ERC20",
+        "tokenSymbol": "DAI"
+      },
+      "0x00f58d6d585f84b2d7267940cede30ce2fe6eae8":{
+        "tokenType": "ERC20",
+        "tokenSymbol": "ZRX"
       }
     }
   }
