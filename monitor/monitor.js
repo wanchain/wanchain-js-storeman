@@ -151,7 +151,7 @@ module.exports = class stateAction {
           if (typeof(self[action]) === "function") {
             let paras = stateDict[self.state].paras;
             paras = paras.concat([stateDict[self.state].nextState, stateDict[self.state].rollState]);
-            self.logger.debug("********************************** takeAction ********************************** hashX:", action, paras)
+            self.logger.debug("********************************** takeAction ********************************** hashX:", this.hashX, action, paras)
             await self[action](...paras);
           }
           // resolve();
