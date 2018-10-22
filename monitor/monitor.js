@@ -10,7 +10,7 @@ const Logger = require('comm/logger.js');
 // const erc20CrossAgent = require('agent/Erc20CrossAgent.js');
 const sendMail = require('comm/sendMail');
 
-// const fs = require('fs');
+const fs = require('fs');
 // const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
@@ -240,7 +240,7 @@ module.exports = class stateAction {
 
     if (!Array.isArray(actionArray)) {
       if (actionArray !== 'redeem' || actionArray !== 'revoke') {
-        if (!checkStoremanQuota) {
+        if (!this.checkStoremanQuota) {
           let content = {
             status: 'transIgnored',
             transConfirmed: 0
