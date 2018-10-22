@@ -216,7 +216,7 @@ async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
   if (curBlock > moduleConfig.CONFIRM_BLOCK_NUM) {
     let to = curBlock - moduleConfig.CONFIRM_BLOCK_NUM;
     try {
-      if (from > to) {
+      if (from <= to) {
         events = await getScEvents(logger, chain, scAddr, topics, from, to);
       }
       logger.info("events: ", events.length);
