@@ -1,7 +1,7 @@
 const baseChain = require("chain/base.js");
 const chainSCConfig = require('conf/moduleConfig.js');
 // const solc = require('solc');
-const fs = require('fs');
+// const fs = require('fs');
 // const wanUtil = require('wanchain-util');
 
 class WanChain extends baseChain {

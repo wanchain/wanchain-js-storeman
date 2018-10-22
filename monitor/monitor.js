@@ -240,7 +240,7 @@ module.exports = class stateAction {
 
     if (!Array.isArray(actionArray)) {
       if (actionArray !== 'redeem' || actionArray !== 'revoke') {
-        if (!this.checkStoremanQuota) {
+        if (!await this.checkStoremanQuota) {
           let content = {
             status: 'transIgnored',
             transConfirmed: 0
