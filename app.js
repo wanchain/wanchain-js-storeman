@@ -161,12 +161,19 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
         }
 
         if (content !== null) {
-          try {
-            modelOps.saveScannedEvent(...content);
-          } catch (err) {
-            syncLogger.error("********************************** saveScannedEvent faild, try another time **********************************", err);
-            modelOps.saveScannedEvent(...content);
-          }
+          // try {
+          //   modelOps.saveScannedEvent(...content);
+          // } catch (err) {
+          //   syncLogger.error("********************************** saveScannedEvent faild, try another time **********************************", err);
+          //   modelOps.saveScannedEvent(...content);
+          // }
+          modelOps.syncSaveScannedEvent(...content, (err, result) => {
+            if(err) {
+              syncLogger.error("********************************** saveScannedEvent faild, try another time **********************************", err);
+              modelOps.saveScannedEvent(...content);
+            }
+            resolve();
+          })
         }
         resolve();
       } catch (err) {
