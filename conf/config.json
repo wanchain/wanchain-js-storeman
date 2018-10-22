@@ -1,55 +1,113 @@
 {
-  "ethWeb3Url": "/home/ubuntu/ethereum/20180607/rinkebyData/geth.ipc",
-  "wanWeb3Url": "/home/ubuntu/.wanchain1/gwan.ipc",
-  "mpcUrl": "/home/ubuntu/.wanchain1/gwan.ipc",
+  "main": {
+    "ethWeb3Url": "http://18.236.235.133:18545",
+    "wanWeb3Url": "http://18.236.235.133:8545",
+    "mpcUrl": "http://18.236.235.133:8545",
 
-  "isLeader": false,
+    "isLeader": false,
 
-  "maxEthGasPrice": 50,
-  "gasPriceDelta": 10,
-  "wanGasPrice": 180,
-  "wanGasLimit": 470000,
-  "ethGasLimit": 470000,
+    "maxEthGasPrice": 50,
+    "gasPriceDelta": 10,
+    "wanGasPrice": 180,
+    "wanGasLimit": 470000,
+    "ethGasLimit": 470000,
 
-  "mailReceiver": "zhanli@wanchain.org",
-  "issueCollection": "./issueCollection.txt",
+    "mailReceiver": "monitor@wanchain.org",
+    "issueCollection": "./issueCollection.txt",
 
-  "storemanEth": "0x41623962c5d44565de623d53eb677e0f300467d2",
-  "storemanWan": "0x06daa9379cbe241a84a65b217a11b38fe3b4b063",
+    "storemanEth": "0x41623962c5d44565de623d53eb677e0f300467d2",
+    "storemanWan": "0x06daa9379cbe241a84a65b217a11b38fe3b4b063",
 
-  "crossTokens": {
-    "ETH": {
-      "0x": {
-        "tokenType": "COIN",
-        "tokenSymbol": "ETH"
-      },
-      "0x87271f3df675f13e8ceffa6e426d18a787267e9e": {
-        "tokenType": "ERC20",
-        "tokenSymbol": "WCT"
-      },
-      "0x7017500899433272b4088afe34c04d742d0ce7df": {
-        "tokenType": "ERC20",
-        "tokenSymbol": "WCT_One"
-      },
-      "0xce7fb657a37afa635f60a4e2c707bb47737d511c": {
-        "tokenType": "ERC20",
-        "tokenSymbol": "WCT_Two"
-      },
-      "0x40e72d86819cef00172db2250cdb222041d12112": {
-        "tokenType": "ERC20",
-        "tokenSymbol": "WCT_Three"
-      },
-      "0x54950025d1854808b09277fe082b54682b11a50b":{
-        "tokenType": "ERC20",
-        "tokenSymbol": "MKR"
-      },
-      "0xdbf193627ee704d38495c2f5eb3afc3512eafa4c":{
-        "tokenType": "ERC20",
-        "tokenSymbol": "DAI"
-      },
-      "0x00f58d6d585f84b2d7267940cede30ce2fe6eae8":{
-        "tokenType": "ERC20",
-        "tokenSymbol": "ZRX"
+    "crossTokens": {
+      "ETH": {
+        "0x": {
+          "tokenType": "COIN",
+          "tokenSymbol": "ETH"
+        },
+        "0x87271f3df675f13e8ceffa6e426d18a787267e9e": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "WCT"
+        },
+        "0x7017500899433272b4088afe34c04d742d0ce7df": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "WCT_One"
+        },
+        "0xce7fb657a37afa635f60a4e2c707bb47737d511c": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "WCT_Two"
+        },
+        "0x40e72d86819cef00172db2250cdb222041d12112": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "WCT_Three"
+        },
+        "0x54950025d1854808b09277fe082b54682b11a50b": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "MKR"
+        },
+        "0xdbf193627ee704d38495c2f5eb3afc3512eafa4c": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "DAI"
+        },
+        "0x00f58d6d585f84b2d7267940cede30ce2fe6eae8": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "ZRX"
+        }
+      }
+    }
+  },
+  "testnet": {
+    "ethWeb3Url": "http://18.236.235.133:18545",
+    "wanWeb3Url": "http://18.236.235.133:8545",
+    "mpcUrl": "http://18.236.235.133:8545",
+
+    "isLeader": false,
+
+    "maxEthGasPrice": 50,
+    "gasPriceDelta": 10,
+    "wanGasPrice": 180,
+    "wanGasLimit": 470000,
+    "ethGasLimit": 470000,
+
+    "mailReceiver": "zhanli@wanchain.org",
+    "issueCollection": "./issueCollection.txt",
+
+    "storemanEth": "0x41623962c5d44565de623d53eb677e0f300467d2",
+    "storemanWan": "0x06daa9379cbe241a84a65b217a11b38fe3b4b063",
+
+    "crossTokens": {
+      "ETH": {
+        "0x": {
+          "tokenType": "COIN",
+          "tokenSymbol": "ETH"
+        },
+        "0x87271f3df675f13e8ceffa6e426d18a787267e9e": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "WCT"
+        },
+        "0x7017500899433272b4088afe34c04d742d0ce7df": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "WCT_One"
+        },
+        "0xce7fb657a37afa635f60a4e2c707bb47737d511c": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "WCT_Two"
+        },
+        "0x40e72d86819cef00172db2250cdb222041d12112": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "WCT_Three"
+        },
+        "0x54950025d1854808b09277fe082b54682b11a50b": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "MKR"
+        },
+        "0xdbf193627ee704d38495c2f5eb3afc3512eafa4c": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "DAI"
+        },
+        "0x00f58d6d585f84b2d7267940cede30ce2fe6eae8": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "ZRX"
+        }
       }
     }
   }

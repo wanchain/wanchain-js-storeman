@@ -63,9 +63,9 @@ const eventSchema = new Schema({
     lockHashFailed,
     waitingX, 
     receivedX,
-    waitingCrossRefundConfirming,
-    refundFailed,
-    refundFinished, 
+    waitingCrossRedeemConfirming,
+    redeemFailed,
+    redeemFinished,
     walletRevoked,
     waitingRevoke,
     waitingCrossRevokeConfirming,
@@ -78,6 +78,10 @@ const eventSchema = new Schema({
     type: Number
   },
   timestamp: {
+    type: Number,
+    default: 0
+  },
+  lockedTime: {
     type: Number,
     default: 0
   },
@@ -115,16 +119,16 @@ const eventSchema = new Schema({
     type: Array,
     default: []
   },
-  walletRefundEvent: {
+  walletRedeemEvent: {
     type: Array,
     default: []
   },
-  storemanRefundTxHash: {
+  storemanRedeemTxHash: {
     type: String,
     lowercase: true,
     default: '0x'
   },
-  storemanRefundEvent: {
+  storemanRedeemEvent: {
     type: Array,
     default: []
   },

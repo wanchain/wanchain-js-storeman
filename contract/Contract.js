@@ -22,19 +22,19 @@ module.exports = class Contract {
     }
   }
 
-  compileSol(tokenFile) {
-    let content = fs.readFileSync(tokenFile, 'utf8');
-    return solc.compile(content, 1);
-  }
+  // compileSol(tokenFile) {
+  //   let content = fs.readFileSync(tokenFile, 'utf8');
+  //   return solc.compile(content, 1);
+  // }
 
-  getAbiFromSol(compileSol, tokenName) {
-    return JSON.parse(compileSol.contracts[':' + tokenName].interface);
-  }
+  // getAbiFromSol(compileSol, tokenName) {
+  //   return JSON.parse(compileSol.contracts[':' + tokenName].interface);
+  // }
 
-  setAbiFromFile(tokenFile, tokenName) {
-    let compilesol = this.compileSol(tokenFile);
-    this.abi = this.getAbiFromSol(compilesol, tokenName);
-  }
+  // setAbiFromFile(tokenFile, tokenName) {
+  //   let compilesol = this.compileSol(tokenFile);
+  //   this.abi = this.getAbiFromSol(compilesol, tokenName);
+  // }
 
   getSolInferface(contractFunc) {
     let contract = web3.eth.contract(this.abi);
@@ -42,22 +42,22 @@ module.exports = class Contract {
     return conInstance[contractFunc];
   }
 
-  getcommandString(funcName) {
-    for (var i = 0; i < this.abi.length; ++i) {
-      let item = this.abi[i];
-      if (item.name == funcName) {
-        let command = funcName + '(';
-        for (var j = 0; j < item.inputs.length; ++j) {
-          if (j != 0) {
-            command = command + ',';
-          }
-          command = command + item.inputs[j].type;
-        }
-        command = command + ')';
-        return command;
-      }
-    }
-  }
+  // getcommandString(funcName) {
+  //   for (var i = 0; i < this.abi.length; ++i) {
+  //     let item = this.abi[i];
+  //     if (item.name == funcName) {
+  //       let command = funcName + '(';
+  //       for (var j = 0; j < item.inputs.length; ++j) {
+  //         if (j != 0) {
+  //           command = command + ',';
+  //         }
+  //         command = command + item.inputs[j].type;
+  //       }
+  //       command = command + ')';
+  //       return command;
+  //     }
+  //   }
+  // }
 
   // commandSha3(command) {
   //   return wanUtil.sha3(command, 256);

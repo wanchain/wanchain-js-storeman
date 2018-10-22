@@ -10,9 +10,11 @@ const Logger = require('comm/logger.js');
 // const erc20CrossAgent = require('agent/Erc20CrossAgent.js');
 const sendMail = require('comm/sendMail');
 
-const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('conf/config.json'));
+// const fs = require('fs');
+// const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
+const configJson = require('conf/config.json');
+const config = moduleConfig.testnet?configJson.main:configJson.testnet;
 
 const retryTimes = moduleConfig.retryTimes;
 const retryWaitTime = moduleConfig.retryWaitTime;
@@ -29,90 +31,95 @@ function getWeiFromEther(ether) {
 var stateDict = {
   init: {
     action: 'initState',
-    paras: [],
-    nextState: 'waitingCross',
-    rollState: 'checkApprove'
+    paras: ['waitingCross', 'checkApprove'],
+    // nextState: 'waitingCross',
+    // rollState: 'checkApprove'
   },
   checkApprove: {
     action: 'checkAllowance',
-    paras: [],
-    nextState: 'waitingCross',
-    rollState: 'waitingApproveLock'
+    paras: ['waitingCross', 'waitingApproveLock'],
+    // nextState: 'waitingCross',
+    // rollState: 'waitingApproveLock'
   },
   waitingApproveLock: {
     action: 'sendTrans',
-    paras: [['approveZero', 'approve', 'lock'], 'storemanLockEvent'],
-    nextState: ['waitingCrossLockConfirming', 'waitingX'],
-    rollState: ['waitingApproveLock', 'waitingIntervention']
+    paras: [
+      ['approveZero', 'approve', 'lock'], 'storemanLockEvent', ['waitingCrossLockConfirming', 'waitingX'],
+      ['waitingApproveLock', 'waitingIntervention']
+    ],
+    // nextState: ['waitingCrossLockConfirming', 'waitingX'],
+    // rollState: ['waitingApproveLock', 'waitingIntervention']
   },
   waitingCross: {
     action: 'sendTrans',
-    paras: ['lock', 'storemanLockEvent'],
-    nextState: ['waitingCrossLockConfirming', 'waitingX'],
-    rollState: ['waitingCross', 'waitingIntervention']
+    paras: ['lock', 'storemanLockEvent', ['waitingCrossLockConfirming', 'waitingX'],
+      ['waitingCross', 'waitingIntervention']
+    ],
+    // nextState: ['waitingCrossLockConfirming', 'waitingX'],
+    // rollState: ['waitingCross', 'waitingIntervention']
   },
   waitingCrossLockConfirming: {
     action: 'checkStoremanTransOnline',
-    paras: ['storemanLockEvent', 'storemanLockTxHash'],
-    nextState: 'waitingX',
-    rollState: ['init', 'waitingIntervention']
+    paras: ['storemanLockEvent', 'storemanLockTxHash', 'waitingX', ['init', 'waitingIntervention']],
+    // nextState: 'waitingX',
+    // rollState: ['init', 'waitingIntervention']
   },
   waitingX: {
     action: 'checkWalletEventOnline',
-    paras: ['walletRefundEvent'],
-    nextState: 'receivedX',
-    rollState: 'waitingX'
+    paras: ['walletRedeemEvent', 'receivedX', 'waitingX'],
+    // nextState: 'receivedX',
+    // rollState: 'waitingX'
   },
   receivedX: {
     action: 'sendTrans',
-    paras: ['refund', 'storemanRefundEvent'],
-    nextState: ['waitingCrossRefundConfirming', 'refundFinished'],
-    rollState: ['receivedX', 'waitingIntervention']
+    paras: ['redeem', 'storemanRedeemEvent', ['waitingCrossRedeemConfirming', 'redeemFinished'],
+      ['receivedX', 'waitingIntervention']
+    ],
+    // nextState: ['waitingCrossRedeemConfirming', 'redeemFinished'],
+    // rollState: ['receivedX', 'waitingIntervention']
   },
-  waitingCrossRefundConfirming: {
+  waitingCrossRedeemConfirming: {
     action: 'checkStoremanTransOnline',
-    paras: ['storemanRefundEvent', 'storemanRefundTxHash'],
-    nextState: 'refundFinished',
-    rollState: ['receivedX', 'waitingIntervention']
+    paras: ['storemanRedeemEvent', 'storemanRedeemTxHash', 'redeemFinished', ['receivedX', 'waitingIntervention']],
+    // nextState: 'redeemFinished',
+    // rollState: ['receivedX', 'waitingIntervention']
   },
-  refundFinished: {
-  },
+  redeemFinished: {},
   waitingRevoke: {
     action: 'sendTrans',
-    paras: ['revoke', 'storemanRevokeEvent'],
-    nextState: ['waitingCrossRevokeConfirming', 'revokeFinished'],
-    rollState: ['waitingRevoke', 'waitingIntervention']
+    paras: ['revoke', 'storemanRevokeEvent', ['waitingCrossRevokeConfirming', 'revokeFinished'],
+      ['waitingRevoke', 'waitingIntervention']
+    ],
+    // nextState: ['waitingCrossRevokeConfirming', 'revokeFinished'],
+    // rollState: ['waitingRevoke', 'waitingIntervention']
   },
   waitingCrossRevokeConfirming: {
     action: 'checkStoremanTransOnline',
-    paras: ['storemanRevokeEvent', 'storemanRevokeTxHash'],
-    nextState: 'revokeFinished',
-    rollState: ['waitingRevoke', 'waitingIntervention']
+    paras: ['storemanRevokeEvent', 'storemanRevokeTxHash', 'revokeFinished', ['waitingRevoke', 'waitingIntervention']],
+    // nextState: 'revokeFinished',
+    // rollState: ['waitingRevoke', 'waitingIntervention']
   },
-  revokeFinished: {
-  },
+  revokeFinished: {},
   waitingIntervention: {
     action: 'takeIntervention',
-    paras: [],
-    nextState: 'interventionPending',
-    rollState: 'waitingIntervention'
+    paras: ['interventionPending', 'waitingIntervention'],
+    // nextState: 'interventionPending',
+    // rollState: 'waitingIntervention'
   },
-  transIgnored: {
-  },
+  transIgnored: {},
   foundLosted: {
     action: 'takeIntervention',
-    paras: [],
-    nextState: 'transFinished',
-    rollState: 'waitingIntervention'
+    paras: ['transFinished', 'waitingIntervention'],
+    // nextState: 'transFinished',
+    // rollState: 'waitingIntervention'
   },
   interventionPending: {
     action: 'initState',
-    paras: [],
-    nextState: 'waitingCross',
-    rollState: 'checkApprove'
+    paras: ['waitingCross', 'checkApprove'],
+    // nextState: 'waitingCross',
+    // rollState: 'checkApprove'
   },
-  transFinished: {
-  }
+  transFinished: {}
 };
 
 module.exports = class stateAction {
@@ -150,7 +157,7 @@ module.exports = class stateAction {
           let action = stateDict[self.state].action;
           if (typeof(self[action]) === "function") {
             let paras = stateDict[self.state].paras;
-            paras = paras.concat([stateDict[self.state].nextState, stateDict[self.state].rollState]);
+            // paras = paras.concat([stateDict[self.state].nextState, stateDict[self.state].rollState]);
             self.logger.debug("********************************** takeAction ********************************** hashX:", this.hashX, action, paras)
             await self[action](...paras);
           }
@@ -232,6 +239,16 @@ module.exports = class stateAction {
     }
 
     if (!Array.isArray(actionArray)) {
+      if (actionArray !== 'redeem' || actionArray !== 'revoke') {
+        if (!checkStoremanQuota) {
+          let content = {
+            status: 'transIgnored',
+            transConfirmed: 0
+          }
+          this.updateRecord(content);
+          return;
+        }
+      }
       actionArray = [actionArray];
     } else {
       actionArray = [...actionArray];
@@ -288,7 +305,7 @@ module.exports = class stateAction {
     if (state === "waitingRevoke" ||
       state === "waitingCrossRevokeConfirming" ||
       state === "revokeFailed") {
-      if (record.walletRefundEvent.length !== 0) {
+      if (record.walletRedeemEvent.length !== 0) {
         this.updateState('foundLosted');
       } 
       return false;
@@ -296,11 +313,11 @@ module.exports = class stateAction {
 
     try {
       let HTLCtime = Number(record.HTLCtime);
-      // let suspendTime = Number(record.suspendTime);
+      let suspendTime = Number(record.suspendTime);
       let timestamp = Number(record.timestamp);
 
       let HTLCtimeDate = new Date(HTLCtime).toString();
-      // let suspendTimeDate = new Date(suspendTime).toString();
+      let suspendTimeDate = new Date(suspendTime).toString();
       let timestampDate = new Date(timestamp).toString();
       let nowData = new Date().toString();
 
@@ -308,14 +325,22 @@ module.exports = class stateAction {
         this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
         if (record.storemanRevokeEvent.length !== 0) {
           this.updateState('revokeFinished');
-        } else if (record.storemanRefundEvent.length !== 0) {
-          this.updateState('refundFinished');
+        } else if (record.storemanRedeemEvent.length !== 0) {
+          this.updateState('redeemFinished');
         } else if (record.storemanLockEvent.length === 0) {
           this.updateState('transIgnored');
-        } else if (record.walletRefundEvent.length !== 0) {
+        } else if (record.walletRedeemEvent.length !== 0) {
           this.updateState('foundLosted');
         } else {
           this.updateState('waitingRevoke');
+        }
+        return true;
+      }
+
+      if (suspendTime <= Date.now()) {
+        this.logger.debug("********************************** checkSecureSuspendTimeOut ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "suspendTimeDate:", suspendTimeDate, "nowData:", nowData);
+        if (record.storemanLockEvent.length === 0) {
+          this.updateState('transIgnored');
         }
         return true;
       }
@@ -325,7 +350,7 @@ module.exports = class stateAction {
     return false;
   }
 
-  checkWaitTimeout() {}
+  // checkWaitTimeout() {}
 
   async checkAllowance(nextState, rollState) {
     let newAgent = new global.agentDict[this.crossChain.toUpperCase()][this.tokenType](this.crossChain, this.tokenType, 1, this.record);
@@ -348,13 +373,13 @@ module.exports = class stateAction {
     let transConfirmed;
 
     if (this.record.direction === 0) {
-      if (eventName === 'storemanRefundEvent') {
+      if (eventName === 'storemanRedeemEvent') {
         transOnChain = this.crossChain;
       } else {
         transOnChain = 'wan';
       }
     } else {
-      if (eventName === 'storemanRefundEvent') {
+      if (eventName === 'storemanRedeemEvent') {
         transOnChain = 'wan';
       } else {
         transOnChain = this.crossChain;
@@ -435,6 +460,44 @@ module.exports = class stateAction {
       }
     } catch (err) {
       this.logger.error("checkWalletEventOnline:", this.record.hashX, eventName, err);
+    }
+  }
+
+  async getStoremanQuota() {
+    let storemanGroupAddr = moduleConfig.storemanWan;
+    let storemanQuotaInfo;
+    let chain = getGlobalChain(this.crossChain);
+
+    try{
+      if(this.tokenType === 'COIN') {
+        storemanQuotaInfo = await chain.getStoremanQuota(this.crossChain.toUpperCase(), this.tokenType, storemanGroupAddr);
+      } else {
+        storemanQuotaInfo = await chain.getErc20StoremanQuota(this.crossChain.toUpperCase(), this.tokenType, this.record.tokenAddr, storemanGroupAddr);
+      }
+      this.logger.debug("getStoremanQuota result is", storemanQuotaInfo);
+
+      if(this.crossDirection === 0) {
+        return storemanQuotaInfo[1];
+      } else {
+        return storemanQuotaInfo[2];
+      }
+    } catch(err) {
+      this.logger.error("getStoremanQuota error:", err);
+      return null;
+    }
+  }
+
+  async checkStoremanQuota() {
+    let boundQuota = await this.getStoremanQuota();
+
+    if(boundQuota !== null) {
+      if(web3.toBigNumber(this.record.value) > web3.toBigNumber(boundQuota)) {
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return false;
     }
   }
 }

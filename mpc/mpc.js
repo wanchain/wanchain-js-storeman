@@ -3,8 +3,11 @@
 const Web3 = require("web3");
 const web3Mpc = require("mpc/web3Mpc.js");
 var net = require('net');
-const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('conf/config.json'));
+// const fs = require('fs');
+// const config = JSON.parse(fs.readFileSync('conf/config.json'));
+const moduleConfig = require('conf/moduleConfig.js');
+const configJson = require('conf/config.json');
+const config = moduleConfig.testnet?configJson.main:configJson.testnet;
 
 const {
   getGlobalChain,

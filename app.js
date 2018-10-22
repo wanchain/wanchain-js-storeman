@@ -8,15 +8,19 @@ const Erc20CrossAgent = require("agent/Erc20CrossAgent.js");
 const EthCrossAgent = require("agent/EthCrossAgent.js");
 const StateAction = require("monitor/monitor.js");
 
-const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('conf/config.json'));
+// const fs = require('fs');
+// const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
+const configJson = require('conf/config.json');
+const config = moduleConfig.testnet?configJson.main:configJson.testnet;
+
+console.log(config);
+console.log(moduleConfig);
 
 const {
   initChain,
   initNonce,
   getGlobalChain,
-  // getChain,
   sleep
 } = require('comm/lib');
 
@@ -43,7 +47,6 @@ async function init() {
 
   global.storemanRestart = true;
 
-  // tokenList.wanchainHtlcAddr = [];
   tokenList.supportTokenAddrs = [];
   for (let crossChain in moduleConfig.crossInfoDict) {
     
@@ -54,7 +57,6 @@ async function init() {
 
     tokenList[crossChain] = {};
 
-    // tokenList[crossChain].originalChainHtlcAddr = [];
     tokenList[crossChain].supportTokens = {};
 
     for (let token in config["crossTokens"][crossChain]) {
@@ -67,9 +69,6 @@ async function init() {
 
       tokenList[crossChain][tokenType].wanchainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr;
       tokenList[crossChain][tokenType].originalChainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr;
-
-      // tokenList.wanchainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr);
-      // tokenList[crossChain].originalChainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr);
 
       tokenList[crossChain][tokenType].wanCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 0);
       tokenList[crossChain][tokenType].originCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 1);
@@ -188,164 +187,52 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
   }
 }
 
-async function splitEvent1(chainType, events) {
-  let multiEvents = [...events].map((event) => {
-    return new Promise((resolve, reject) => {
-      try {
-        for (let chain in moduleConfig.crossInfoDict) {
-          if (chainType !== 'wan' && chainType !== chain.toLowerCase()) {
-            continue;
-          } 
-          for (let tokenType in moduleConfig.crossInfoDict[chain]) {
-            let tokenTypeHandler = tokenList[chain][tokenType];
-
-            let content = {};
-            let hashX = '0x';
-            let data = [];
-            let tokenAddr;
-            if ((event.topics[0] === tokenTypeHandler.originCrossAgent.depositLockEvent && chainType !== 'wan') ||
-              (event.topics[0] === tokenTypeHandler.wanCrossAgent.withdrawLockEvent && chainType === 'wan')) {
-              syncLogger.debug("********************************** 1: found new wallet lock transaction ********************************** hashX", event.topics[3]);
-              
-              console.log(event);
-              let decodeLog = tokenTypeHandler.originCrossAgent.contract.parseEvent(event);
-              console.log(decodeLog);
-
-              hashX = event.topics[3].toLowerCase();
-              data = splitData(event.data);
-              tokenAddr = (chainType !== 'wan') ? '0x' + data[2].substr(-40, 40) : '0x' + data[3].substr(-40, 40);
-              content = {
-                hashX: event.topics[3].toLowerCase(),
-                direction: (chainType !== 'wan') ? 0 : 1,
-                crossChain: chain.toLowerCase(),
-                tokenType: tokenType,
-                tokenAddr: tokenAddr,
-                tokenSymbol: config["crossTokens"][chain][tokenAddr].tokenSymbol,
-                originChain: chainType,
-                from: '0x' + event.topics[1].substr(-40, 40),
-                crossAddress: '0x' + data[1].substr(-40, 40),
-                toHtlcAddr: event.address.toLowerCase(),
-                storeman: '0x' + event.topics[2].substr(-40, 40),
-                value: parseInt(data[0], 16),
-                blockNumber: event.blockNumber,
-                timestamp: event.timestamp * 1000,
-                suspendTime: (1000 * Number(moduleConfig.lockedTime) + Number(event.timestamp) * 1000).toString(),
-                HTLCtime: (1000 * Number(moduleConfig.lockedTime) + Number(event.timestamp) * 1000).toString(),
-                walletLockEvent: event
-              };
-            } else if ((event.topics[0] === tokenTypeHandler.wanCrossAgent.depositLockEvent && chainType === 'wan') ||
-              (event.topics[0] === tokenTypeHandler.originCrossAgent.withdrawLockEvent && chainType !== 'wan')) {
-              syncLogger.debug("********************************** 2: found storeman lock transaction ********************************** hashX", event.topics[3]);
-              hashX = event.topics[3].toLowerCase();
-              content = {
-                HTLCtime: (1000 * Number(moduleConfig.lockedTime) + Number(event.timestamp) * 1000).toString(),
-                storemanLockTxHash: event.transactionHash.toLowerCase(),
-                storemanLockEvent: event
-              };
-            } else if ((event.topics[0] === tokenTypeHandler.wanCrossAgent.depositRefundEvent && chainType === 'wan') ||
-              (event.topics[0] === tokenTypeHandler.originCrossAgent.withdrawRefundEvent && chainType !== 'wan')) {
-              syncLogger.debug("********************************** 3: found wallet refund transaction ********************************** hashX", event.topics[3]);
-              hashX = event.topics[3].toLowerCase();
-              data = splitData(event.data);
-              content = {
-                x: '0x' + data[0],
-                walletRefundEvent: event,
-              };
-            } else if ((event.topics[0] === tokenTypeHandler.originCrossAgent.depositRefundEvent && chainType !== 'wan') ||
-              (event.topics[0] === tokenTypeHandler.wanCrossAgent.withdrawRefundEvent && chainType === 'wan')) {
-              syncLogger.debug("********************************** 4: found storeman refund transaction ********************************** hashX", event.topics[3]);
-              hashX = event.topics[3].toLowerCase();
-              content = {
-                storemanRefundTxHash: event.transactionHash.toLowerCase(),
-                storemanRefundEvent: event
-              };
-            } else if ((event.topics[0] === tokenTypeHandler.originCrossAgent.depositRevokeEvent && chainType !== 'wan') ||
-              (event.topics[0] === tokenTypeHandler.wanCrossAgent.withdrawRevokeEvent && chainType === 'wan')) {
-              syncLogger.debug("********************************** 5: found wallet revoke transaction ********************************** hashX", event.topics[2]);
-              hashX = event.topics[2].toLowerCase();
-              content = {
-                walletRevokeEvent: event,
-              };
-            } else if ((event.topics[0] === tokenTypeHandler.wanCrossAgent.depositRevokeEvent && chainType === 'wan') ||
-              (event.topics[0] === tokenTypeHandler.originCrossAgent.withdrawRevokeEvent && chainType !== 'wan')) {
-              syncLogger.debug("********************************** 6: found storeman revoke transaction ********************************** hashX", event.topics[2]);
-              hashX = event.topics[2].toLowerCase();
-              content = {
-                storemanRevokeTxHash: event.transactionHash.toLowerCase(),
-                storemanRevokeEvent: event
-              };
-            }
-            if (hashX !== '0x') {
-              try {
-                modelOps.saveScannedEvent(hashX, content);
-              } catch (err) {
-                syncLogger.error("********************************** saveScannedEvent faild, try another time **********************************", err);
-                modelOps.saveScannedEvent(hashX, content);
-              }
-
-            }
-          }
-        }
-        resolve();
-      } catch (err) {
-        reject(err);
-      }
-    });
-  });
-
-  try {
-    await Promise.all(multiEvents);
-    syncLogger.debug("********************************** splitEvent done **********************************");
-  } catch (err) {
-    global.syncLogger.error("splitEvent", err);
-    return Promise.reject(err);
-  }
-}
-
 async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
   logger.debug("********************************** syncChain **********************************", chainType, crossChain, tokenType);
   let blockNumber = 0;
-    try {
-      blockNumber = await modelOps.getScannedBlockNumberSync(chainType);
-      if (blockNumber > moduleConfig.SAFE_BLOCK_NUM) {
-        blockNumber -= moduleConfig.SAFE_BLOCK_NUM;
-      } else {
-        blockNumber = moduleConfig.startSyncBlockNum[chainType.toUpperCase()];
-      }
-      logger.info("Current blockNumber in db is:", blockNumber, chainType);
-    } catch (err) {
-      logger.error(err);
-      return;
+  try {
+    blockNumber = await modelOps.getScannedBlockNumberSync(chainType);
+    if (blockNumber > moduleConfig.SAFE_BLOCK_NUM) {
+      blockNumber -= moduleConfig.SAFE_BLOCK_NUM;
+    } else {
+      blockNumber = moduleConfig.startSyncBlockNum[chainType.toUpperCase()];
     }
+    logger.info("Current blockNumber in db is:", blockNumber, chainType);
+  } catch (err) {
+    logger.error(err);
+    return;
+  }
 
-    let chain = getGlobalChain(chainType);
-    let from = blockNumber;
-    let curBlock = 0;
-    let topics = [];
-    let events;
-    
+  let chain = getGlobalChain(chainType);
+  let from = blockNumber;
+  let curBlock = 0;
+  let topics = [];
+  let events = [];
+
+  try {
+    curBlock = await chain.getBlockNumberSync();
+    logger.info("Current block is:", curBlock, chainType);
+  } catch (err) {
+    logger.error("getBlockNumberSync from :", chainType, err);
+    return;
+  }
+  if (curBlock > moduleConfig.CONFIRM_BLOCK_NUM) {
+    let to = curBlock - moduleConfig.CONFIRM_BLOCK_NUM;
     try {
-      curBlock = await chain.getBlockNumberSync();
-      logger.info("Current block is:", curBlock, chainType);
+      if (from > to) {
+        events = await getScEvents(logger, chain, scAddr, topics, from, to);
+      }
+      logger.info("events: ", events.length);
+      if (events.length > 0) {
+        await splitEvent(chainType, crossChain, tokenType, events);
+      }
+      modelOps.saveScannedBlockNumber(chainType, to);
+      logger.info("********************************** saveState **********************************", chainType, crossChain, tokenType);
     } catch (err) {
-      logger.error("getBlockNumberSync from :", chainType, err);
+      logger.error("getScEvents from :", chainType, err);
       return;
     }
-    if (curBlock > moduleConfig.CONFIRM_BLOCK_NUM) {
-      let to = curBlock - moduleConfig.CONFIRM_BLOCK_NUM;
-      try {
-        events = await getScEvents(logger, chain, scAddr, topics, from, to);
-        logger.info("events: ", events.length);
-        if (events.length > 0) {
-          await splitEvent(chainType, crossChain, tokenType, events);
-        }
-        modelOps.saveScannedBlockNumber(chainType, to);
-        logger.info("********************************** saveState **********************************", chainType, crossChain, tokenType);
-      } catch (err) {
-        logger.error("getScEvents from :", chainType, err);
-        return;
-      }
-    }
+  }
 }
 
 async function syncMain(logger, db) {
@@ -396,12 +283,12 @@ async function handlerMain(logger, db) {
       }
       if (global.storemanRestart) {
         option.status = {
-          $nin: ['refundFinished', 'revokeFinished', 'transIgnored', 'transFinished']
+          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'transFinished']
         }
         global.storemanRestart = false;
       } else {
         option.status = {
-          $nin: ['refundFinished', 'revokeFinished', 'transIgnored', 'transFinished', 'interventionPending']
+          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'transFinished', 'interventionPending']
         }
       }
       let history = await modelOps.getEventHistory(option);
@@ -430,7 +317,6 @@ async function handlerMain(logger, db) {
   }
 }
 
-// let logger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", level = 'info');
 let db = mongoose.createConnection(moduleConfig.crossEthDbUrl, {
   useNewUrlParser: true
 });

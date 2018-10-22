@@ -12,8 +12,10 @@ let wanRawTrans = require("trans/WanRawTrans.js");
 let MPC = require("mpc/mpc.js");
 
 const moduleConfig = require('conf/moduleConfig.js');
-const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('conf/config.json'));
+// const fs = require('fs');
+// const config = JSON.parse(fs.readFileSync('conf/config.json'));
+const configJson = require('conf/config.json');
+const config = moduleConfig.testnet?configJson.main:configJson.testnet;
 
 const Web3 = require("web3");
 const web3 = new Web3();
@@ -39,24 +41,23 @@ module.exports = class EthCrossAgent {
 
     this.crossFunc = (this.crossDirection === 0) ? crossInfoInst.depositFunc : crossInfoInst.withdrawFunc;
     this.crossEvent = (this.crossDirection === 0) ? crossInfoInst.depositEvent : crossInfoInst.withdrawEvent;
-    // this.approveFunc = 'approve';
 
     this.lockEvent = this.contract.getEventSignature(this.crossEvent[0]);
-    this.refundEvent = this.contract.getEventSignature(this.crossEvent[1]);
+    this.redeemEvent = this.contract.getEventSignature(this.crossEvent[1]);
     this.revokeEvent = this.contract.getEventSignature(this.crossEvent[2]);
 
     this.depositLockFunc = this.contract.getEventSignature(crossInfoInst.depositFunc[0]);
-    this.depositRefundFunc = this.contract.getEventSignature(crossInfoInst.depositFunc[1]);
+    this.depositRedeemFunc = this.contract.getEventSignature(crossInfoInst.depositFunc[1]);
     this.depositRevokeFunc = this.contract.getEventSignature(crossInfoInst.depositFunc[2]);
     this.withdrawLockFunc = this.contract.getEventSignature(crossInfoInst.withdrawFunc[0]);
-    this.withdrawRefundFunc = this.contract.getEventSignature(crossInfoInst.withdrawFunc[1]);
+    this.withdrawRedeemFunc = this.contract.getEventSignature(crossInfoInst.withdrawFunc[1]);
     this.withdrawRevokeFunc = this.contract.getEventSignature(crossInfoInst.withdrawFunc[2]);
 
     this.depositLockEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[0]);
-    this.depositRefundEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[1]);
+    this.depositRedeemEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[1]);
     this.depositRevokeEvent = this.contract.getEventSignature(crossInfoInst.depositEvent[2]);
     this.withdrawLockEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[0]);
-    this.withdrawRefundEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[1]);
+    this.withdrawRedeemEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[1]);
     this.withdrawRevokeEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[2]);
 
     if (record !== null) {
@@ -70,8 +71,6 @@ module.exports = class EthCrossAgent {
 
       this.tokenAddr = record.tokenAddr;
       this.tokenSymbol = record.tokenSymbol;
-      // let erc20Abi = moduleConfig.erc20Abi;
-      // this.tokenContract = new Contract(erc20Abi, this.tokenAddr);
     }
 
   }
@@ -86,13 +85,13 @@ module.exports = class EthCrossAgent {
   getTransChainType(crossDirection, action) {
 
     if (this.crossDirection === 0) {
-      if (action === 'refund') {
+      if (action === 'redeem') {
         return this.crossChain;
       } else {
         return 'wan';
       }
     } else {
-      if (action === 'refund') {
+      if (action === 'redeem') {
         return 'wan';
       } else {
         return this.crossChain
@@ -102,7 +101,6 @@ module.exports = class EthCrossAgent {
 
   async initAgentTransInfo(action) {
     if (action !== null) {
-      // this.chain = getGlobalChain(this.transChainType);
       let transInfo = await this.getTransInfo(action);
       if (this.transChainType === 'wan') {
         this.trans = new wanRawTrans(...transInfo);
@@ -201,23 +199,14 @@ module.exports = class EthCrossAgent {
 
     return new Promise(async (resolve, reject) => {
       try {
-        // if (action === 'approve' || action === 'approveZero') {
-        //   from = config.storemanEth;
-        // } else 
-        if (action === 'refund') {
+        if (action === 'redeem') {
           from = (this.crossDirection === 0) ? config.storemanEth : config.storemanWan;
         } else {
           from = (this.crossDirection === 0) ? config.storemanWan : config.storemanEth;
         }
 
-        // to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
         to = this.contractAddr;
 
-        // if (action === 'approve') {
-        //   this.amount = Math.max(this.amount, this.getWeiFromEther(web3.toBigNumber(moduleConfig.approveTokenAllowance)));
-        // } else if (action === 'approveZero') {
-        //   this.amount = 0;
-        // }
         amount = this.amount;
 
         if (this.transChainType === 'wan') {
@@ -240,10 +229,6 @@ module.exports = class EthCrossAgent {
       }
     });
   }
-  // getApproveData() {
-  //   this.logger.debug("********************************** funcInterface **********************************", this.approveFunc);
-  //   return this.tokenContract.constructData(this.approveFunc, this.contractAddr, this.amount);
-  // }
 
   getLockData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
@@ -255,9 +240,9 @@ module.exports = class EthCrossAgent {
     }
     
   }
-  getRefundData() {
+  getRedeemData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
-    this.logger.debug('getRefundData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
+    this.logger.debug('getRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
     return this.contract.constructData(this.crossFunc[1], this.key);
   }
   getRevokeData() {
@@ -270,8 +255,8 @@ module.exports = class EthCrossAgent {
     return [this.lockEvent, null, null, this.hashKey];
   }
 
-  getRefundEventTopic() {
-    return [this.refundEvent, null, null, this.hashKey];
+  getRedeemEventTopic() {
+    return [this.redeemEvent, null, null, this.hashKey];
   }
 
   getRevokeEventTopic() {
@@ -279,16 +264,12 @@ module.exports = class EthCrossAgent {
   }
 
   createTrans(action) {
-    // if (action === 'approve' || action === 'approveZero') {
-    //   this.data = this.getApproveData();
-    //   this.build = this.buildApproveData;
-    // } else 
     if (action === 'lock') {
       this.data = this.getLockData();
       this.build = this.buildLockData;
-    } else if (action === 'refund') {
-      this.data = this.getRefundData();
-      this.build = this.buildRefundData;
+    } else if (action === 'redeem') {
+      this.data = this.getRedeemData();
+      this.build = this.buildRedeemData;
     } else if (action === 'revoke') {
       this.data = this.getRevokeData();
       this.build = this.buildRevokeData;
@@ -310,8 +291,6 @@ module.exports = class EthCrossAgent {
         if (!err && result !== null) {
           resolve(result);
         } else {
-          // if (err.hasOwnProperty("message") &&
-          //   (err.message === 'nonce too low' || err.message === 'replacement transaction underpriced')) {}
           global[this.transChainType + 'LastNonce'] = 0;
           reject(err);
         }
@@ -372,15 +351,6 @@ module.exports = class EthCrossAgent {
     });
   }
 
-  // buildApproveData(hashKey, result) {
-  //   this.logger.debug("********************************** insertApproveData trans **********************************", hashKey);
-
-  //   let content = {
-  //     storemanApproveTxHash: result.toLowerCase()
-  //   }
-  //   return content;
-  // }
-
   buildLockData(hashKey, result) {
     this.logger.debug("********************************** insertLockData trans **********************************", hashKey);
 
@@ -390,11 +360,11 @@ module.exports = class EthCrossAgent {
     return content;
   }
 
-  buildRefundData(hashKey, result) {
-    this.logger.debug("********************************** insertRefundData trans **********************************", hashKey);
+  buildRedeemData(hashKey, result) {
+    this.logger.debug("********************************** insertRedeemData trans **********************************", hashKey);
 
     let content = {
-      storemanRefundTxHash: result.toLowerCase()
+      storemanRedeemTxHash: result.toLowerCase()
     }
     return content;
   }
@@ -443,7 +413,8 @@ module.exports = class EthCrossAgent {
           value: args.value,
           blockNumber: decodeEvent.blockNumber,
           timestamp: decodeEvent.timestamp * 1000,
-          suspendTime: (1000 * lockedTime + Number(decodeEvent.timestamp) * 1000).toString(),
+          lockedTime: lockedTime * 1000,
+          suspendTime: (1000 * (lockedTime - lockedTime / moduleConfig.secureLockIntervalRatio) + Number(decodeEvent.timestamp) * 1000).toString(),
           HTLCtime: (1000 * lockedTime + Number(decodeEvent.timestamp) * 1000).toString(),
           walletLockEvent: event
         };
@@ -457,17 +428,17 @@ module.exports = class EthCrossAgent {
         };
       } else if ((eventName === this.crossInfoInst.depositEvent[1] && chainType === 'wan') ||
         (eventName === this.crossInfoInst.withdrawEvent[1] && chainType !== 'wan')) {
-        this.logger.debug("********************************** 3: found wallet refund transaction ********************************** hashX", hashX);
+        this.logger.debug("********************************** 3: found wallet redeem transaction ********************************** hashX", hashX);
         content = {
           x: args.x,
-          walletRefundEvent: event
+          walletRedeemEvent: event
         };
       } else if ((eventName === this.crossInfoInst.depositEvent[1] && chainType !== 'wan') ||
         (eventName === this.crossInfoInst.withdrawEvent[1] && chainType === 'wan')) {
-        this.logger.debug("********************************** 4: found storeman refund transaction ********************************** hashX", hashX);
+        this.logger.debug("********************************** 4: found storeman redeem transaction ********************************** hashX", hashX);
         content = {
-          storemanRefundTxHash: decodeEvent.transactionHash,
-          storemanRefundEvent: event
+          storemanRedeemTxHash: decodeEvent.transactionHash,
+          storemanRedeemEvent: event
         };
       } else if ((eventName === this.crossInfoInst.depositEvent[2] && chainType !== 'wan') ||
         (eventName === this.crossInfoInst.withdrawEvent[2] && chainType === 'wan')) {

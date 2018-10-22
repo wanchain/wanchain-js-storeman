@@ -2,7 +2,6 @@
 const {
   getGlobalChain,
   sleep
-//   getChain
 } = require('comm/lib');
 
 let Contract = require("contract/Contract.js");
@@ -10,8 +9,10 @@ let Contract = require("contract/Contract.js");
 const EthCrossAgent = require("agent/EthCrossAgent.js");
 
 const moduleConfig = require('conf/moduleConfig.js');
-const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('conf/config.json'));
+// const fs = require('fs');
+// const config = JSON.parse(fs.readFileSync('conf/config.json'));
+const configJson = require('conf/config.json');
+const config = moduleConfig.testnet?configJson.main:configJson.testnet;
 
 const Web3 = require("web3");
 const web3 = new Web3();
@@ -39,7 +40,7 @@ module.exports = class Erc20CrossAgent extends EthCrossAgent {
       try {
         if (action === 'approve' || action === 'approveZero') {
           from = config.storemanEth;
-        } else if (action === 'refund') {
+        } else if (action === 'redeem') {
           from = (this.crossDirection === 0) ? config.storemanEth : config.storemanWan;
         } else {
           from = (this.crossDirection === 0) ? config.storemanWan : config.storemanEth;
@@ -84,9 +85,9 @@ module.exports = class Erc20CrossAgent extends EthCrossAgent {
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
     return this.contract.constructData(this.crossFunc[0], this.tokenAddr, this.hashKey, this.crossAddress, this.amount);
   }
-  getRefundData() {
+  getRedeemData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
-    this.logger.debug('getRefundData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
+    this.logger.debug('getRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
     return this.contract.constructData(this.crossFunc[1], this.tokenAddr, this.key);
   }
   getRevokeData() {
@@ -102,9 +103,9 @@ module.exports = class Erc20CrossAgent extends EthCrossAgent {
     } else if (action === 'lock') {
       this.data = this.getLockData();
       this.build = this.buildLockData;
-    } else if (action === 'refund') {
-      this.data = this.getRefundData();
-      this.build = this.buildRefundData;
+    } else if (action === 'redeem') {
+      this.data = this.getRedeemData();
+      this.build = this.buildRedeemData;
     } else if (action === 'revoke') {
       this.data = this.getRevokeData();
       this.build = this.buildRevokeData;
