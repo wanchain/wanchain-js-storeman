@@ -14,9 +14,6 @@ const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
 const config = moduleConfig.testnet?configJson.main:configJson.testnet;
 
-console.log(config);
-console.log(moduleConfig);
-
 const {
   initChain,
   initNonce,
