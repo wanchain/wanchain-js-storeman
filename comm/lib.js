@@ -2,7 +2,7 @@
 // const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
-const config = moduleConfig.testnet?configJson.main:configJson.testnet;
+const config = moduleConfig.testnet?configJson.testnet:configJson.main;
 
 const Web3 = require("web3");
 const net = require('net');

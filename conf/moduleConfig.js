@@ -12,6 +12,7 @@ const config = {
     "sender": "monitor@wanchain.org"
   },
   mpcSignature: true,
+  testnet: testnet,
 
   retryTimes: 5,
   retryWaitTime: 60 * 1000,
@@ -78,6 +79,7 @@ const test_Config = {
     "sender": "monitor@wanchain.org"
   },
   mpcSignature: true,
+  testnet: testnet,
 
   retryTimes: 5,
   retryWaitTime: 60 * 1000,
