@@ -25,6 +25,8 @@ const config = {
   CONFIRM_BLOCK_NUM: 12,
   INTERVAL_TIME: 15 * 1000,
 
+  secureLockIntervalRatio: 20, /*lock action needed to be done before suspendTime - 1/20 lockedTime*/ 
+
   approveTokenAllowance: 40000, /* unit ether*/
   tokenAllowanceThreshold: 500, /* unit ether*/
 
