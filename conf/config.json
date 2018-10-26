@@ -40,7 +40,7 @@
           "tokenType": "ERC20",
           "tokenSymbol": "KNC"
         },
-        "0x80fB784B7eD66730e8b1DBd9820aFD29931aab03": {
+        "0x80fb784b7ed66730e8b1dbd9820afd29931aab03": {
           "tokenType": "ERC20",
           "tokenSymbol": "LEND"
         }
