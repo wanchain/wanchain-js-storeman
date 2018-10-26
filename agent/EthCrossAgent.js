@@ -404,7 +404,7 @@ module.exports = class EthCrossAgent {
           crossChain: crossChain.toLowerCase(),
           tokenType: tokenType,
           tokenAddr: tokenAddr,
-          tokenSymbol: config["crossTokens"][crossChain][tokenAddr].tokenSymbol,
+          tokenSymbol: config.crossTokens[crossChain][tokenAddr].tokenSymbol,
           originChain: chainType,
           from: (chainType !== 'wan') ? args.user : args.wanAddr,
           crossAddress: (chainType !== 'wan') ? args.wanAddr : args.ethAddr,
