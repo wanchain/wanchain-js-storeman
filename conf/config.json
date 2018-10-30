@@ -1,6 +1,6 @@
 {
   "main": {
-    "ethWeb3Url": "http://34.212.139.136:18545",
+    "ethWeb3Url": "http://34.211.18.63:18545",
     "wanWeb3Url": "http://localhost:8545",
     "mpcUrl": "http://localhost:8545",
 
@@ -48,7 +48,7 @@
     }
   },
   "testnet": {
-    "ethWeb3Url": "http://localhost:18545",
+    "ethWeb3Url": "http://52.88.196.90:18545",
     "wanWeb3Url": "http://localhost:8545",
     "mpcUrl": "http://localhost:8545",
 
