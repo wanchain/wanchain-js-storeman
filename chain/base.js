@@ -44,9 +44,10 @@ class baseChain {
     });
   }
 
-  getScEventSync(address, topics, fromBlk, toBlk) {
+  getScEventSync(address, topics, fromBlk, toBlk, retryTimes = 0) {
     let baseChain = this;
-    return new Promise(function (resolve, reject) {
+    let times = 0;
+    return new Promise(function(resolve, reject) {
       let filterValue = {
         fromBlock: fromBlk,
         toBlock: toBlk,
@@ -54,14 +55,30 @@ class baseChain {
         address: address
       };
       let filter = baseChain.theWeb3.eth.filter(filterValue);
-      filter.get(function(err, events) {
-        if (err) {
-          baseChain.log.error("getScEventSync", err);
-          reject(err);
-        } else {
-          resolve(events);
-        }
-      });
+      let filterGet = function(filter) {
+        filter.get(function(err, events) {
+          if (err) {
+            if (times >= retryTimes) {
+              baseChain.log.error("getScEventSync", err);
+              reject(err);
+            } else {
+              baseChain.log.debug("getScEventSync retry", times);
+              // baseChain.log.error("getScEventSync retry", times, err);
+              times++;
+              filterGet(filter);
+            }
+          } else {
+            resolve(events);
+          }
+        });
+      }
+      try{
+        filterGet(filter);
+      } catch(err) {
+        baseChain.log.error("getScEventSync", err);
+        reject(err);
+      }
+
     });
   }
 

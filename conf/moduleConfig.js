@@ -14,6 +14,8 @@ const config = {
   mpcSignature: true,
   testnet: testnet,
 
+  web3RetryTimes: 30,
+
   retryTimes: 5,
   retryWaitTime: 60 * 1000,
   confirmTimes: 60,
@@ -82,6 +84,8 @@ const test_Config = {
   },
   mpcSignature: true,
   testnet: testnet,
+
+  web3RetryTimes: 30,
 
   retryTimes: 5,
   retryWaitTime: 60 * 1000,

@@ -94,7 +94,7 @@ async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
   let events;
   let cntPerTime = 50;
   try {
-    events = await chain.getScEventSync(scAddr, topics, fromBlk, toBlk);
+    events = await chain.getScEventSync(scAddr, topics, fromBlk, toBlk, moduleConfig.web3RetryTimes);
   } catch (err) {
     logger.error("getScEvents", err);
     return Promise.reject(err);
