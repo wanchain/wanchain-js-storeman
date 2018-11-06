@@ -3,7 +3,7 @@ const pwd = process.env.MONGO_PWD;
 // const dbUrl = `mongodb://${user}:${pwd}@localhost:27017`;
 const dbUrl = `mongodb://localhost:27017`;
 
-const testnet = false;
+const testnet = true;
 
 const config = {
   crossEthDbUrl: dbUrl + "/crossEthChain",

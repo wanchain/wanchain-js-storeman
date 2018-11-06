@@ -21,7 +21,6 @@ const Web3 = require("web3");
 const web3 = new Web3();
 
 global.mutex_nonce = false;
-global.nonce_pending = false;
 
 module.exports = class EthCrossAgent {
   constructor(crossChain, tokenType, crossDirection, record = null, action = null) {
@@ -152,6 +151,7 @@ module.exports = class EthCrossAgent {
       let nonce = 0;
       let chainNonce = this.transChainType + 'LastNonce';
       let nonceRenew = this.transChainType + 'NonceRenew';
+      let noncePending = this.transChainType + 'NoncePending';
       let storemanAddress;
       if (this.transChainType.toLowerCase() === 'wan') {
         storemanAddress = config.storemanWan;
@@ -165,21 +165,25 @@ module.exports = class EthCrossAgent {
       try {
         if (global[nonceRenew]) {
           nonce = await this.chain.getNonceSync(storemanAddress);
-          global[chainNonce] = parseInt(nonce, 16);
+          nonce = parseInt(nonce, 16);
           global[nonceRenew] = false;
-          global.nonce_pending = true;
-        } else if (global[chainNonce] === 0) {
+        } else if (global[noncePending]) {
           nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
-          global[chainNonce] = parseInt(nonce, 16);
-          global.nonce_pending = true;
-        } else if (global.nonce_pending) {
-          nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
-          global[chainNonce] = parseInt(nonce, 16);
-          global.nonce_pending = false;
-        } 
+          nonce = parseInt(nonce, 16);
+          global[noncePending] = false;
+        } else {
+          nonce = global[chainNonce];
+        }
+
         this.logger.debug("mutex_nonce false");
         global.mutex_nonce = false;
-        resolve(global[chainNonce]++);
+
+        if (nonce >= global[chainNonce]) {
+          global[chainNonce] = nonce;
+          resolve(global[chainNonce]++);
+        } else {
+          resolve(nonce);
+        }
       } catch (err) {
         this.logger.error("getNonce failed", err);
         this.logger.debug("mutex_nonce false");
@@ -291,7 +295,7 @@ module.exports = class EthCrossAgent {
         if (!err && result !== null) {
           resolve(result);
         } else {
-          global[this.transChainType + 'LastNonce'] = 0;
+          global[this.transChainType + 'noncePending'] = true;
           reject(err);
         }
       });

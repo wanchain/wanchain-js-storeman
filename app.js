@@ -41,6 +41,7 @@ async function init() {
   initChain('wan');
   await initNonce('wan');
   global.wanNonceRenew = false;
+  global.wanNoncePending = false;
 
   global.storemanRestart = true;
 
@@ -48,6 +49,7 @@ async function init() {
   for (let crossChain in moduleConfig.crossInfoDict) {
     
     global[crossChain + 'NonceRenew'] = false;
+    glabao[crossChain + 'NoncePending'] = false;
 
     initChain(crossChain);
     await initNonce(crossChain);
