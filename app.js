@@ -49,7 +49,7 @@ async function init() {
   for (let crossChain in moduleConfig.crossInfoDict) {
     
     global[crossChain + 'NonceRenew'] = false;
-    glabao[crossChain + 'NoncePending'] = false;
+    global[crossChain + 'NoncePending'] = false;
 
     initChain(crossChain);
     await initNonce(crossChain);
