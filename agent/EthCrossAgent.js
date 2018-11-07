@@ -295,7 +295,7 @@ module.exports = class EthCrossAgent {
         if (!err && result !== null) {
           resolve(result);
         } else {
-          global[this.transChainType + 'noncePending'] = true;
+          global[this.transChainType + 'NoncePending'] = true;
           reject(err);
         }
       });
