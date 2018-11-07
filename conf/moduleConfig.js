@@ -23,7 +23,7 @@ const config = {
   logServerUrl: '54.149.227.183',
   logServerPort: 514,
 
-  SAFE_BLOCK_NUM: 12,
+  SAFE_BLOCK_NUM: 5000,
   CONFIRM_BLOCK_NUM: 12,
   INTERVAL_TIME: 15 * 1000,
 
@@ -94,7 +94,7 @@ const test_Config = {
   logServerUrl: '54.149.227.183',
   logServerPort: 514,
 
-  SAFE_BLOCK_NUM: 2,
+  SAFE_BLOCK_NUM: 5000,
   CONFIRM_BLOCK_NUM: 2,
   INTERVAL_TIME: 15 * 1000,
 
