@@ -46,6 +46,8 @@ async function init() {
   global.storemanRestart = true;
 
   tokenList.supportTokenAddrs = [];
+  tokenList.wanchainHtlcAddr = [];
+  tokenList.originalChainHtlcAddr = [];
   for (let crossChain in moduleConfig.crossInfoDict) {
     
     global[crossChain + 'NonceRenew'] = false;
@@ -68,6 +70,9 @@ async function init() {
 
       tokenList[crossChain][tokenType].wanchainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr;
       tokenList[crossChain][tokenType].originalChainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr;
+
+      tokenList.wanchainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr);
+      tokenList.originalChainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr);
 
       tokenList[crossChain][tokenType].wanCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 0);
       tokenList[crossChain][tokenType].originCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 1);
@@ -279,9 +284,13 @@ async function handlerMain(logger, db) {
     logger.info("********************************** handlerMain start **********************************");
 
     try {
+      let htlcAddrFilter = tokenList.wanchainHtlcAddr.concat(tokenList.originalChainHtlcAddr);
       let option = {
         tokenAddr: {
           $in: [...tokenList.supportTokenAddrs]
+        },
+        toHtlcAddr: {
+          $in: [...htlcAddrFilter]
         },
         storeman: {
           $in: [config.storemanEth, config.storemanWan]
