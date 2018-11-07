@@ -32,9 +32,18 @@ class DbAccess {
     let log = this.log;
     model.findOneAndUpdate(filter, content, {
       upsert: true
-    }, function(err, doc) {
+    }, (err, doc) => {
       if (err) {
-        log.error(err);
+        log.error("updateDocument will retry", (err.hasOwnProperty("message")) ? err.message : err);
+        model.findOneAndUpdate(filter, content, {
+          upsert: true
+        }, (err, doc) => {
+          if (err) {
+            log.error("updateDocument retry failed",err);
+          } else {
+            log.error("updateDocument succeeded ");
+          }
+        });
       }
     });
   }
