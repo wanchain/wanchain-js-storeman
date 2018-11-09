@@ -3,8 +3,6 @@
 const Web3 = require("web3");
 const web3Mpc = require("mpc/web3Mpc.js");
 var net = require('net');
-// const fs = require('fs');
-// const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
 const config = moduleConfig.testnet?configJson.testnet:configJson.main;
@@ -35,7 +33,6 @@ module.exports = class mpc {
     } else {
       this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(config.mpcUrl, net));
     }
-    // this.mpcWeb3 = getGlobalChain('wan').theWeb3;
     web3Mpc.extend(this.mpcWeb3);
   }
 

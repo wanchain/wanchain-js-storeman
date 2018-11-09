@@ -1,7 +1,12 @@
 const user = process.env.MONGO_USER;
 const pwd = process.env.MONGO_PWD;
-// const dbUrl = `mongodb://${user}:${pwd}@localhost:27017`;
-const dbUrl = `mongodb://localhost:27017`;
+
+let dbUrl;
+if(user) {
+  dbUrl = `mongodb://${user}:${pwd}@localhost:27017`;
+} else {
+  dbUrl = `mongodb://localhost:27017`;
+}
 
 const testnet = false;
 

@@ -1,5 +1,3 @@
-// const fs = require('fs');
-// const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
 const config = moduleConfig.testnet?configJson.testnet:configJson.main;
@@ -57,6 +55,7 @@ async function initNonce(chainType) {
 
 function getGlobalChain(chainType) {
   let chainName = chainType.toLowerCase() + "Chain";
+  global[chainName] = getChain(chainType);
   return global[chainName];
 }
 

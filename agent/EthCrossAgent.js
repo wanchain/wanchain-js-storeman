@@ -12,15 +12,13 @@ let wanRawTrans = require("trans/WanRawTrans.js");
 let MPC = require("mpc/mpc.js");
 
 const moduleConfig = require('conf/moduleConfig.js');
-// const fs = require('fs');
-// const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const configJson = require('conf/config.json');
 const config = moduleConfig.testnet?configJson.testnet:configJson.main;
 
 const Web3 = require("web3");
 const web3 = new Web3();
 
-global.mutex_nonce = false;
+global.mutexNonce = false;
 
 module.exports = class EthCrossAgent {
   constructor(crossChain, tokenType, crossDirection, record = null, action = null) {
@@ -143,11 +141,11 @@ module.exports = class EthCrossAgent {
 
     return new Promise(async (resolve, reject) => {
       this.logger.debug("getNonce begin!")
-      while (global.mutex_nonce) {
+      while (global.mutexNonce) {
         await sleep(3);
       }
-      this.logger.debug("mutex_nonce true");
-      global.mutex_nonce = true;
+      this.logger.debug("mutexNonce true");
+      global.mutexNonce = true;
       let nonce = 0;
       let chainNonce = this.transChainType + 'LastNonce';
       let nonceRenew = this.transChainType + 'NonceRenew';
@@ -158,8 +156,8 @@ module.exports = class EthCrossAgent {
       } else if (this.transChainType.toLowerCase() === 'eth') {
         storemanAddress = config.storemanEth;
       } else {
-        this.logger.debug("mutex_nonce false");
-        global.mutex_nonce = false;
+        this.logger.debug("mutexNonce false");
+        global.mutexNonce = false;
         return;
       }
       try {
@@ -175,24 +173,22 @@ module.exports = class EthCrossAgent {
           nonce = global[chainNonce];
         }
 
-        this.logger.debug("mutex_nonce false");
-        global.mutex_nonce = false;
+        this.logger.debug("mutexNonce false");
+        global.mutexNonce = false;
 
         if (nonce >= global[chainNonce]) {
           global[chainNonce] = nonce;
-          resolve(global[chainNonce]++);
-        } else {
-          resolve(nonce);
+          global[chainNonce]++;
         }
+        resolve(nonce);
       } catch (err) {
         this.logger.error("getNonce failed", err);
-        this.logger.debug("mutex_nonce false");
-        global.mutex_nonce = false;
+        this.logger.debug("mutexNonce false");
+        global.mutexNonce = false;
         reject(err);
       }
     });
   }
-
   getTransInfo(action) {
     let from;
     let to;

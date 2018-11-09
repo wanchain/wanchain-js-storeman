@@ -8,14 +8,12 @@ const Erc20CrossAgent = require("agent/Erc20CrossAgent.js");
 const EthCrossAgent = require("agent/EthCrossAgent.js");
 const StateAction = require("monitor/monitor.js");
 
-// const fs = require('fs');
-// const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
 const config = moduleConfig.testnet?configJson.testnet:configJson.main;
 
 const {
-  initChain,
+  // initChain,
   initNonce,
   getGlobalChain,
   sleep
@@ -38,7 +36,7 @@ global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/store
 global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 
 async function init() {
-  initChain('wan');
+  // initChain('wan');
   await initNonce('wan');
   global.wanNonceRenew = false;
   global.wanNoncePending = false;
@@ -53,7 +51,7 @@ async function init() {
     global[crossChain + 'NonceRenew'] = false;
     global[crossChain + 'NoncePending'] = false;
 
-    initChain(crossChain);
+    // initChain(crossChain);
     await initNonce(crossChain);
 
     tokenList[crossChain] = {};
@@ -168,19 +166,7 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
         }
 
         if (content !== null) {
-          // try {
-          //   modelOps.saveScannedEvent(...content);
-          // } catch (err) {
-          //   syncLogger.error("********************************** saveScannedEvent faild, try another time **********************************", err);
-          //   modelOps.saveScannedEvent(...content);
-          // }
-          modelOps.syncSaveScannedEvent(...content, (err, result) => {
-            if(err) {
-              syncLogger.error("********************************** saveScannedEvent faild, try another time **********************************", err);
-              modelOps.saveScannedEvent(...content);
-            }
-            resolve();
-          })
+          modelOps.saveScannedEvent(...content);
         }
         resolve();
       } catch (err) {
@@ -259,8 +245,6 @@ async function syncMain(logger, db) {
       }
     } catch (err) {
       logger.error("syncMain failed:", err);
-      await sleep(moduleConfig.INTERVAL_TIME);
-      continue;
     }
 
     await sleep(moduleConfig.INTERVAL_TIME);

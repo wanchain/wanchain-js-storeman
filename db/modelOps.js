@@ -68,14 +68,6 @@ class ModelOps {
     }, content);
   }
 
-  syncSaveScannedEvent(hashX, content, callback) {
-    this.dbAccess.updateDocument(this.eventModel, {
-      hashX: hashX
-    }, content, function(err, result) {
-      callback(err, result);
-    });
-  }
-
   getEventByHashX(hashX, callback) {
     let logger = this.logger;
     this.dbAccess.findDocumentOne(this.eventModel, {

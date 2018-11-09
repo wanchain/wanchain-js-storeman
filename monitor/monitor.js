@@ -7,11 +7,9 @@ const {
 
 const ModelOps = require('db/modelOps');
 const Logger = require('comm/logger.js');
-// const erc20CrossAgent = require('agent/Erc20CrossAgent.js');
 const sendMail = require('comm/sendMail');
 
 const fs = require('fs');
-// const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
 const config = moduleConfig.testnet?configJson.testnet:configJson.main;
@@ -31,93 +29,67 @@ function getWeiFromEther(ether) {
 var stateDict = {
   init: {
     action: 'initState',
-    paras: ['waitingCross', 'checkApprove'],
-    // nextState: 'waitingCross',
-    // rollState: 'checkApprove'
+    paras: ['waitingCross', 'checkApprove']
   },
   checkApprove: {
     action: 'checkAllowance',
-    paras: ['waitingCross', 'waitingApproveLock'],
-    // nextState: 'waitingCross',
-    // rollState: 'waitingApproveLock'
+    paras: ['waitingCross', 'waitingApproveLock']
   },
   waitingApproveLock: {
     action: 'sendTrans',
     paras: [
       ['approveZero', 'approve', 'lock'], 'storemanLockEvent', ['waitingCrossLockConfirming', 'waitingX'],
       ['waitingApproveLock', 'waitingIntervention']
-    ],
-    // nextState: ['waitingCrossLockConfirming', 'waitingX'],
-    // rollState: ['waitingApproveLock', 'waitingIntervention']
+    ]
   },
   waitingCross: {
     action: 'sendTrans',
     paras: ['lock', 'storemanLockEvent', ['waitingCrossLockConfirming', 'waitingX'],
       ['waitingCross', 'waitingIntervention']
-    ],
-    // nextState: ['waitingCrossLockConfirming', 'waitingX'],
-    // rollState: ['waitingCross', 'waitingIntervention']
+    ]
   },
   waitingCrossLockConfirming: {
     action: 'checkStoremanTransOnline',
-    paras: ['storemanLockEvent', 'storemanLockTxHash', 'waitingX', ['init', 'waitingIntervention']],
-    // nextState: 'waitingX',
-    // rollState: ['init', 'waitingIntervention']
+    paras: ['storemanLockEvent', 'storemanLockTxHash', 'waitingX', ['init', 'waitingIntervention']]
   },
   waitingX: {
     action: 'checkWalletEventOnline',
-    paras: ['walletRedeemEvent', 'receivedX', 'waitingX'],
-    // nextState: 'receivedX',
-    // rollState: 'waitingX'
+    paras: ['walletRedeemEvent', 'receivedX', 'waitingX']
   },
   receivedX: {
     action: 'sendTrans',
     paras: ['redeem', 'storemanRedeemEvent', ['waitingCrossRedeemConfirming', 'redeemFinished'],
       ['receivedX', 'waitingIntervention']
-    ],
-    // nextState: ['waitingCrossRedeemConfirming', 'redeemFinished'],
-    // rollState: ['receivedX', 'waitingIntervention']
+    ]
   },
   waitingCrossRedeemConfirming: {
     action: 'checkStoremanTransOnline',
-    paras: ['storemanRedeemEvent', 'storemanRedeemTxHash', 'redeemFinished', ['receivedX', 'waitingIntervention']],
-    // nextState: 'redeemFinished',
-    // rollState: ['receivedX', 'waitingIntervention']
+    paras: ['storemanRedeemEvent', 'storemanRedeemTxHash', 'redeemFinished', ['receivedX', 'waitingIntervention']]
   },
   redeemFinished: {},
   waitingRevoke: {
     action: 'sendTrans',
     paras: ['revoke', 'storemanRevokeEvent', ['waitingCrossRevokeConfirming', 'revokeFinished'],
       ['waitingRevoke', 'waitingIntervention']
-    ],
-    // nextState: ['waitingCrossRevokeConfirming', 'revokeFinished'],
-    // rollState: ['waitingRevoke', 'waitingIntervention']
+    ]
   },
   waitingCrossRevokeConfirming: {
     action: 'checkStoremanTransOnline',
-    paras: ['storemanRevokeEvent', 'storemanRevokeTxHash', 'revokeFinished', ['waitingRevoke', 'waitingIntervention']],
-    // nextState: 'revokeFinished',
-    // rollState: ['waitingRevoke', 'waitingIntervention']
+    paras: ['storemanRevokeEvent', 'storemanRevokeTxHash', 'revokeFinished', ['waitingRevoke', 'waitingIntervention']]
   },
   revokeFinished: {},
   waitingIntervention: {
     action: 'takeIntervention',
-    paras: ['interventionPending', 'waitingIntervention'],
-    // nextState: 'interventionPending',
-    // rollState: 'waitingIntervention'
+    paras: ['interventionPending', 'waitingIntervention']
   },
   transIgnored: {},
   foundLosted: {
     action: 'takeIntervention',
-    paras: ['transFinished', 'waitingIntervention'],
-    // nextState: 'transFinished',
-    // rollState: 'waitingIntervention'
+    paras: ['transFinished', 'waitingIntervention']
   },
   interventionPending: {
     action: 'initState',
-    paras: ['waitingCross', 'checkApprove'],
-    // nextState: 'waitingCross',
-    // rollState: 'checkApprove'
+    paras: ['waitingCross', 'checkApprove']
   },
   transFinished: {}
 };
@@ -157,7 +129,6 @@ module.exports = class stateAction {
           let action = stateDict[self.state].action;
           if (typeof(self[action]) === "function") {
             let paras = stateDict[self.state].paras;
-            // paras = paras.concat([stateDict[self.state].nextState, stateDict[self.state].rollState]);
             self.logger.debug("********************************** takeAction ********************************** hashX:", this.hashX, action, paras)
             await self[action](...paras);
           }
@@ -239,7 +210,7 @@ module.exports = class stateAction {
     }
 
     if (!Array.isArray(actionArray)) {
-      if (actionArray !== 'redeem' || actionArray !== 'revoke') {
+      if (['redeem', 'revoke'].indexOf(actionArray) === -1) {
         if (!await this.checkStoremanQuota) {
           let content = {
             status: 'transIgnored',
@@ -349,8 +320,6 @@ module.exports = class stateAction {
     }
     return false;
   }
-
-  // checkWaitTimeout() {}
 
   async checkAllowance(nextState, rollState) {
     let newAgent = new global.agentDict[this.crossChain.toUpperCase()][this.tokenType](this.crossChain, this.tokenType, 1, this.record);

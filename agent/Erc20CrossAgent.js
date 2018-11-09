@@ -9,8 +9,6 @@ let Contract = require("contract/Contract.js");
 const EthCrossAgent = require("agent/EthCrossAgent.js");
 
 const moduleConfig = require('conf/moduleConfig.js');
-// const fs = require('fs');
-// const config = JSON.parse(fs.readFileSync('conf/config.json'));
 const configJson = require('conf/config.json');
 const config = moduleConfig.testnet?configJson.testnet:configJson.main;
 
