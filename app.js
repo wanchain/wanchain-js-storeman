@@ -13,7 +13,7 @@ const configJson = require('conf/config.json');
 const config = moduleConfig.testnet?configJson.testnet:configJson.main;
 
 const {
-  // initChain,
+  initChain,
   initNonce,
   getGlobalChain,
   sleep
@@ -36,7 +36,7 @@ global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/store
 global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 
 async function init() {
-  // initChain('wan');
+  initChain('wan');
   await initNonce('wan');
   global.wanNonceRenew = false;
   global.wanNoncePending = false;
@@ -51,7 +51,7 @@ async function init() {
     global[crossChain + 'NonceRenew'] = false;
     global[crossChain + 'NoncePending'] = false;
 
-    // initChain(crossChain);
+    initChain(crossChain);
     await initNonce(crossChain);
 
     tokenList[crossChain] = {};
