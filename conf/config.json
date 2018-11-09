@@ -13,7 +13,7 @@
     "ethGasLimit": 470000,
 
     "mailReceiver": "monitor@wanchain.org",
-    "issueCollection": "./issueCollection.txt",
+    "issueCollectionPath": "./invalidTrans/",
 
     "storemanEth": "0xbbbe9b512538c50a86027bf76d245e95778693af",
     "storemanWan": "0xd5588a0850431a55abe3ac0bcc68eaa1b5075c57",
@@ -61,7 +61,7 @@
     "ethGasLimit": 470000,
 
     "mailReceiver": "monitor@wanchain.org",
-    "issueCollection": "./issueCollection.txt",
+    "issueCollectionPath": "./invalidTrans/test/",
 
     "storemanEth": "0x41623962c5d44565de623d53eb677e0f300467d2",
     "storemanWan": "0x06daa9379cbe241a84a65b217a11b38fe3b4b063",

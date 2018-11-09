@@ -10,6 +10,7 @@ const Logger = require('comm/logger.js');
 const sendMail = require('comm/sendMail');
 
 const fs = require('fs');
+const path = require("path");
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
 const config = moduleConfig.testnet?configJson.testnet:configJson.main;
@@ -156,15 +157,34 @@ module.exports = class stateAction {
   }
 
   takeIntervention(nextState, rollState) {
-    fs.appendFile(config.issueCollection, this.record, (err) => {
-      if(!err) {
-        this.logger.error("TakeIntervention done of hashX", this.record.hashX);
-        this.updateState(nextState);
+    let mkdirsSync = function(dirname) {
+      if (fs.existsSync(dirname)) {
+        return true;
       } else {
-        this.logger.error("TakeIntervention failed of hashX", this.record.hashX, err);
-        this.updateState(rollState);
+        if (mkdirsSync(path.dirname(dirname))) {
+          fs.mkdirSync(dirname);
+          return true;
+        }
       }
-    })
+    }
+    let date = new Date();
+    let year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+
+    let issueCollection = config.issueCollectionPath + 'issueCollection' + year + '-' + month + '-' + day + '.txt';
+    let content = this.record + '\n';
+    if (mkdirsSync(config.issueCollectionPath)) {
+      fs.appendFile(issueCollection, content, (err) => {
+        if (!err) {
+          this.logger.error("TakeIntervention done of hashX", issueCollection, this.record.hashX);
+          this.updateState(nextState);
+        } else {
+          this.logger.error("TakeIntervention failed of hashX", issueCollection, this.record.hashX, err);
+          this.updateState(rollState);
+        }
+      })
+    }
   }
 
   takeMailIntervention(nextState, rollState) {
