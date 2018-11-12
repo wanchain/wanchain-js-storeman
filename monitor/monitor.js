@@ -303,7 +303,13 @@ module.exports = class stateAction {
     }
 
     try {
-      let HTLCtime = Number(record.HTLCtime);
+      let HTLCtime;
+      if (record.storemanLockEvent.length !== 0) {
+        HTLCtime = Number(record.storemanLockEvent[0].timestamp) * 1000 + Number(record.lockedTime);
+      } else {
+        HTLCtime = Number(record.timestamp) + Number(record.lockedTime);
+      }
+      // let HTLCtime = Number(record.HTLCtime);
       let suspendTime = Number(record.suspendTime);
       let timestamp = Number(record.timestamp);
 
