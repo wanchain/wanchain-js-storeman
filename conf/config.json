@@ -99,6 +99,10 @@
         "0x00f58d6d585f84b2d7267940cede30ce2fe6eae8": {
           "tokenType": "ERC20",
           "tokenSymbol": "ZRX"
+        },
+        "0xd5cc1810197238b06f0f333b1cb2046e0c6ece9a": {
+          "tokenType": "ERC20",
+          "tokenSymbol": "WCTODD"
         }
       }
     }
