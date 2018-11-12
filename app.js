@@ -145,7 +145,7 @@ async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
 
 async function splitEvent(chainType, crossChain, tokenType, events) {
   let multiEvents = [...events].map((event) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         let tokenTypeHandler = tokenList[crossChain][tokenType];
         let lockedTime = tokenList[crossChain][tokenType].lockedTime; 
@@ -166,6 +166,16 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
         }
 
         if (content !== null) {
+          if(content[1].hasOwnProperty("walletRevokeEvent")) {
+            let option = {
+              hashX : content[0]
+            };
+            let result = await modelOps.getEventHistory(option);
+            if (result.length === 0) {
+              resolve();
+              return;
+            }
+          }
           modelOps.saveScannedEvent(...content);
         }
         resolve();

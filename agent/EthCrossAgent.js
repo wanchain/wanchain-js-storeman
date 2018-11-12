@@ -391,13 +391,20 @@ module.exports = class EthCrossAgent {
     let args = decodeEvent.args;
     let eventName = decodeEvent.event;
     let hashX = args.xHash;
+    let storeman;
 
     try {
+      if (!((eventName === this.crossInfoInst.depositEvent[2] && chainType !== 'wan') ||
+        (eventName === this.crossInfoInst.withdrawEvent[2] && chainType === 'wan'))) {
+        storeman = this.getDecodeEventStoremanGroup(decodeEvent);
+        if([config.storemanEth, config.storemanWan].indexOf(storeman) === -1) {
+          return null;
+        }
+      }
       if ((eventName === this.crossInfoInst.depositEvent[0] && chainType !== 'wan') ||
         (eventName === this.crossInfoInst.withdrawEvent[0] && chainType === 'wan')) {
         this.logger.debug("********************************** 1: found new wallet lock transaction ********************************** hashX", hashX);
         let tokenAddr = this.getDecodeEventTokenAddr(decodeEvent);
-        let storeman = this.getDecodeEventStoremanGroup(decodeEvent);
         content = {
           hashX: hashX,
           direction: (chainType !== 'wan') ? 0 : 1,
