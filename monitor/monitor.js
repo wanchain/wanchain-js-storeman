@@ -122,6 +122,15 @@ module.exports = class stateAction {
     this.updateRecord(content);
   }
 
+  updateFailReason(err) {
+    let error = (err.hasOwnProperty("message")) ? err.message : err;
+    this.logger.debug("********************************** updateFailReason ********************************** hashX:", this.hashX, "failReason:", error);
+    let content = {
+      failReason: error,
+    };
+    this.updateRecord(content);
+  }
+  
   takeAction() {
   	let self = this;
     return new Promise(async (resolve, reject) => {
@@ -182,6 +191,7 @@ module.exports = class stateAction {
         } else {
           this.logger.error("TakeIntervention failed of hashX", issueCollection, this.record.hashX, err);
           this.updateState(rollState);
+          this.updateFailReason(err);
         }
       })
     }
@@ -204,6 +214,7 @@ module.exports = class stateAction {
           this.record,
           err);
         this.updateState(rollState);
+        this.updateFailReason(err);
       })
     } catch (err) {
       this.logger.error("send mail failed, receive:%s subject:%s content:%s\n error: %s",
@@ -277,6 +288,7 @@ module.exports = class stateAction {
       } else {
         result.transRetried = 0;
         result.status = rollState[1];
+        this.updateFailReason(err);
       }
       this.logger.debug(result);
     }
@@ -431,6 +443,7 @@ module.exports = class stateAction {
             status: rollState[1],
             transConfirmed: 0
           }
+          this.updateFailReason('txHash receipt is 0x0! Cannot find ', eventName);
         }
       } else {
           content = {

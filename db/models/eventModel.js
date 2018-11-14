@@ -14,6 +14,10 @@ const eventSchema = new Schema({
   crossChain: {
     type: String
   },
+  failReason: {
+    type: String,
+    default: 'null'
+  },
   tokenType: {
     type: String,
   },
