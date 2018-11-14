@@ -334,11 +334,9 @@ module.exports = class stateAction {
         return true;
       }
 
-      if (suspendTime <= Date.now()) {
+      if ((suspendTime <= Date.now()) && (record.storemanLockEvent.length === 0)) {
         this.logger.debug("********************************** checkSecureSuspendTimeOut ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "suspendTimeDate:", suspendTimeDate, "nowData:", nowData);
-        if (record.storemanLockEvent.length === 0) {
-          this.updateState('transIgnored');
-        }
+        this.updateState('transIgnored');
         return true;
       }
     } catch (err) {
