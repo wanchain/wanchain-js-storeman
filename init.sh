@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 function use() {
         echo "========================"
@@ -12,6 +12,6 @@ if [[ $# == 2 ]]
 	then
 		NODE_PATH=. node initConfig.js $1 $2
 else
-	use 
+    use
     exit
 fi
