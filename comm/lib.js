@@ -1,6 +1,8 @@
 const moduleConfig = require('conf/moduleConfig.js');
+const configPath = 'conf/config.json';
 const configJson = require('conf/config.json');
 const config = moduleConfig.testnet?configJson.testnet:configJson.main;
+const fs = require('fs');
 
 const Web3 = require("web3");
 const net = require('net');
@@ -53,6 +55,98 @@ async function initNonce(chainType) {
   });
 }
 
+async function initCrossTokens(storemanWan, storemanEth) {
+  let wanChain = getGlobalChain('wan');
+  let crossTokens = {};
+  let empty = true;
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      for (let crossChain in moduleConfig.crossInfoDict) {
+        crossTokens[crossChain] = {};
+        let ethStoremanGroups = await wanChain.getStoremanGroups(crossChain);
+        let ethErc20Tokens = await wanChain.getRegErc20Tokens(crossChain);
+        let ethErc20StoremanGroups = await wanChain.getErc20StoremanGroupsOfMutiTokens(crossChain, ethErc20Tokens);
+
+        for (let storeman of ethStoremanGroups) {
+          if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanEth) {
+            crossTokens[crossChain]['0x'] = {
+              "tokenType": "COIN",
+              "tokenSymbol": "ETH"
+            };
+            empty = false;
+            break;
+          }
+        }
+
+        for (let storeman of ethErc20StoremanGroups) {
+          if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanEth) {
+            for (let token of ethErc20Tokens) {
+              if (token.tokenOrigAddr === storeman.tokenOrigAddr) {
+                let chain = getGlobalChain(crossChain.toLowerCase());
+                let tokenInfo = await chain.getErc20Info(token.tokenOrigAddr);
+                Object.assign(token, tokenInfo);
+                chain.bigNumber2String(token, 10);
+                crossTokens[crossChain][token.tokenOrigAddr] = token;
+                empty = false;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (!empty) {
+        resolve(crossTokens);
+      } else {
+        resolve(null);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+async function initConfig(storemanWan, storemanEth) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let crossTokens = await initCrossTokens(storemanWan, storemanEth);
+      if (crossTokens != null) {
+        fs.readFile(configPath, (err, data) => {
+          if (err) {
+            reject(err);
+          }
+
+          var config = data.toString();
+          config = JSON.parse(config);
+
+          var net;
+          if (moduleConfig.testnet) {
+            net = "testnet";
+          } else {
+            net = "main";
+          }
+          config[net].storemanWan = storemanWan;
+          config[net].storemanEth = storemanEth;
+          config[net].crossTokens = crossTokens;
+
+          var str = JSON.stringify(config, null, 2);
+          fs.writeFile(configPath, str, (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(crossTokens);
+            }
+          })
+        })
+      } else {
+        resolve(null);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 function getGlobalChain(chainType) {
   let chainName = chainType.toLowerCase() + "Chain";
   global[chainName] = getChain(chainType);
@@ -72,3 +166,5 @@ exports.initChain = initChain;
 exports.getGlobalChain = getGlobalChain;
 exports.getChain = getChain;
 exports.initNonce = initNonce;
+exports.initConfig = initConfig;
+exports.initCrossTokens = initCrossTokens;

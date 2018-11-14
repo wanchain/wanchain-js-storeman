@@ -36,53 +36,58 @@ global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/store
 global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 
 async function init() {
-  initChain('wan');
-  await initNonce('wan');
-  global.wanNonceRenew = false;
-  global.wanNoncePending = false;
+  try {
+    initChain('wan');
+    await initNonce('wan');
+    global.wanNonceRenew = false;
+    global.wanNoncePending = false;
 
-  global.storemanRestart = true;
+    global.storemanRestart = true;
 
-  tokenList.supportTokenAddrs = [];
-  tokenList.wanchainHtlcAddr = [];
-  tokenList.originalChainHtlcAddr = [];
-  for (let crossChain in moduleConfig.crossInfoDict) {
-    
-    global[crossChain + 'NonceRenew'] = false;
-    global[crossChain + 'NoncePending'] = false;
+    tokenList.supportTokenAddrs = [];
+    tokenList.wanchainHtlcAddr = [];
+    tokenList.originalChainHtlcAddr = [];
+    for (let crossChain in moduleConfig.crossInfoDict) {
 
-    initChain(crossChain);
-    await initNonce(crossChain);
+      global[crossChain + 'NonceRenew'] = false;
+      global[crossChain + 'NoncePending'] = false;
 
-    tokenList[crossChain] = {};
+      initChain(crossChain);
+      await initNonce(crossChain);
 
-    tokenList[crossChain].supportTokens = {};
+      tokenList[crossChain] = {};
 
-    for (let token in config["crossTokens"][crossChain]) {
-      tokenList.supportTokenAddrs.push(token);
-      tokenList[crossChain].supportTokens[token] = config["crossTokens"][crossChain][token].tokenSymbol;
+      tokenList[crossChain].supportTokens = {};
+
+      for (let token in config["crossTokens"][crossChain]) {
+        tokenList.supportTokenAddrs.push(token);
+        tokenList[crossChain].supportTokens[token] = config["crossTokens"][crossChain][token].tokenSymbol;
+      }
+
+      for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
+        tokenList[crossChain][tokenType] = {};
+
+        tokenList[crossChain][tokenType].wanchainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr;
+        tokenList[crossChain][tokenType].originalChainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr;
+
+        tokenList.wanchainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr);
+        tokenList.originalChainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr);
+
+        tokenList[crossChain][tokenType].wanCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 0);
+        tokenList[crossChain][tokenType].originCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 1);
+        tokenList[crossChain][tokenType].lockedTime = await tokenList[crossChain][tokenType].wanCrossAgent.getLockedTime();
+      }
     }
+    monitorLogger.info(tokenList);
 
-    for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
-      tokenList[crossChain][tokenType] = {};
-
-      tokenList[crossChain][tokenType].wanchainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr;
-      tokenList[crossChain][tokenType].originalChainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr;
-
-      tokenList.wanchainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr);
-      tokenList.originalChainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr);
-
-      tokenList[crossChain][tokenType].wanCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 0);
-      tokenList[crossChain][tokenType].originCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 1);
-      tokenList[crossChain][tokenType].lockedTime = await tokenList[crossChain][tokenType].wanCrossAgent.getLockedTime();
+    for (let crossChain in moduleConfig.crossInfoDict) {
+      syncLogger.debug("Nonce of chain:", crossChain, global[crossChain.toLowerCase() + 'LastNonce']);
     }
+    syncLogger.debug("Nonce of chain:", 'WAN', global['wanLastNonce']);
+  } catch (err) {
+    console.log(err);
+    process.exit();
   }
-  monitorLogger.info(tokenList);
-
-  for (let crossChain in moduleConfig.crossInfoDict) {
-    syncLogger.debug("Nonce of chain:", crossChain, global[crossChain.toLowerCase() + 'LastNonce']);
-  }
-  syncLogger.debug("Nonce of chain:", 'WAN', global['wanLastNonce']);
 }
 
 function splitData(string) {
@@ -342,9 +347,15 @@ db.on('connected', function(err) {
 let modelOps = new ModelOps(global.syncLogger, db);
 
 async function main() {
+  global.syncLogger.info("start storeman agent");
+  if (Object.keys(config["crossTokens"]).length === 0) {
+    global.syncLogger.error("./init.sh storemanWanAddr storemanEthAddr");
+    global.syncLogger.error("To start storeman agent at the first time, you need to run init.sh with storemanWanAddr storemanEthAddr as paras!");
+    process.exit();
+  }
   await init();
+
   syncMain(global.syncLogger, db);
   handlerMain(global.monitorLogger, db);
 }
-
 main();

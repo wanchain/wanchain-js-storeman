@@ -1,3 +1,6 @@
+const chainSCConfig = require('conf/moduleConfig.js');
+const coder = require('web3/lib/solidity/coder');
+
 function sleep(time) {
   return new Promise(function(resolve, reject) {
     setTimeout(function() {
@@ -10,6 +13,31 @@ class baseChain {
   constructor(log, theWeb3) {
     this.log = log;
     this.theWeb3 = theWeb3;
+  }
+
+  /**
+   * Change all bigNumber fields in a json to string.
+   * @param {object} json .
+   * @param {number} num: 10 - Decimal; 16 - Hex
+   */
+  bigNumber2String(json, num) {
+    for (let i in json) {
+      if (json[i].constructor.name === 'BigNumber') {
+        json[i] = json[i].toString(num);
+      }
+    }
+  }
+
+  /**
+   * Should be used to encode plain param to topic
+   *
+   * @method encodeTopic
+   * @param {String} type
+   * @param {Object} param
+   * @return {String} encoded plain param
+   */
+  encodeTopic(type, param) {
+    return '0x' + coder.encodeParam(type, param);
   }
 
   getNetworkId() {
@@ -375,10 +403,6 @@ class baseChain {
     return conInstance[varName];
   }
 
-  getERC20Interface(contractAddr, contractFunc) {
-    return this.getSolInferface(chainSCConfig.erc20Abi, contractAddr, contractFunc);
-  }
-
   getTokenBalance(address, tokenScAddr, abi, callback) {
     let log = this.log;
     try {
@@ -417,6 +441,37 @@ class baseChain {
     } catch (err) {
       log.debug('getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
     }      
+    });
+  }
+
+  getErc20Info(tokenScAddr) {
+    let log = this.log;
+    let self = this;
+    let erc20Abi = chainSCConfig.erc20Abi;
+    let token = {};
+    token.tokenType = "ERC20";
+
+    return new Promise((resolve, reject) => {
+      try {
+        token.tokenSymbol = self.getSolVar(erc20Abi, tokenScAddr, 'symbol')();
+        token.decimals = self.getSolVar(erc20Abi, tokenScAddr, 'decimals')().toString(10);
+        resolve(token);
+      } catch (err) {
+        if (err.hasOwnProperty("message") && (err.message === "new BigNumber() not a base 16 number: ")) {
+          try {
+            let unusualErc20Abi = chainSCConfig.unusualErc20Abi;
+            token.tokenSymbol = self.theWeb3.toAscii(self.getSolVar(unusualErc20Abi, tokenScAddr, 'symbol')()).replace(/\u0000/g, '');
+            token.decimals = self.getSolVar(erc20Abi, tokenScAddr, 'decimals')().toString(10);
+            resolve(token);
+          } catch (err) {
+            log.error(err);
+            reject(err);
+          }
+        } else {
+          log.error(err);
+          reject(err);
+        }
+      }
     });
   }
 

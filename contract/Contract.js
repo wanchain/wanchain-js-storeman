@@ -47,6 +47,15 @@ module.exports = class Contract {
     })
   }
 
+  parseEvents(events) {
+    if (events === null || !Array.isArray(events)) {
+      return events;
+    }
+    return events.map((event) => {
+      return this.parseEvent(event);
+    });
+  }
+
   parseEvent(event) {
     if (event === null) {
       return event;
