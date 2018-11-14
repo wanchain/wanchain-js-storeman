@@ -16,6 +16,7 @@ const {
   initChain,
   initNonce,
   getGlobalChain,
+  backupIssueFile,
   sleep
 } = require('comm/lib');
 
@@ -43,6 +44,7 @@ async function init() {
     global.wanNoncePending = false;
 
     global.storemanRestart = true;
+    backupIssueFile();
 
     tokenList.supportTokenAddrs = [];
     tokenList.wanchainHtlcAddr = [];

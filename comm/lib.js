@@ -153,6 +153,30 @@ function getGlobalChain(chainType) {
   return global[chainName];
 }
 
+function backupIssueFile() {
+  let date = new Date();
+  let year = date.getFullYear();
+  let month = date.getMonth() + 1;
+  let day = date.getDate();
+  let hour = date.getHours();
+  let minute = date.getMinutes();
+  let second = date.getSeconds();
+
+  let issueCollection = config.issueCollectionPath + 'issueCollection' + year + '-' + month + '-' + day + '.txt';
+  let newName = config.issueCollectionPath + 'issueCollection' + year + '-' + month + '-' + day + '-' + hour + minute + second + '.txt';
+
+  fs.exists(issueCollection, (exists) => {
+    if (exists) {
+      fs.rename(issueCollection, newName, (err) => {
+        if (err) {
+          console.log(err);
+        }
+        console.log('backupIssueFile done!', issueCollection, 'to', newName);
+      })
+    }
+  });
+}
+
 function sleep(time) {
   return new Promise(function(resolve, reject) {
     setTimeout(function() {
@@ -168,3 +192,4 @@ exports.getChain = getChain;
 exports.initNonce = initNonce;
 exports.initConfig = initConfig;
 exports.initCrossTokens = initCrossTokens;
+exports.backupIssueFile = backupIssueFile;
