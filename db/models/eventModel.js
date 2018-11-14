@@ -15,8 +15,7 @@ const eventSchema = new Schema({
     type: String
   },
   failReason: {
-    type: String,
-    default: 'null'
+    type: String
   },
   tokenType: {
     type: String,

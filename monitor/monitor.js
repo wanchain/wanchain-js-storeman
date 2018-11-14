@@ -130,7 +130,7 @@ module.exports = class stateAction {
     };
     this.updateRecord(content);
   }
-  
+
   takeAction() {
   	let self = this;
     return new Promise(async (resolve, reject) => {
