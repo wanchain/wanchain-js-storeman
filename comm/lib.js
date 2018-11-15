@@ -1,7 +1,7 @@
 const moduleConfig = require('conf/moduleConfig.js');
 const configPath = 'conf/config.json';
-const configJson = require('conf/config.json');
-const config = moduleConfig.testnet?configJson.testnet:configJson.main;
+let configJson = require('conf/config.json');
+let config = moduleConfig.testnet?configJson.testnet:configJson.main;
 const fs = require('fs');
 
 const Web3 = require("web3");
@@ -10,6 +10,8 @@ const EthChain = require('chain/eth');
 const WanChain = require('chain/wan');
 
 function getChain(chainType) {
+  configJson = JSON.parse(fs.readFileSync('conf/config.json'));
+  config = moduleConfig.testnet?configJson.testnet:configJson.main;
   let chain = chainType.toLowerCase();
   if (chain === 'eth') {
     if (config.ethWeb3Url.indexOf("http://") !== -1) {

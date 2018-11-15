@@ -87,7 +87,7 @@ async function init() {
     }
     syncLogger.debug("Nonce of chain:", 'WAN', global['wanLastNonce']);
   } catch (err) {
-    console.log(err);
+    console.log("init error ", err);
     process.exit();
   }
 }
