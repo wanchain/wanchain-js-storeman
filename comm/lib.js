@@ -10,8 +10,15 @@ const EthChain = require('chain/eth');
 const WanChain = require('chain/wan');
 
 function getChain(chainType) {
-  configJson = JSON.parse(fs.readFileSync('conf/config.json'));
-  config = moduleConfig.testnet?configJson.testnet:configJson.main;
+  let loadConfig = function() {
+    configJson = JSON.parse(fs.readFileSync('conf/config.json'));
+    config = moduleConfig.testnet?configJson.testnet:configJson.main;
+  }
+  try{
+    loadConfig();
+  } catch(err) {
+    console.log(err);
+  }
   let chain = chainType.toLowerCase();
   if (chain === 'eth') {
     if (config.ethWeb3Url.indexOf("http://") !== -1) {
