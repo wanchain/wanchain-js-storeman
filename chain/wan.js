@@ -151,25 +151,6 @@ class WanChain extends baseChain {
               }
             }
           }
-          // try {
-          //   let arrayAsync = storemanGroup.map(async function(storeman) {
-          //     let storemanQuotas = await self.getErc20StoremanQuota(crossChain, 'ERC20', storeman.tokenOrigAddr, storeman.smgWanAddr);
-          //     storeman.inboundQuota = storemanQuotas[1];
-          //     storeman.outboundQuota = storemanQuotas[2];
-          //     storeman.receivable = storemanQuotas[3];
-          //     storeman.payable = storemanQuotas[4];
-          //     storeman.debt = storemanQuotas[5];
-          //   });
-
-          //   await Promise.all(arrayAsync);
-          //   for (let i of storemanGroup) {
-          //     self.bigNumber2String(i, 10);
-          //   }
-          // } catch (err) {
-          //   log.error(err);
-          //   storemanGroup = null;
-          //   reject(err);
-          // }
           resolve(storemanGroup);
         }
       })
