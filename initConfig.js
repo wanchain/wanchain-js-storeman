@@ -19,7 +19,7 @@ async function init() {
       }
       console.log(crossTokens);
     } catch (err) {
-      console.log(err);
+      console.log("Storeman agent init error, plz check the paras and try again.", err);
       process.exit();
     }
   } else {
