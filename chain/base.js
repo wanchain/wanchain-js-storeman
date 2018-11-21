@@ -447,14 +447,27 @@ class baseChain {
   getErc20Info(tokenScAddr) {
     let log = this.log;
     let self = this;
-    let erc20Abi = chainSCConfig.erc20Abi;
+    let erc20Abi;
+    let symbol;
+    let decimals;
     let token = {};
     token.tokenType = "ERC20";
 
+    if (chainSCConfig.informalErc20.hasOwnProperty(tokenScAddr)) {
+      let informalErc20 = chainSCConfig.informalErc20[tokenScAddr];
+      erc20Abi = informalErc20.abi;
+      symbol = informalErc20.symbol;
+      decimals = informalErc20.decimals;
+    } else {
+      erc20Abi = chainSCConfig.erc20Abi;
+      symbol = 'symbol';
+      decimals = 'decimals';
+    }
+
     return new Promise((resolve, reject) => {
       try {
-        token.tokenSymbol = self.getSolVar(erc20Abi, tokenScAddr, 'symbol')();
-        token.decimals = self.getSolVar(erc20Abi, tokenScAddr, 'decimals')().toString(10);
+        token.tokenSymbol = self.getSolVar(erc20Abi, tokenScAddr, symbol)();
+        token.decimals = self.getSolVar(erc20Abi, tokenScAddr, decimals)().toString(10);
         resolve(token);
       } catch (err) {
         if (err.hasOwnProperty("message") && (err.message === "new BigNumber() not a base 16 number: ")) {
