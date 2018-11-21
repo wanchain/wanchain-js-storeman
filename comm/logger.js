@@ -42,7 +42,7 @@ class Logger {
         // - Write to all logs with level `level` and below to file
         // - Write all logs error (and below) to errorFile.
         //
-        // new winston.transports.Syslog(this.options),
+        new winston.transports.Syslog(this.options),
         new winston.transports.Console(),
         // new (winston.transports.DailyRotateFile)({
         //   filename: errorFile,
