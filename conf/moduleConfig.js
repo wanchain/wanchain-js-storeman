@@ -21,7 +21,7 @@ const config = {
 
   web3RetryTimes: 30,
 
-  retryTimes: 5,
+  retryTimes: 60,
   retryWaitTime: 60 * 1000,
   confirmTimes: 60,
 
