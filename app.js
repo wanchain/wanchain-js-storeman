@@ -236,7 +236,7 @@ async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
       if (from <= to) {
         events = await getScEvents(logger, chain, scAddr, topics, from, to);
       }
-      logger.info("events: ", events.length);
+      logger.info("events: ", chainType, events.length);
       if (events.length > 0) {
         await splitEvent(chainType, crossChain, tokenType, events);
       }
