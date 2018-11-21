@@ -58,7 +58,7 @@ class Logger {
           datePattern: 'YYYY-MM-DD',
           zippedArchive: false,
           maxSize: '50m',
-          maxFiles: '5d'
+          maxFiles: '30d'
         })
       ]
     });
