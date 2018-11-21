@@ -22,7 +22,7 @@ const config = {
   web3RetryTimes: 30,
 
   retryTimes: 60,
-  retryWaitTime: 60 * 1000,
+  retryWaitTime: 120 * 1000,
   confirmTimes: 60,
 
   logServerUrl: '54.149.227.183',
