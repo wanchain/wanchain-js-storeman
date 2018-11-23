@@ -182,7 +182,7 @@ module.exports = class stateAction {
     let day = date.getDate();
 
     let issueCollection = config.issueCollectionPath + 'issueCollection' + year + '-' + month + '-' + day + '.txt';
-    let content = this.record + '\n';
+    let content = JSON.stringify(this.record) + '\n';
     if (mkdirsSync(config.issueCollectionPath)) {
       fs.appendFile(issueCollection, content, (err) => {
         if (!err) {
