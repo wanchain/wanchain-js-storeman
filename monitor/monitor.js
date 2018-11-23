@@ -312,7 +312,7 @@ module.exports = class stateAction {
       } else {
         HTLCtime = Number(record.timestamp) + Number(record.lockedTime);
       }
-      let HTLC2time = Number(record.HTLCtime);
+      let HTLC2time = Number(record.timestamp) + Number(record.lockedTime) * 2;
       let suspendTime = Number(record.suspendTime);
       let timestamp = Number(record.timestamp);
 
