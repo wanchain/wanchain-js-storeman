@@ -326,7 +326,7 @@ module.exports = class stateAction {
         state === "waitingCrossRevokeConfirming" ||
         state === "revokeFailed") {
         if (record.walletRedeemEvent.length !== 0) {
-          if (HTLCtime <= Date.now && Date.now() <= HTLC2time) {
+          if (Date.now() <= HTLC2time) {
             this.updateState('receivedX');
           } else {
             this.updateState('fundLosted');
