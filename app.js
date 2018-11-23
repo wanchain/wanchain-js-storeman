@@ -299,12 +299,12 @@ async function handlerMain(logger, db) {
       }
       if (global.storemanRestart) {
         option.status = {
-          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'transFinished']
+          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'fundLostFinished']
         }
         global.storemanRestart = false;
       } else {
         option.status = {
-          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'transFinished', 'interventionPending']
+          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'fundLostFinished', 'interventionPending']
         }
       }
       let history = await modelOps.getEventHistory(option);

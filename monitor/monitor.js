@@ -84,15 +84,15 @@ var stateDict = {
     paras: ['interventionPending', 'waitingIntervention']
   },
   transIgnored: {},
-  foundLosted: {
+  fundLosted: {
     action: 'takeIntervention',
-    paras: ['transFinished', 'waitingIntervention']
+    paras: ['fundLostFinished', 'waitingIntervention']
   },
   interventionPending: {
     action: 'initState',
     paras: ['waitingCross', 'checkApprove']
   },
-  transFinished: {}
+  fundLostFinished: {}
 };
 
 module.exports = class stateAction {
@@ -301,16 +301,7 @@ module.exports = class stateAction {
     let state = this.state;
     this.logger.debug("********************************** checkHashTimeout ********************************** hashX:", this.hashX, record.status);
 
-    if (state === "waitingIntervention" || state === "foundLosted") {
-      return false;
-    }
-
-    if (state === "waitingRevoke" ||
-      state === "waitingCrossRevokeConfirming" ||
-      state === "revokeFailed") {
-      if (record.walletRedeemEvent.length !== 0) {
-        this.updateState('foundLosted');
-      } 
+    if (state === "waitingIntervention" || state === "fundLosted") {
       return false;
     }
 
@@ -321,17 +312,31 @@ module.exports = class stateAction {
       } else {
         HTLCtime = Number(record.timestamp) + Number(record.lockedTime);
       }
-      // let HTLCtime = Number(record.HTLCtime);
+      let HTLC2time = Number(record.HTLCtime);
       let suspendTime = Number(record.suspendTime);
       let timestamp = Number(record.timestamp);
 
       let HTLCtimeDate = new Date(HTLCtime).toString();
+      let HTLC2timeDate = new Date(HTLC2time).toString();
       let suspendTimeDate = new Date(suspendTime).toString();
       let timestampDate = new Date(timestamp).toString();
       let nowData = new Date().toString();
 
+      if (state === "waitingRevoke" ||
+        state === "waitingCrossRevokeConfirming" ||
+        state === "revokeFailed") {
+        if (record.walletRedeemEvent.length !== 0) {
+          if (HTLCtime <= Date.now && Date.now() <= HTLC2time) {
+            this.updateState('receivedX');
+          } else {
+            this.updateState('fundLosted');
+          }
+        }
+        return false;
+      }
+
       if (HTLCtime <= Date.now()) {
-        this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
+        this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLCtimeDate:", HTLCtimeDate, "HTLC2timeDate:", HTLC2timeDate, "nowData:", nowData);
         if (record.storemanRevokeEvent.length !== 0) {
           this.updateState('revokeFinished');
         } else if (record.storemanRedeemEvent.length !== 0) {
@@ -339,7 +344,11 @@ module.exports = class stateAction {
         } else if (record.storemanLockEvent.length === 0) {
           this.updateState('transIgnored');
         } else if (record.walletRedeemEvent.length !== 0) {
-          this.updateState('foundLosted');
+          if (Date.now() <= HTLC2time) {
+            this.updateState('receivedX');
+          } else {
+            this.updateState('fundLosted');
+          }
         } else {
           this.updateState('waitingRevoke');
         }

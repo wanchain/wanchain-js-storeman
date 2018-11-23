@@ -422,14 +422,14 @@ module.exports = class EthCrossAgent {
           timestamp: decodeEvent.timestamp * 1000,
           lockedTime: lockedTime * 1000,
           suspendTime: (1000 * (lockedTime - lockedTime / moduleConfig.secureLockIntervalRatio) + Number(decodeEvent.timestamp) * 1000).toString(),
-          HTLCtime: (1000 * lockedTime + Number(decodeEvent.timestamp) * 1000).toString(),
+          HTLCtime: (1000 * 2 * lockedTime + Number(decodeEvent.timestamp) * 1000).toString(),
           walletLockEvent: event
         };
       } else if ((eventName === this.crossInfoInst.depositEvent[0] && chainType === 'wan') ||
         (eventName === this.crossInfoInst.withdrawEvent[0] && chainType !== 'wan')) {
         this.logger.debug("********************************** 2: found storeman lock transaction ********************************** hashX", hashX);
         content = {
-          HTLCtime: (1000 * lockedTime + Number(decodeEvent.timestamp) * 1000).toString(),
+          // HTLCtime: (1000 * lockedTime + Number(decodeEvent.timestamp) * 1000).toString(),
           storemanLockTxHash: decodeEvent.transactionHash,
           storemanLockEvent: event
         };
