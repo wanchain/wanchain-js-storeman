@@ -71,12 +71,14 @@ var stateDict = {
   waitingRevoke: {
     action: 'sendTrans',
     paras: ['revoke', 'storemanRevokeEvent', ['waitingCrossRevokeConfirming', 'revokeFinished'],
-      ['waitingRevoke', 'waitingIntervention']
+      ['waitingRevoke', 'revokeFailedBeforeHTLC2time']
     ]
   },
   waitingCrossRevokeConfirming: {
     action: 'checkStoremanTransOnline',
-    paras: ['storemanRevokeEvent', 'storemanRevokeTxHash', 'revokeFinished', ['waitingRevoke', 'waitingIntervention']]
+    paras: ['storemanRevokeEvent', 'storemanRevokeTxHash', 'revokeFinished', ['waitingRevoke', 'revokeFailedBeforeHTLC2time']]
+  },
+  revokeFailedBeforeHTLC2time: {
   },
   revokeFinished: {},
   waitingIntervention: {
@@ -322,13 +324,26 @@ module.exports = class stateAction {
       let timestampDate = new Date(timestamp).toString();
       let nowData = new Date().toString();
 
+      // beforeHTLC2time, revoke maybe fail because of late walletRedeemEvent
+      if (state === "revokeFailedBeforeHTLC2time") {
+        if (Date.now() > HTLC2time) {
+          this.updateState("waitingIntervention");
+        }
+      }
+
       if (state === "waitingRevoke" ||
         state === "waitingCrossRevokeConfirming" ||
-        state === "revokeFailed") {
+        state === "revokeFailedBeforeHTLC2time") {
         if (record.walletRedeemEvent.length !== 0) {
           if (Date.now() <= HTLC2time) {
-            this.updateState('receivedX');
+            let content = {
+              status: 'receivedX',
+              transConfirmed: 0,
+              transRetried: 0
+            }
+            this.updateRecord(content);
           } else {
+            this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLC2timeDate:", HTLC2timeDate, "nowData:", nowData);
             this.updateState('fundLosted');
           }
         }
@@ -336,19 +351,13 @@ module.exports = class stateAction {
       }
 
       if (HTLCtime <= Date.now()) {
-        this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLCtimeDate:", HTLCtimeDate, "HTLC2timeDate:", HTLC2timeDate, "nowData:", nowData);
+        this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
         if (record.storemanRevokeEvent.length !== 0) {
           this.updateState('revokeFinished');
         } else if (record.storemanRedeemEvent.length !== 0) {
           this.updateState('redeemFinished');
         } else if (record.storemanLockEvent.length === 0) {
           this.updateState('transIgnored');
-        } else if (record.walletRedeemEvent.length !== 0) {
-          if (Date.now() <= HTLC2time) {
-            this.updateState('receivedX');
-          } else {
-            this.updateState('fundLosted');
-          }
         } else {
           this.updateState('waitingRevoke');
         }
