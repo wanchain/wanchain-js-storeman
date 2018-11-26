@@ -342,12 +342,19 @@ module.exports = class stateAction {
               transRetried: 0
             }
             this.updateRecord(content);
+            this.state = 'receivedX';
           } else {
             this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLC2timeDate:", HTLC2timeDate, "nowData:", nowData);
             this.updateState('fundLosted');
+            this.state = 'fundLosted';
           }
         }
         return false;
+      }
+
+      // return true to not take action
+      if (state === "revokeFailedBeforeHTLC2time") {
+        return true;
       }
 
       if (HTLCtime <= Date.now()) {
