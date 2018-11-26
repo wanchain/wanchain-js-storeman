@@ -326,7 +326,7 @@ module.exports = class stateAction {
 
       // beforeHTLC2time, revoke maybe fail because of late walletRedeemEvent
       if (state === "revokeFailedBeforeHTLC2time") {
-        if (Date.now() > HTLC2time) {
+        if (HTLC2time <= Date.now()) {
           this.updateState("waitingIntervention");
         }
       }
@@ -335,7 +335,7 @@ module.exports = class stateAction {
         state === "waitingCrossRevokeConfirming" ||
         state === "revokeFailedBeforeHTLC2time") {
         if (record.walletRedeemEvent.length !== 0) {
-          if (Date.now() <= HTLC2time) {
+          if (Date.now() < HTLC2time) {
             let content = {
               status: 'receivedX',
               transConfirmed: 0,
@@ -365,6 +365,11 @@ module.exports = class stateAction {
           this.updateState('redeemFinished');
         } else if (record.storemanLockEvent.length === 0) {
           this.updateState('transIgnored');
+        } else if (record.walletRefundEvent.length !== 0) {
+          // redeem may happened until HTLC2time
+          if (HTLC2time <= Date.now()) {
+            this.updateState("waitingRevoke");
+          }
         } else {
           this.updateState('waitingRevoke');
         }
@@ -468,7 +473,8 @@ module.exports = class stateAction {
             status: rollState[1],
             transConfirmed: 0
           }
-          this.updateFailReason('txHash receipt is 0x0! Cannot find ', eventName);
+          let failReason = 'txHash receipt is 0x0! Cannot find ' + eventName;
+          this.updateFailReason(failReason);
         }
       } else {
           content = {
