@@ -365,7 +365,7 @@ module.exports = class stateAction {
           this.updateState('redeemFinished');
         } else if (record.storemanLockEvent.length === 0) {
           this.updateState('transIgnored');
-        } else if (record.walletRefundEvent.length !== 0) {
+        } else if (record.walletRedeemEvent.length !== 0) {
           // redeem may happened until HTLC2time
           if (HTLC2time <= Date.now()) {
             this.updateState("waitingRevoke");
