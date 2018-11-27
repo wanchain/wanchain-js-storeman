@@ -10,7 +10,7 @@ class WanChain extends baseChain {
 
   getTokenScManagerFuncInterface(crossChain, tokenType, contractFunc) {
     let scAbi = chainSCConfig.crossInfoDict[crossChain][tokenType]["tokenManagerAbi"];
-    let contractAddr = chainSCConfigcrossInfoDict[crossChain][tokenType]["tokenManagerAddr"];
+    let contractAddr = chainSCConfig.crossInfoDict[crossChain][tokenType]["tokenManagerAddr"];
     return this.getSolInferface(scAbi, contractAddr, contractFunc);
   }
 

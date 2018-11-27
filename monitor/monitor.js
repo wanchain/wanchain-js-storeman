@@ -242,17 +242,18 @@ module.exports = class stateAction {
       }
     }
 
-    if (!Array.isArray(actionArray)) {
-      if (['redeem', 'revoke'].indexOf(actionArray) === -1) {
-        if (!await this.checkStoremanQuota) {
-          let content = {
-            status: 'transIgnored',
-            transConfirmed: 0
-          }
-          this.updateRecord(content);
-          return;
+    if (['redeem', 'revoke'].indexOf(actionArray) === -1) {
+      if (!await this.checkStoremanQuota()) {
+        let content = {
+          status: 'transIgnored',
+          transConfirmed: 0
         }
+        this.updateRecord(content);
+        return;
       }
+    }
+
+    if (!Array.isArray(actionArray)) {
       actionArray = [actionArray];
     } else {
       actionArray = [...actionArray];
@@ -501,9 +502,9 @@ module.exports = class stateAction {
   }
 
   async getStoremanQuota() {
-    let storemanGroupAddr = moduleConfig.storemanWan;
+    let storemanGroupAddr = config.storemanWan;
     let storemanQuotaInfo;
-    let chain = getGlobalChain(this.crossChain);
+    let chain = getGlobalChain('wan');
 
     try{
       if(this.tokenType === 'COIN') {
@@ -526,15 +527,18 @@ module.exports = class stateAction {
 
   async checkStoremanQuota() {
     let boundQuota = await this.getStoremanQuota();
+    this.logger.debug("checkStoremanQuota boundQuota is", boundQuota);
 
     if(boundQuota !== null) {
       if(web3.toBigNumber(this.record.value) > web3.toBigNumber(boundQuota)) {
+        this.logger.debug("checkStoremanQuota value %s is bigger than boundQuota %s", this.record.value.toString(), boundQuota.toString());
         return false;
       } else {
+        this.logger.debug("checkStoremanQuota value %s is smaller than boundQuota %s", this.record.value.toString(), boundQuota.toString());
         return true;
       }
     } else {
-      return false;
+      return true;
     }
   }
 }
