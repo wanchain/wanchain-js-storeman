@@ -530,7 +530,7 @@ module.exports = class stateAction {
     this.logger.debug("checkStoremanQuota boundQuota is", boundQuota);
 
     if(boundQuota !== null) {
-      if(web3.toBigNumber(this.record.value) > web3.toBigNumber(boundQuota)) {
+      if (web3.toBigNumber(this.record.value).cmp(web3.toBigNumber(boundQuota)) > 0) {
         this.logger.debug("checkStoremanQuota value %s is bigger than boundQuota %s", this.record.value.toString(), boundQuota.toString());
         return false;
       } else {
