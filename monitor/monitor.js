@@ -512,7 +512,7 @@ module.exports = class stateAction {
       } else {
         storemanQuotaInfo = await chain.getErc20StoremanQuota(this.crossChain.toUpperCase(), this.tokenType, this.record.tokenAddr, storemanGroupAddr);
       }
-      this.logger.debug("getStoremanQuota result is", storemanQuotaInfo);
+      this.logger.debug("getStoremanQuota result is", storemanQuotaInfo, this.hashX);
 
       if(this.crossDirection === 0) {
         return storemanQuotaInfo[1];
@@ -520,21 +520,21 @@ module.exports = class stateAction {
         return storemanQuotaInfo[2];
       }
     } catch(err) {
-      this.logger.error("getStoremanQuota error:", err);
+      this.logger.error("getStoremanQuota error:", err, this.hashX);
       return null;
     }
   }
 
   async checkStoremanQuota() {
     let boundQuota = await this.getStoremanQuota();
-    this.logger.debug("checkStoremanQuota boundQuota is", boundQuota);
+    this.logger.debug("checkStoremanQuota boundQuota is", boundQuota, this.hashX);
 
     if(boundQuota !== null) {
       if (web3.toBigNumber(this.record.value).cmp(web3.toBigNumber(boundQuota)) > 0) {
-        this.logger.debug("checkStoremanQuota value %s is bigger than boundQuota %s", this.record.value.toString(), boundQuota.toString());
+        this.logger.debug("checkStoremanQuota value %s is bigger than boundQuota %s", this.record.value.toString(), boundQuota.toString(), this.hashX);
         return false;
       } else {
-        this.logger.debug("checkStoremanQuota value %s is smaller than boundQuota %s", this.record.value.toString(), boundQuota.toString());
+        this.logger.debug("checkStoremanQuota value %s is smaller than boundQuota %s", this.record.value.toString(), boundQuota.toString(), this.hashX);
         return true;
       }
     } else {
