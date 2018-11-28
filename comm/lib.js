@@ -116,9 +116,12 @@ async function initCrossTokens(storemanWan, storemanEth) {
 }
 
 async function initConfig(storemanWan, storemanEth) {
+  let storemanWanAddr = storemanWan.toLowerCase();
+  let storemanEthAddr = storemanEth.toLowerCase();
+
   return new Promise(async (resolve, reject) => {
     try {
-      let crossTokens = await initCrossTokens(storemanWan, storemanEth);
+      let crossTokens = await initCrossTokens(storemanWanAddr, storemanEthAddr);
       if (crossTokens != null) {
         fs.readFile(configPath, (err, data) => {
           if (err) {
@@ -134,8 +137,8 @@ async function initConfig(storemanWan, storemanEth) {
           } else {
             net = "main";
           }
-          config[net].storemanWan = storemanWan;
-          config[net].storemanEth = storemanEth;
+          config[net].storemanWan = storemanWanAddr;
+          config[net].storemanEth = storemanEthAddr;
           config[net].crossTokens = crossTokens;
 
           var str = JSON.stringify(config, null, 2);
