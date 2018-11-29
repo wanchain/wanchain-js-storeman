@@ -120,8 +120,8 @@ function writeWeb3IpToFile(filename, nextIp) {
       }
 
       if(nextIp === undefined) {
-      	resolve(true);
-      	return;
+        resolve(true);
+        return;
       }
 
       let curIp = config[net].ethWeb3Url;
