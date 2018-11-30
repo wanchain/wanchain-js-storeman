@@ -66,36 +66,45 @@ function watchdog(chainType) {
     try {
       chain.theWeb3.eth.getBlockNumber((err, result) => {
         if (err) {
-          log.error("getBlockNumber " + err + " chainType= " + chainType);
+          log.error("getBlockNumber " + err + " chainType " + chainType + " curEthWeb3Ip "+ curEthWeb3Ip);
 
           updateWeb3Ip();
           resolve();
         } else {
-          log.debug("getBlockNumber,blockNumber= %s chainType = %s", result, chainType);
+          log.debug("getBlockNumber,blockNumber %s chainType %s curEthWeb3Ip %s", result, chainType, curEthWeb3Ip);
           blockNumber = result;
 
           chain.theWeb3.eth.getBlock(blockNumber, (err, block) => {
-            if (err) {
-              log.error("getBlockByNumber " + err + " chainType= " + chainType);
-              updateWeb3Ip();
-              resolve();
-            } else {
-              log.debug("getLatestBlockTime %s chainType = %s", block.timestamp, chainType);
-              blockTimeStamp = block.timestamp;
-
-              timeOutOrNot = false;
-              timeOutOrNot = checkTimeout(blockTimeStamp, timeOutOfLastBlock, chainType);
-              log.info("timeOutOrNot = %s chainType = %s", timeOutOrNot, chainType);
-
-              if (timeOutOrNot) {
+            try {
+              if (err) {
+                log.error("getBlockByNumber " + err + " chainType " + chainType + " curEthWeb3Ip "+ curEthWeb3Ip);
                 updateWeb3Ip();
+                resolve();
+              } else {
+                if (block !== null) {
+                  log.debug("getLatestBlockTime %s chainType %s curEthWeb3Ip %s", block.timestamp, chainType, curEthWeb3Ip);
+                  blockTimeStamp = block.timestamp;
+
+                  timeOutOrNot = false;
+                  timeOutOrNot = checkTimeout(blockTimeStamp, timeOutOfLastBlock, chainType);
+                } else {
+                  timeOutOrNot = true;
+                }
+                log.info("timeOutOrNot %s chainType %s curEthWeb3Ip %s", timeOutOrNot, chainType, curEthWeb3Ip);
+                if (timeOutOrNot) {
+                  updateWeb3Ip();
+                }
+                resolve();
               }
-              resolve();
+            } catch (err) {
+              log.error("getBlock Info " + err + " chainType " + chainType+ " curEthWeb3Ip "+ curEthWeb3Ip);
+              reject(err);
             }
           });
         }
       });
     } catch (err) {
+      log.error("getBlock Info " + err + " chainType " + chainType + " curEthWeb3Ip "+ curEthWeb3Ip);
       reject(err);
     }
   });
@@ -144,8 +153,12 @@ function writeWeb3IpToFile(filename, nextIp) {
 async function mainLoop() {
   while (1) {
     log.info("Watchdog loop begins...");
-    await watchdog('ETH');
-    await sleep(syncInterval);
+    try {
+      await watchdog('ETH');
+      await sleep(syncInterval);
+    } catch (err) {
+      log.error("Watchdog error " + err);
+    }
   }
 }
 
