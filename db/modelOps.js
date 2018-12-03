@@ -68,6 +68,19 @@ class ModelOps {
     }, content);
   }
 
+  syncSave(hashX, content) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        await this.dbAccess.syncUpdateDocument(this.eventModel, {
+          hashX: hashX
+        }, content);
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   getEventByHashX(hashX, callback) {
     let logger = this.logger;
     this.dbAccess.findDocumentOne(this.eventModel, {

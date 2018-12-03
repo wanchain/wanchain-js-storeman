@@ -48,6 +48,22 @@ class DbAccess {
     });
   }
 
+  syncUpdateDocument(model, filter, content) {
+    let log = this.log;
+    return new Promise((resolve, reject) => {
+      model.findOneAndUpdate(filter, content, {
+        upsert: true
+      }, (err, doc) => {
+        if (!err) {
+          resolve();
+        } else {
+          log.error("syncUpdateDocument failed",err);
+          reject(err);
+        }
+      });
+    });
+  }
+
   findDocumentOne(model, filter, callback) {
     let log = this.log;
     model.findOne(filter, function(err, result) {
