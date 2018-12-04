@@ -14,6 +14,9 @@ const eventSchema = new Schema({
   crossChain: {
     type: String
   },
+  failAction:{
+    type: String
+  },
   failReason: {
     type: String
   },
@@ -108,15 +111,20 @@ const eventSchema = new Schema({
     type: Array,
     default: []
   },
+  storemanApproveZeroTxHash: {
+    type: String,
+    lowercase: true,
+    default: []
+  },
   storemanApproveTxHash: {
     type: String,
     lowercase: true,
-    default: '0x'
+    default: []
   },
   storemanLockTxHash: {
     type: String,
     lowercase: true,
-    default: '0x'
+    default: []
   },
   storemanLockEvent: {
     type: Array,
@@ -129,7 +137,7 @@ const eventSchema = new Schema({
   storemanRedeemTxHash: {
     type: String,
     lowercase: true,
-    default: '0x'
+    default: []
   },
   storemanRedeemEvent: {
     type: Array,
@@ -142,7 +150,7 @@ const eventSchema = new Schema({
   storemanRevokeTxHash: {
     type: String,
     lowercase: true,
-    default: '0x'
+    default: []
   },
   storemanRevokeEvent: {
     type: Array,

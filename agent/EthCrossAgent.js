@@ -57,6 +57,7 @@ module.exports = class EthCrossAgent {
     this.withdrawRedeemEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[1]);
     this.withdrawRevokeEvent = this.contract.getEventSignature(crossInfoInst.withdrawEvent[2]);
 
+    this.record = record;
     if (record !== null) {
       if (record.x !== '0x') {
         this.key = record.x;
@@ -355,8 +356,9 @@ module.exports = class EthCrossAgent {
     this.logger.debug("********************************** insertLockData trans **********************************", hashKey);
 
     let content = {
-      storemanLockTxHash: result.toLowerCase()
+      storemanLockTxHash: (Array.isArray(this.record.storemanLockTxHash)) ? [...this.record.storemanLockTxHash] : [this.record.storemanLockTxHash]
     }
+    content.storemanLockTxHash.push(result.toLowerCase());
     return content;
   }
 
@@ -364,8 +366,9 @@ module.exports = class EthCrossAgent {
     this.logger.debug("********************************** insertRedeemData trans **********************************", hashKey);
 
     let content = {
-      storemanRedeemTxHash: result.toLowerCase()
+      storemanRedeemTxHash: (Array.isArray(this.record.storemanRedeemTxHash)) ? [...this.record.storemanRedeemTxHash] : [this.record.storemanRedeemTxHash]
     }
+    content.storemanRedeemTxHash.push(result.toLowerCase());
     return content;
   }
 
@@ -373,8 +376,9 @@ module.exports = class EthCrossAgent {
     this.logger.debug("********************************** insertRevokeData trans **********************************", hashKey);
 
     let content = {
-      storemanRevokeTxHash: result.toLowerCase()
+      storemanRevokeTxHash: (Array.isArray(this.record.storemanRevokeTxHash)) ? [...this.record.storemanRevokeTxHash] : [this.record.storemanRevokeTxHash]
     }
+    content.storemanRevokeTxHash.push(result.toLowerCase());
     return content;
   }
 
@@ -429,8 +433,6 @@ module.exports = class EthCrossAgent {
         (eventName === this.crossInfoInst.withdrawEvent[0] && chainType !== 'wan')) {
         this.logger.debug("********************************** 2: found storeman lock transaction ********************************** hashX", hashX);
         content = {
-          // HTLCtime: (1000 * lockedTime + Number(decodeEvent.timestamp) * 1000).toString(),
-          storemanLockTxHash: decodeEvent.transactionHash,
           storemanLockEvent: event
         };
       } else if ((eventName === this.crossInfoInst.depositEvent[1] && chainType === 'wan') ||
@@ -444,7 +446,6 @@ module.exports = class EthCrossAgent {
         (eventName === this.crossInfoInst.withdrawEvent[1] && chainType === 'wan')) {
         this.logger.debug("********************************** 4: found storeman redeem transaction ********************************** hashX", hashX);
         content = {
-          storemanRedeemTxHash: decodeEvent.transactionHash,
           storemanRedeemEvent: event
         };
       } else if ((eventName === this.crossInfoInst.depositEvent[2] && chainType !== 'wan') ||
@@ -457,7 +458,6 @@ module.exports = class EthCrossAgent {
         (eventName === this.crossInfoInst.withdrawEvent[2] && chainType !== 'wan')) {
         this.logger.debug("********************************** 6: found storeman revoke transaction ********************************** hashX", hashX);
         content = {
-          storemanRevokeTxHash: decodeEvent.transactionHash,
           storemanRevokeEvent: event
         };
       }

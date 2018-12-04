@@ -268,6 +268,25 @@ async function syncMain(logger, db) {
   }
 }
 
+/* When storeman restart, change all waitingIntervention state to interventionPending, to auto retry the test*/
+async function updateRecordAfterRestart(logger) {
+  let option = {
+    status: {
+      $in: ['waitingIntervention']
+    }
+  }
+  let changeList = await modelOps.getEventHistory(option);
+  let content = {
+    status: 'interventionPending'
+  }
+  logger.debug('changeList length is ', changeList.length);
+  for (let i = 0; i < changeList.length; i++) {
+    let record = changeList[i];
+    await modelOps.syncSave(record.hashX, content);
+  }
+  logger.debug('updateRecordAfterRestart finished!');
+}
+
 function monitorRecord(record) {
   let stateAction = new StateAction(record, global.monitorLogger, db);
   stateAction.takeAction()
@@ -358,6 +377,7 @@ async function main() {
   await init();
 
   syncMain(global.syncLogger, db);
+  await updateRecordAfterRestart(global.monitorLogger);
   handlerMain(global.monitorLogger, db);
 }
 main();

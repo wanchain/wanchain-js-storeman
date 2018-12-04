@@ -95,7 +95,10 @@ module.exports = class Erc20CrossAgent extends EthCrossAgent {
   }
 
   createTrans(action) {
-    if (action === 'approve' || action === 'approveZero') {
+    if (action === 'approveZero') {
+      this.data = this.getApproveData();
+      this.build = this.buildApproveZeroData;
+    } else if (action === 'approve') {
       this.data = this.getApproveData();
       this.build = this.buildApproveData;
     } else if (action === 'lock') {
@@ -114,12 +117,23 @@ module.exports = class Erc20CrossAgent extends EthCrossAgent {
     this.trans.setValue(0);
   }
 
+  buildApproveZeroData(hashKey, result) {
+    this.logger.debug("********************************** insertApproveZeroData trans **********************************", hashKey);
+
+    let content = {
+      storemanApproveZeroTxHash: (Array.isArray(this.record.storemanApproveZeroTxHash)) ? [...this.record.storemanApproveZeroTxHash] : [this.record.storemanApproveZeroTxHash]
+    }
+    content.storemanApproveZeroTxHash.push(result.toLowerCase());
+    return content;
+  }
+
   buildApproveData(hashKey, result) {
     this.logger.debug("********************************** insertApproveData trans **********************************", hashKey);
 
     let content = {
-      storemanApproveTxHash: result.toLowerCase()
+      storemanApproveTxHash: (Array.isArray(this.record.storemanApproveTxHash)) ? [...this.record.storemanApproveTxHash] : [this.record.storemanApproveTxHash]
     }
+    content.storemanApproveTxHash.push(result.toLowerCase());
     return content;
   }
 
