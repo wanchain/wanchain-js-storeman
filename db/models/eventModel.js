@@ -112,17 +112,17 @@ const eventSchema = new Schema({
     default: []
   },
   storemanApproveZeroTxHash: {
-    type: String,
+    type: Array,
     lowercase: true,
     default: []
   },
   storemanApproveTxHash: {
-    type: String,
+    type: Array,
     lowercase: true,
     default: []
   },
   storemanLockTxHash: {
-    type: String,
+    type: Array,
     lowercase: true,
     default: []
   },
@@ -135,7 +135,7 @@ const eventSchema = new Schema({
     default: []
   },
   storemanRedeemTxHash: {
-    type: String,
+    type: Array,
     lowercase: true,
     default: []
   },
@@ -148,7 +148,7 @@ const eventSchema = new Schema({
     default: []
   },
   storemanRevokeTxHash: {
-    type: String,
+    type: Array,
     lowercase: true,
     default: []
   },
