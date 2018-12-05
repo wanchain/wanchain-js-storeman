@@ -245,18 +245,17 @@ module.exports = class stateAction {
       }
     }
 
-    if (['redeem', 'revoke'].indexOf(actionArray) === -1) {
-      if (!await this.checkStoremanQuota()) {
-        let content = {
-          status: 'transIgnored',
-          transConfirmed: 0
-        }
-        await this.updateRecord(content);
-        return;
-      }
-    }
-
     if (!Array.isArray(actionArray)) {
+      if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.record.direction === 0)) {
+        if (!await this.checkStoremanQuota()) {
+          let content = {
+            status: 'transIgnored',
+            transConfirmed: 0
+          }
+          await this.updateRecord(content);
+          return;
+        }
+      }
       actionArray = [actionArray];
     } else {
       actionArray = [...actionArray];
