@@ -1,6 +1,6 @@
 {
   "main": {
-    "ethWeb3Url": "http://54.184.15.234:18545",
+    "ethWeb3Url": "http://localhost:18545",
     "wanWeb3Url": "http://localhost:8545",
     "mpcUrl": "http://localhost:8545",
     "isLeader": false,
@@ -14,7 +14,7 @@
     "crossTokens": {}
   },
   "testnet": {
-    "ethWeb3Url": "http://54.185.138.211:18545",
+    "ethWeb3Url": "http://localhost:18545",
     "wanWeb3Url": "http://localhost:8545",
     "mpcUrl": "http://localhost:8545",
     "isLeader": false,
