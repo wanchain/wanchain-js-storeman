@@ -117,7 +117,7 @@ const test_Config = {
   confirmTimes: 60,
 
   logServerUrl: '54.149.227.183',
-  logServerPort: 514,
+  logServerPort: 515,
 
   SAFE_BLOCK_NUM: 100,
   CONFIRM_BLOCK_NUM: 2,
