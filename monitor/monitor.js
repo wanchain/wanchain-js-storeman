@@ -286,7 +286,7 @@ module.exports = class stateAction {
       result.status = nextState[0];
     } catch (err) {
       this.logger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
-      this.logger.error("err is", err);
+      this.logger.error("sendTransaction faild err is", err);
       if (this.record.transRetried < retryTimes) {
         result.transRetried = this.record.transRetried + 1;
         result.status = rollState[0];
