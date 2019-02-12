@@ -448,21 +448,23 @@ class baseChain {
   getErc20Info(tokenScAddr) {
     let log = this.log;
     let self = this;
-    let erc20Abi;
-    let symbol;
-    let decimals;
+    let erc20Abi = chainSCConfig.erc20Abi;
+    let symbol = 'symbol';
+    let decimals = 'decimals';
+
     let token = {};
     token.tokenType = "ERC20";
 
     if (chainSCConfig.informalErc20.hasOwnProperty(tokenScAddr)) {
       let informalErc20 = chainSCConfig.informalErc20[tokenScAddr];
-      erc20Abi = informalErc20.abi;
-      symbol = informalErc20.symbol;
-      decimals = informalErc20.decimals;
-    } else {
-      erc20Abi = chainSCConfig.erc20Abi;
-      symbol = 'symbol';
-      decimals = 'decimals';
+      if (informalErc20.hasOwnProperty('implementation')) {
+        let implTokenScAddr = self.getSolVar(informalErc20.abi, tokenScAddr, informalErc20.implementation)();
+        tokenScAddr = implTokenScAddr;
+      } else {
+        erc20Abi = informalErc20.abi;
+        symbol = informalErc20.symbol;
+        decimals = informalErc20.decimals;
+      }
     }
 
     return new Promise((resolve, reject) => {
