@@ -4,6 +4,7 @@ let configJson = require('conf/config.json');
 let config = moduleConfig.testnet?configJson.testnet:configJson.main;
 const fs = require('fs');
 
+const Eos = require('eosjs');
 const Web3 = require("web3");
 const net = require('net');
 const EthChain = require('chain/eth');

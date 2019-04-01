@@ -10,7 +10,7 @@ function sleep(time) {
 }
 
 class baseChain {
-  constructor(log, theWeb3) {
+  constructor(log, theWeb3 = null) {
     this.log = log;
     this.theWeb3 = theWeb3;
   }
