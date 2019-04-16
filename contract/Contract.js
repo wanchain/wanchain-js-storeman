@@ -18,6 +18,8 @@ module.exports = class Contract {
   setContractAddr(contractAddr) {
     if (/^0x[0-9a-f]{40}$/i.test(contractAddr)) {
       this.contractAddr = contractAddr;
+    } else {
+      this.contractAddr = null;
     }
   }
 
@@ -57,7 +59,8 @@ module.exports = class Contract {
   }
 
   parseEvent(event) {
-    if (event === null) {
+    // for eos chain, no need to parse
+    if (event === null || !this.contractAddr) {
       return event;
     }
     let decoders = this.abi.filter((json) => {

@@ -9,6 +9,7 @@ const Web3 = require("web3");
 const net = require('net');
 const EthChain = require('chain/eth');
 const WanChain = require('chain/wan');
+const EosChain = require('chain/eos');
 
 function getChain(chainType) {
   let loadConfig = function() {
@@ -33,6 +34,10 @@ function getChain(chainType) {
     } else {
       return new WanChain(global.syncLogger, new Web3(new Web3.providers.IpcProvider(config.wanWeb3Url, net)));
     }
+  } else if (chain === 'eos') {
+    if (config.wanWeb3Url.indexOf("http://") !== -1) {
+      return new EosChain(global.syncLogger, config.eosUrl);
+    }
   } else {
     return null;
   }
@@ -44,6 +49,10 @@ function initChain(chainType) {
 }
 
 async function initNonce(chainType) {
+  if (moduleConfig.nonceless.includes(chainType)) {
+    return;
+  }
+
   return new Promise(async (resolve, reject) => {
     try {
       let chainNonce = chainType.toLowerCase() + 'LastNonce';
@@ -52,7 +61,7 @@ async function initNonce(chainType) {
       if (chainType.toLowerCase() === 'wan') {
         storemanAddress = config.storemanWan;
       } else if (chainType.toLowerCase() === 'eth') {
-        storemanAddress = config.storemanEth;
+        storemanAddress = config.storemanOri;
       } else {
         return;
       }
@@ -65,7 +74,7 @@ async function initNonce(chainType) {
   });
 }
 
-async function initCrossTokens(storemanWan, storemanEth) {
+async function initCrossTokens(storemanWan, storemanOri) {
   let wanChain = getGlobalChain('wan');
   let crossTokens = {};
   let empty = true;
@@ -79,7 +88,7 @@ async function initCrossTokens(storemanWan, storemanEth) {
         let ethErc20StoremanGroups = await wanChain.getErc20StoremanGroupsOfMutiTokens(crossChain, ethErc20Tokens);
 
         for (let storeman of ethStoremanGroups) {
-          if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanEth) {
+          if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanOri) {
             crossTokens[crossChain]['0x'] = {
               "tokenType": "COIN",
               "tokenSymbol": "ETH"
@@ -90,7 +99,7 @@ async function initCrossTokens(storemanWan, storemanEth) {
         }
 
         for (let storeman of ethErc20StoremanGroups) {
-          if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanEth) {
+          if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanOri) {
             for (let token of ethErc20Tokens) {
               if (token.tokenOrigAddr === storeman.tokenOrigAddr) {
                 let chain = getGlobalChain(crossChain.toLowerCase());
@@ -116,9 +125,123 @@ async function initCrossTokens(storemanWan, storemanEth) {
   });
 }
 
-async function initConfig(storemanWan, storemanEth) {
+async function initEosCrossTokens(storemanWan, storemanOri) {
+  let wanChain = getGlobalChain('wan');
+  let crossTokens = {};
+  let empty = true;
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      for (let crossChain in moduleConfig.crossInfoDict) {
+        crossTokens[crossChain] = {};
+        console.log(crossChain);
+        // let oriStoremanGroups = await wanChain.getStoremanGroups(crossChain);
+        let oriTokens = await wanChain.getRegErc20Tokens(crossChain);
+        let oriTokenStoremanGroups = await wanChain.getErc20StoremanGroupsOfMutiTokens(crossChain, oriTokens);
+console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
+        // for (let storeman of oriStoremanGroups) {
+        //   if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanOri) {
+        //     crossTokens[crossChain]['0x'] = {
+        //       "tokenType": "COIN",
+        //       "tokenSymbol": crossChain
+        //     };
+        //     empty = false;
+        //     break;
+        //   }
+        // }
+
+        for (let storeman of oriTokenStoremanGroups) {
+          if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanOri) {
+            for (let token of oriTokens) {
+              console.log(token);
+              if (token.tokenOrigAddr === storeman.tokenOrigAddr) {
+                // let chain = getGlobalChain(crossChain.toLowerCase());
+                // let tokenInfo = await chain.getErc20Info(token.tokenOrigAddr);
+                let chain = getGlobalChain('wan');
+                let tokenInfo = await chain.getErc20Info(token.tokenWanAddr);
+                Object.assign(token, tokenInfo);
+                chain.bigNumber2String(token, 10);
+                crossTokens[crossChain][decodeEosAccount(token.tokenOrigAddr)] = token;
+                empty = false;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (!empty) {
+        resolve(crossTokens);
+      } else {
+        resolve(null);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+function decodeEosAccount(account) {
+  if (account === "0x0f000101656f73696f2e746f6b656e0000000000") {
+    return 'eosio.token';
+  } else if (account === "0x0b00010268746c63656f73000000000000000000" || account === "0x0c00010373746f72656d616e0000000000000000") {
+    return 'htlceos';
+  } else if (account === "0x0800010474657374000000000000000000000000") {
+    return 'aaron';
+  }
+}
+
+function encodeEosAccount(account) {
+  // return '0x0c00010373746f72656d616e0000000000000000';
+  return '0x0f000101656f73696f2e746f6b656e0000000000';
+}
+
+async function initEosConfig(storemanWan, storemanOri) {
   let storemanWanAddr = storemanWan.toLowerCase();
-  let storemanEthAddr = storemanEth.toLowerCase();
+  let storemanOriAddr = storemanOri.toLowerCase();
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      let crossTokens = await initEosCrossTokens(storemanWanAddr, storemanOriAddr);
+      if (crossTokens != null) {
+        fs.readFile(configPath, (err, data) => {
+          if (err) {
+            reject(err);
+          }
+
+          var config = data.toString();
+          config = JSON.parse(config);
+
+          var net;
+          if (moduleConfig.testnet) {
+            net = "testnet";
+          } else {
+            net = "main";
+          }
+          config[net].storemanWan = storemanWanAddr;
+          config[net].storemanOri = storemanOriAddr;
+          config[net].crossTokens = crossTokens;
+
+          var str = JSON.stringify(config, null, 2);
+          fs.writeFile(configPath, str, (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(crossTokens);
+            }
+          })
+        })
+      } else {
+        resolve(null);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+async function initConfig(storemanWan, storemanOri) {
+  let storemanWanAddr = storemanWan.toLowerCase();
+  let storemanEthAddr = storemanOri.toLowerCase();
 
   return new Promise(async (resolve, reject) => {
     try {
@@ -139,7 +262,7 @@ async function initConfig(storemanWan, storemanEth) {
             net = "main";
           }
           config[net].storemanWan = storemanWanAddr;
-          config[net].storemanEth = storemanEthAddr;
+          config[net].storemanOri = storemanEthAddr;
           config[net].crossTokens = crossTokens;
 
           var str = JSON.stringify(config, null, 2);
@@ -203,6 +326,8 @@ exports.initChain = initChain;
 exports.getGlobalChain = getGlobalChain;
 exports.getChain = getChain;
 exports.initNonce = initNonce;
-exports.initConfig = initConfig;
+exports.initConfig = initEosConfig;
 exports.initCrossTokens = initCrossTokens;
 exports.backupIssueFile = backupIssueFile;
+exports.encodeEosAccount = encodeEosAccount;
+exports.decodeEosAccount = decodeEosAccount;

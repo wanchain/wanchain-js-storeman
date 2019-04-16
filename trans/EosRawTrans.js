@@ -1,13 +1,17 @@
 "use strict"
 
 module.exports = class EosRawTrans {
-    constructor(from, to, value) {
-        this.txParams = {
+  constructor(from, to, value) {
+    this.txParams = [from, to, value, ''];
+  }
 
-        }
-    }
+  setData(data) {
+    this.actions = data;
+    // this.txParams.data = data;
+  }
 
-    sign(privateKey) {}
-
-    
+  setValue(value) {
+    this.value = value;
+    // this.txParams.value = value;
+  }
 }

@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const ModelOps = require('db/modelOps');
 const Erc20CrossAgent = require("agent/Erc20CrossAgent.js");
 const EthCrossAgent = require("agent/EthCrossAgent.js");
+const EosCrossAgent = require("agent/EosCrossAgent.js");
 const StateAction = require("monitor/monitor.js");
 
 const moduleConfig = require('conf/moduleConfig.js');
@@ -30,6 +31,9 @@ global.agentDict = {
   ETH: {
     COIN: EthCrossAgent,
     ERC20: Erc20CrossAgent
+  },
+  EOS: {
+    ERC20: EosCrossAgent,
   }
 }
 
@@ -83,7 +87,9 @@ async function init() {
     monitorLogger.info(tokenList);
 
     for (let crossChain in moduleConfig.crossInfoDict) {
-      syncLogger.debug("Nonce of chain:", crossChain, global[crossChain.toLowerCase() + 'LastNonce']);
+      if (!moduleConfig.nonceless.includes(crossChain)) {
+        syncLogger.debug("Nonce of chain:", crossChain, global[crossChain.toLowerCase() + 'LastNonce']);
+      }
     }
     syncLogger.debug("Nonce of chain:", 'WAN', global['wanLastNonce']);
   } catch (err) {
@@ -171,6 +177,8 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
         } else {
           content = crossAgent.getDecodeEventDbData(chainType, crossChain, tokenType, decodeEvent, event, lockedTime);
         }
+
+        console.log("aaron debug here content", content);
 
         if (content !== null) {
           if(content[1].hasOwnProperty("walletRevokeEvent")) {
@@ -312,13 +320,16 @@ async function handlerMain(logger, db) {
         toHtlcAddr: {
           $in: [...htlcAddrFilter]
         },
+        // hashX: {
+        //   $in: ['0x9f2d25cbc77f4d3bf42b4949f9c2485e68611586d72c7a85c281b3483c295207']
+        // },
         storeman: {
-          $in: [config.storemanEth, config.storemanWan]
+          $in: [config.storemanOri, config.storemanWan]
         }
       }
       if (global.storemanRestart) {
         option.status = {
-          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'fundLostFinished']
+          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored1', 'fundLostFinished']
         }
         global.storemanRestart = false;
       } else {
@@ -326,8 +337,9 @@ async function handlerMain(logger, db) {
           $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'fundLostFinished', 'interventionPending']
         }
       }
+      console.log("aaron debug here", option);
       let history = await modelOps.getEventHistory(option);
-      logger.debug('history length is ', history.length);
+      logger.debug('history length is ', history);
       logger.debug('handlingList length is ', Object.keys(handlingList).length);
 
       for (let i = 0; i < history.length; i++) {
@@ -352,7 +364,7 @@ async function handlerMain(logger, db) {
   }
 }
 
-let db = mongoose.createConnection(moduleConfig.crossEthDbUrl, {
+let db = mongoose.createConnection(moduleConfig.crossDbUrl, {
   useNewUrlParser: true
 });
 db.on('connected', function(err) {
@@ -377,7 +389,7 @@ async function main() {
   await init();
 
   syncMain(global.syncLogger, db);
-  await updateRecordAfterRestart(global.monitorLogger);
+  // await updateRecordAfterRestart(global.monitorLogger);
   handlerMain(global.monitorLogger, db);
 }
 main();

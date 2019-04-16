@@ -37,11 +37,11 @@ module.exports = class Erc20CrossAgent extends EthCrossAgent {
     return new Promise(async (resolve, reject) => {
       try {
         if (action === 'approve' || action === 'approveZero') {
-          from = config.storemanEth;
+          from = config.storemanOri;
         } else if (action === 'redeem') {
-          from = (this.crossDirection === 0) ? config.storemanEth : config.storemanWan;
+          from = (this.crossDirection === 0) ? config.storemanOri : config.storemanWan;
         } else {
-          from = (this.crossDirection === 0) ? config.storemanWan : config.storemanEth;
+          from = (this.crossDirection === 0) ? config.storemanWan : config.storemanOri;
         }
 
         to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;

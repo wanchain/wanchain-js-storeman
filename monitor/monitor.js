@@ -163,7 +163,7 @@ module.exports = class stateAction {
     console.log("ahahah", this.record.hashX);
   	if (this.record.walletLockEvent.length !== 0) {
       let status;
-      if(this.record.tokenType === 'COIN') {
+      if(this.record.tokenType === 'COIN' || this.record.crossChain === 'eos') {
         status = nextState;
       } else {
         status = (this.record.direction === 0) ? nextState : rollState;
@@ -245,8 +245,9 @@ module.exports = class stateAction {
       }
     }
 
+    console.log("aaron debug here crossChain", this.crossChain);
     if (!Array.isArray(actionArray)) {
-      if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.record.direction === 0)) {
+      if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.record.direction === 0) && (this.crossChain === 'eth')) {
         if (!await this.checkStoremanQuota()) {
           let content = {
             status: 'transIgnored',
@@ -327,6 +328,7 @@ module.exports = class stateAction {
       let timestampDate = new Date(timestamp).toString();
       let nowData = new Date().toString();
 
+      console.log("aaron debug here checkhashtimeout,", "HTLCtime:", HTLCtime, "HTLC2time:", timestamp, "nowData:", Date.now())
       // beforeHTLC2time, revoke maybe fail because of late walletRedeemEvent
       if (state === "waitingIntervention") {
         if (HTLC2time <= Date.now()) {
@@ -387,7 +389,8 @@ module.exports = class stateAction {
         } else if (record.walletRedeemEvent.length !== 0) {
           // redeem may happened until HTLC2time
           if (HTLC2time <= Date.now()) {
-            await this.updateState("waitingRevoke");
+            // await this.updateState("waitingRevoke");
+            await this.updateState("fundLosted");
           }
         } else {
           await this.updateState('waitingRevoke');
@@ -409,7 +412,7 @@ module.exports = class stateAction {
   async checkAllowance(nextState, rollState) {
     let newAgent = new global.agentDict[this.crossChain.toUpperCase()][this.tokenType](this.crossChain, this.tokenType, 1, this.record);
     let chain = getGlobalChain(this.crossChain);
-    await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanEth, newAgent.contractAddr, moduleConfig.erc20Abi)
+    await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanOri, newAgent.contractAddr, moduleConfig.erc20Abi)
       .then(async (result) => {
         if (result < Math.max(getWeiFromEther(web3.toBigNumber(moduleConfig.tokenAllowanceThreshold)), web3.toBigNumber(this.record.value))) {
           await this.updateState(rollState);

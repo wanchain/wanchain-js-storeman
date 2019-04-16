@@ -155,7 +155,7 @@ module.exports = class EthCrossAgent {
       if (this.transChainType.toLowerCase() === 'wan') {
         storemanAddress = config.storemanWan;
       } else if (this.transChainType.toLowerCase() === 'eth') {
-        storemanAddress = config.storemanEth;
+        storemanAddress = config.storemanOri;
       } else {
         this.logger.debug("mutexNonce false");
         global.mutexNonce = false;
@@ -201,9 +201,9 @@ module.exports = class EthCrossAgent {
     return new Promise(async (resolve, reject) => {
       try {
         if (action === 'redeem') {
-          from = (this.crossDirection === 0) ? config.storemanEth : config.storemanWan;
+          from = (this.crossDirection === 0) ? config.storemanOri : config.storemanWan;
         } else {
-          from = (this.crossDirection === 0) ? config.storemanWan : config.storemanEth;
+          from = (this.crossDirection === 0) ? config.storemanWan : config.storemanOri;
         }
 
         to = this.contractAddr;
@@ -401,7 +401,7 @@ module.exports = class EthCrossAgent {
       if (!((eventName === this.crossInfoInst.depositEvent[2] && chainType !== 'wan') ||
         (eventName === this.crossInfoInst.withdrawEvent[2] && chainType === 'wan'))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
-        if([config.storemanEth, config.storemanWan].indexOf(storeman) === -1) {
+        if([config.storemanOri, config.storemanWan].indexOf(storeman) === -1) {
           return null;
         }
       }

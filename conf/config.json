@@ -14,9 +14,13 @@
     "crossTokens": {}
   },
   "testnet": {
-    "ethWeb3Url": "http://localhost:18545",
-    "wanWeb3Url": "http://localhost:8545",
-    "mpcUrl": "http://localhost:8545",
+    "eosUrl": "http://localhost:8888",
+    "eosKeyProvider": [
+      "5KF1HEXhQfMyo14uMDm72dn47fZQjEJZVnVSZ6YARvdhUEjeTUr"
+    ],
+    "ethWeb3Url": "http://localhost:18546",
+    "wanWeb3Url": "http://localhost:8546",
+    "mpcUrl": "http://localhost:8546",
     "isLeader": false,
     "maxEthGasPrice": 50,
     "gasPriceDelta": 10,
