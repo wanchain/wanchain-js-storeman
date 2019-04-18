@@ -117,44 +117,63 @@ class WanChain extends baseChain {
     return erc20StoremanGroups;
   }
 
-  getErc20StoremanGroups(crossChain, tokenAddr) {
+  async getErc20StoremanGroups(crossChain, tokenAddr) {
     let log = this.log;
     let self = this;
     let abi = chainSCConfig.crossInfoDict[crossChain].ERC20.smgAdminAbi;
-    let contractAddr = chainSCConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr;
     let topic = [null, this.encodeTopic('address', tokenAddr)];
 
-    return new Promise((resolve, reject) => {
-      self.getScEvent(contractAddr, topic, 0, 'latest', async (err, logs) => {
-        if (err) {
-          log.error(err);
-          reject(err);
-        } else {
-          let parsedLogs = [];
-          if (logs !== null) {
-            let contract = new Contract(abi, contractAddr);
-            parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
-          }
-          let storemanGroup = [];
-          for (let i of parsedLogs) {
-            if (i.event === 'StoremanGroupRegistrationLogger') {
-              storemanGroup.push(i.args);
+    let addrs;
+    if (Array.isArray(chainSCConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr)) {
+      addrs = chainSCConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr;
+    } else {
+      addrs = [chainSCConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr];
+    }
+
+    let storemanGroup = [];
+    let getMultiStoremanEvent = addrs.map((contractAddr) => {
+      return new Promise((resolve, reject) => {
+        self.getScEvent(contractAddr, topic, 0, 'latest', async (err, logs) => {
+          if (err) {
+            log.error(err);
+            reject(err);
+          } else {
+            let parsedLogs = [];
+            if (logs !== null) {
+              let contract = new Contract(abi, contractAddr);
+              parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
             }
-          }
-          for (let i of parsedLogs) {
-            if (i.event === 'StoremanGroupApplyUnRegistrationLogger') {
-              for (let index = 0; index < storemanGroup.length; index++) {
-                if ((storemanGroup[index].tokenOrigAddr === i.args.tokenOrigAddr && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
-                  storemanGroup.splice(index, 1);
-                  break;
+
+            // console.log("aaron debug here logs", parsedLogs);
+
+            for (let i of parsedLogs) {
+              if (i.event === 'StoremanGroupRegistrationLogger') {
+                storemanGroup.push(i.args);
+              }
+            }
+            for (let i of parsedLogs) {
+              if (i.event === 'StoremanGroupApplyUnRegistrationLogger') {
+                for (let index = 0; index < storemanGroup.length; index++) {
+                  if ((storemanGroup[index].tokenOrigAddr === i.args.tokenOrigAddr && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
+                    storemanGroup.splice(index, 1);
+                    break;
+                  }
                 }
               }
             }
+            resolve(storemanGroup);
           }
-          resolve(storemanGroup);
-        }
-      })
-    });
+        })
+      });
+    })
+
+    try {
+      await Promise.all(getMultiStoremanEvent);
+    } catch (err) {
+      log.error("getErc20StoremanGroups", err);
+      return Promise.reject(err);
+    }
+    return storemanGroup;
   }
 
   getRegErc20Tokens(crossChain) {
@@ -199,7 +218,5 @@ class WanChain extends baseChain {
     });
   }
 }
-
-
 
 module.exports = WanChain;
