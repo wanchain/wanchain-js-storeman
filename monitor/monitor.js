@@ -269,7 +269,8 @@ module.exports = class stateAction {
         await sleep(retryWaitTime);
       }
       for (var action of actionArray) {
-        let newAgent = new global.agentDict[this.crossChain.toUpperCase()][this.tokenType](this.crossChain, this.tokenType, this.crossDirection, this.record, action);
+        let transOnChain = ((this.direction === 0) ^ (action === 'redeem')) ? 'wan' : record.crossChain;
+        let newAgent = new global.agentDict[transOnChain.toUpperCase()](this.crossChain, this.tokenType, this.crossDirection, this.record, action);
         this.logger.debug("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
 
@@ -410,7 +411,7 @@ module.exports = class stateAction {
   }
 
   async checkAllowance(nextState, rollState) {
-    let newAgent = new global.agentDict[this.crossChain.toUpperCase()][this.tokenType](this.crossChain, this.tokenType, 1, this.record);
+    let newAgent = new global.agentDict['WAN'](this.crossChain, this.tokenType, 0, this.record);
     let chain = getGlobalChain(this.crossChain);
     await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanOri, newAgent.contractAddr, moduleConfig.erc20Abi)
       .then(async (result) => {

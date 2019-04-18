@@ -7,6 +7,9 @@ const ModelOps = require('db/modelOps');
 const Erc20CrossAgent = require("agent/Erc20CrossAgent.js");
 const EthCrossAgent = require("agent/EthCrossAgent.js");
 const EosCrossAgent = require("agent/EosCrossAgent.js");
+
+const EosAgent = require("agent/EosAgent.js");
+const WanAgent = require("agent/WanAgent.js");
 const StateAction = require("monitor/monitor.js");
 
 const moduleConfig = require('conf/moduleConfig.js');
@@ -27,7 +30,7 @@ let tokenList = {};
 
 global.storemanRestart = false;
 
-global.agentDict = {
+global.agentDict1 = {
   ETH: {
     COIN: EthCrossAgent,
     ERC20: Erc20CrossAgent
@@ -35,6 +38,15 @@ global.agentDict = {
   EOS: {
     ERC20: EosCrossAgent,
   }
+}
+
+global.agentDict = {
+  ETH: {
+    COIN: EthCrossAgent,
+    ERC20: Erc20CrossAgent
+  },
+  EOS: EosAgent,
+  WAN: WanAgent
 }
 
 global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
@@ -79,8 +91,8 @@ async function init() {
         tokenList.wanchainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr);
         tokenList.originalChainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr);
 
-        tokenList[crossChain][tokenType].wanCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 0);
-        tokenList[crossChain][tokenType].originCrossAgent = new global.agentDict[crossChain][tokenType](crossChain, tokenType, 1);
+        tokenList[crossChain][tokenType].wanCrossAgent = new global.agentDict['WAN'](crossChain, tokenType);
+        tokenList[crossChain][tokenType].originCrossAgent = new global.agentDict[crossChain](crossChain, tokenType);
         tokenList[crossChain][tokenType].lockedTime = await tokenList[crossChain][tokenType].wanCrossAgent.getLockedTime();
       }
     }
@@ -169,7 +181,13 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
           crossAgent = tokenTypeHandler.originCrossAgent;
         }
 
-        let decodeEvent = crossAgent.contract.parseEvent(event);
+        let decodeEvent;
+        if (crossAgent.contract) {
+          decodeEvent = crossAgent.contract.parseEvent(event);
+        } else {
+          decodeEvent = event;
+        }
+
         let content;
         if (decodeEvent === null) {
           resolve();
@@ -390,6 +408,6 @@ async function main() {
 
   syncMain(global.syncLogger, db);
   // await updateRecordAfterRestart(global.monitorLogger);
-  handlerMain(global.monitorLogger, db);
+  // handlerMain(global.monitorLogger, db);
 }
 main();

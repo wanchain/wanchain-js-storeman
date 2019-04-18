@@ -180,21 +180,6 @@ console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
   });
 }
 
-function decodeEosAccount(account) {
-  if (account === "0x0f000101656f73696f2e746f6b656e0000000000") {
-    return 'eosio.token';
-  } else if (account === "0x0b00010268746c63656f73000000000000000000" || account === "0x0c00010373746f72656d616e0000000000000000") {
-    return 'htlceos';
-  } else if (account === "0x0800010474657374000000000000000000000000") {
-    return 'aaron';
-  }
-}
-
-function encodeEosAccount(account) {
-  // return '0x0c00010373746f72656d616e0000000000000000';
-  return '0x0f000101656f73696f2e746f6b656e0000000000';
-}
-
 async function initEosConfig(storemanWan, storemanOri) {
   let storemanWanAddr = storemanWan.toLowerCase();
   let storemanOriAddr = storemanOri.toLowerCase();
@@ -313,6 +298,33 @@ function backupIssueFile() {
   });
 }
 
+function decodeEosAccount(account) {
+  if (account === "0x0f000101656f73696f2e746f6b656e0000000000") {
+    return 'eosio.token';
+  } else if (account === "0x0b00010268746c63656f73000000000000000000" || account === "0x0c00010373746f72656d616e0000000000000000") {
+    return 'htlceos';
+  } else if (account === "0x0800010474657374000000000000000000000000") {
+    return 'aaron';
+  }
+}
+
+function encodeEosAccount(account) {
+  // return '0x0c00010373746f72656d616e0000000000000000';
+  return '0x0f000101656f73696f2e746f6b656e0000000000';
+}
+
+function eosToFloat(str) 
+{ 
+  const floatRegex = /[^\d.-]/g
+  return parseFloat(str.replace(floatRegex, '')); 
+}
+
+function floatToEos(amount, symbol) {
+  let DecimalPad = Eos.modules.format.DecimalPad;
+  let precision = 4;
+  return `${DecimalPad(amount, precision)} ${symbol}`
+}
+
 function sleep(time) {
   return new Promise(function(resolve, reject) {
     setTimeout(function() {
@@ -326,8 +338,10 @@ exports.initChain = initChain;
 exports.getGlobalChain = getGlobalChain;
 exports.getChain = getChain;
 exports.initNonce = initNonce;
-exports.initConfig = initEosConfig;
+exports.initConfig = initConfig;
 exports.initCrossTokens = initCrossTokens;
 exports.backupIssueFile = backupIssueFile;
 exports.encodeEosAccount = encodeEosAccount;
 exports.decodeEosAccount = decodeEosAccount;
+exports.eosToFloat = eosToFloat;
+exports.floatToEos = floatToEos;
