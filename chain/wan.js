@@ -144,8 +144,6 @@ class WanChain extends baseChain {
               parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
             }
 
-            // console.log("aaron debug here logs", parsedLogs);
-
             for (let i of parsedLogs) {
               if (i.event === 'StoremanGroupRegistrationLogger') {
                 storemanGroup.push(i.args);
