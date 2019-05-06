@@ -2,7 +2,9 @@
 
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
-const config = moduleConfig.testnet ? configJson.testnet : configJson.main;
+const config = global.testnet ? configJson.testnet : configJson.main;
+
+let Contract = require("contract/Contract.js");
 
 const {
   getGlobalChain,
@@ -24,13 +26,39 @@ module.exports = class BaseAgent {
     let crossInfoInst = moduleConfig.crossInfoDict[crossChain.toUpperCase()][tokenType];
     this.crossInfoInst = crossInfoInst;
 
-    this.transChainType = crossChain.toLowerCase();
+    this.transChainType = this.getChainType();
     this.chain = getGlobalChain(this.transChainType);
     this.storemanAddress = config.storemanOri;
 
     this.crossFunc = (this.crossDirection === 0) ? crossInfoInst.depositFunc : crossInfoInst.withdrawFunc;
     this.depositEvent = crossInfoInst.depositEvent;
     this.withdrawEvent = crossInfoInst.withdrawEvent;
+
+    let abi = (this.transChainType !== 'wan') ? this.crossInfoInst.originalChainHtlcAbi : this.crossInfoInst.wanchainHtlcAbi;
+    this.contractAddr = (this.transChainType !== 'wan') ? this.crossInfoInst.originalChainHtlcAddr : this.crossInfoInst.wanchainHtlcAddr;
+    this.contract = new Contract(abi, this.contractAddr);
+
+    if (this.contract.contractAddr) {
+      if (this.contract) {
+        console.log("this.chainType", this.transChainType);
+        this.depositLockEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[0]);
+        this.depositRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[1]);
+        this.depositRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[2]);
+        this.withdrawLockEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[0]);
+        this.withdrawRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[1]);
+        this.withdrawRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[2]);
+      
+      
+        console.log("this.depositLockEvent", this.depositLockEvent);
+        console.log("this.depositRedeemEvent", this.depositRedeemEvent);
+        console.log("this.depositRevokeEvent", this.depositRevokeEvent);
+        console.log("this.withdrawLockEvent", this.withdrawLockEvent);
+        console.log("this.withdrawRedeemEvent", this.withdrawRedeemEvent);
+        console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
+      }
+    } else {
+      this.contract = null;
+    }
 
     this.record = record;
     if (record !== null) {
@@ -45,6 +73,10 @@ module.exports = class BaseAgent {
       this.tokenAddr = record.tokenAddr;
       this.tokenSymbol = record.tokenSymbol;
     }
+  }
+
+  getChainType() {
+    return this.crossChain.toLowerCase();
   }
 
   getNonce() {

@@ -9,9 +9,12 @@ class EosChain extends baseChain {
     super(log);
 
     this.eosConfig = {
-      keyProvider: ['5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'], // 配置私钥字符串
+      // keyProvider: ['5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'], // 配置私钥字符串
       
-      httpEndpoint: 'http://192.168.1.58:8888'
+      // httpEndpoint: 'http://192.168.1.58:8888'
+
+      keyProvider: [], // 配置私钥字符串
+      httpEndpoint: 'http://junglehistory.cryptolions.io:18888'
     }
 
     this.eos = Eos(this.eosConfig);
@@ -53,7 +56,7 @@ class EosChain extends baseChain {
                 value: quantity,
                 xHash: '0x' + memo.split(':')[0],
                 wanAddr: memo.split(':')[1],
-                tokenOrigAddr: account
+                tokenOrigAccount: account
               }
             };
           } else {

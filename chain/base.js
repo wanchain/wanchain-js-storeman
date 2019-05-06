@@ -1,4 +1,4 @@
-const chainSCConfig = require('conf/moduleConfig.js');
+const moduleConfig = require('conf/moduleConfig.js');
 const coder = require('web3/lib/solidity/coder');
 
 function sleep(time) {
@@ -448,15 +448,15 @@ class baseChain {
   getErc20Info(tokenScAddr) {
     let log = this.log;
     let self = this;
-    let erc20Abi = chainSCConfig.erc20Abi;
+    let erc20Abi = moduleConfig.erc20Abi;
     let symbol = 'symbol';
     let decimals = 'decimals';
 
     let token = {};
     token.tokenType = "ERC20";
 
-    if (chainSCConfig.informalErc20.hasOwnProperty(tokenScAddr)) {
-      let informalErc20 = chainSCConfig.informalErc20[tokenScAddr];
+    if (moduleConfig.informalErc20.hasOwnProperty(tokenScAddr)) {
+      let informalErc20 = moduleConfig.informalErc20[tokenScAddr];
       if (informalErc20.hasOwnProperty('implementation')) {
         let implTokenScAddr = self.getSolVar(informalErc20.abi, tokenScAddr, informalErc20.implementation)();
         tokenScAddr = implTokenScAddr;
@@ -475,7 +475,7 @@ class baseChain {
       } catch (err) {
         if (err.hasOwnProperty("message") && (err.message === "new BigNumber() not a base 16 number: ")) {
           try {
-            let unusualErc20Abi = chainSCConfig.unusualErc20Abi;
+            let unusualErc20Abi = moduleConfig.unusualErc20Abi;
             token.tokenSymbol = self.theWeb3.toAscii(self.getSolVar(unusualErc20Abi, tokenScAddr, 'symbol')()).replace(/\u0000/g, '');
             token.decimals = self.getSolVar(erc20Abi, tokenScAddr, 'decimals')().toString(10);
             resolve(token);

@@ -1,6 +1,13 @@
 "use strict";
 
 const fs = require('fs');
+const optimist = require('optimist');
+
+let argv    = optimist
+  .usage('Usage: nodejs $0  [--testnet]')
+  .argv;
+global.testnet = argv.testnet ? true : false;
+
 const {
   getGlobalChain,
   sleep

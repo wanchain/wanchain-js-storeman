@@ -2,8 +2,8 @@
 
 const {
   getGlobalChain,
-  encodeEosAccount,
-  decodeEosAccount,
+  encodeAccount,
+  decodeAccount,
   sleep
   //   getChain
 } = require('comm/lib');
@@ -17,7 +17,7 @@ let MPC = require("mpc/mpc.js");
 
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
-const config = moduleConfig.testnet?configJson.testnet:configJson.main;
+const config = global.testnet?configJson.testnet:configJson.main;
 
 const Web3 = require("web3");
 const web3 = new Web3();
@@ -229,15 +229,15 @@ module.exports = class EosCrossAgent {
           // xHash: this.hashKey,
           // user: this.crossAddress,
           // value: this.amount
-          storemanGroup: decodeEosAccount(config.storemanOri),
+          storemanGroup: decodeAccount(config.storemanOri),
           xHash: this.hashKey.split('0x')[1],
-          user: decodeEosAccount(this.crossAddress),
+          user: decodeAccount(this.crossAddress),
           value: this.amount
         }
       }];
       return actions;
     } else {
-      return this.contract.constructData(this.crossFunc[0], encodeEosAccount(this.tokenAddr), this.hashKey, this.crossAddress, web3.toBigNumber(eosToFloat(this.amount)));
+      return this.contract.constructData(this.crossFunc[0], encodeAccount(this.tokenAddr), this.hashKey, this.crossAddress, web3.toBigNumber(eosToFloat(this.amount)));
     }
   }
 
@@ -253,7 +253,7 @@ module.exports = class EosCrossAgent {
           permission: 'active',
         }],
         data: {
-          storemanGroup: decodeEosAccount(config.storemanOri),
+          storemanGroup: decodeAccount(config.storemanOri),
           xHash: this.hashKey.split('0x')[1],
           user: this.record.from,
           x: this.key.split('0x')[1]
@@ -277,13 +277,13 @@ module.exports = class EosCrossAgent {
           permission: 'active',
         }],
         data: {
-          storemanGroup: decodeEosAccount(config.storemanOri),
+          storemanGroup: decodeAccount(config.storemanOri),
           xHash: this.hashKey.split('0x')[1]
         }
       }];
       return actions; 
     } else {
-      return this.contract.constructData(this.crossFunc[2], encodeEosAccount(this.tokenAddr), this.hashKey);
+      return this.contract.constructData(this.crossFunc[2], encodeAccount(this.tokenAddr), this.hashKey);
     }
   }
 
@@ -423,7 +423,7 @@ module.exports = class EosCrossAgent {
   }
 
   getDecodeEventTokenAddr(decodeEvent, chainType) {
-    return (chainType === 'wan') ? decodeEosAccount(decodeEvent.args.tokenOrigAddr) : decodeEvent.args.tokenOrigAddr;
+    return (chainType === 'wan') ? decodeAccount(decodeEvent.args.tokenOrigAddr) : decodeEvent.args.tokenOrigAddr;
   }
 
   getDecodeEventStoremanGroup(decodeEvent) {
@@ -452,7 +452,7 @@ module.exports = class EosCrossAgent {
         (eventName === this.crossInfoInst.withdrawEvent[2] && chainType === 'wan'))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
         if (chainType !== 'wan') {
-          // storeman = encodeEosAccount(storeman);
+          // storeman = encodeAccount(storeman);
           storeman = '0x0c00010373746f72656d616e0000000000000000';
         }
         if([config.storemanOri, config.storemanWan].indexOf(storeman) === -1) {

@@ -73,11 +73,16 @@ module.exports = class Contract {
     let decoder = decoders.find((decoder) => {
       return (decoder.signature() === event.topics[0].replace("0x", ""));
     });
-    if (decoder) {
-      return decoder.decode(event);
-    } else {
-      return null;
+    try {
+      if (decoder) {
+        return decoder.decode(event);
+      } else {
+        return null;
+      }
+    } catch (err) {
+      console.log(err);
     }
+
   }
 
   constructData(funcName, ...para) {

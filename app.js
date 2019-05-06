@@ -1,5 +1,12 @@
 "use strict"
 
+const optimist = require('optimist');
+
+let argv    = optimist
+  .usage('Usage: nodejs $0  [--testnet]')
+  .argv;
+global.testnet = argv.testnet ? true : false;
+
 const Logger = require('comm/logger.js');
 
 const mongoose = require('mongoose');
@@ -14,7 +21,7 @@ const StateAction = require("monitor/monitor.js");
 
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
-const config = moduleConfig.testnet?configJson.testnet:configJson.main;
+const config = global.testnet?configJson.testnet:configJson.main;
 
 const {
   initChain,
@@ -41,10 +48,10 @@ global.agentDict1 = {
 }
 
 global.agentDict = {
-  ETH: {
-    COIN: EthCrossAgent,
-    ERC20: Erc20CrossAgent
-  },
+  // ETH: {
+  //   COIN: EthCrossAgent,
+  //   ERC20: Erc20CrossAgent
+  // },
   EOS: EosAgent,
   WAN: WanAgent
 }

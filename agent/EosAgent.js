@@ -4,9 +4,10 @@ const baseAgent = require("agent/BaseAgent.js");
 let Eos = require("eosjs");
 let RawTrans = require("trans/EosRawTrans.js");
 
+const moduleConfig = require('conf/moduleConfig.js');
 const {
-  encodeEosAccount,
-  decodeEosAccount
+  encodeAccount,
+  decodeAccount
 } = require('comm/lib');
 
 module.exports = class EosAgent extends baseAgent{
@@ -114,9 +115,9 @@ module.exports = class EosAgent extends baseAgent{
         // xHash: this.hashKey,
         // user: this.crossAddress,
         // value: this.amount
-        storemanGroup: decodeEosAccount(this.config.storemanOri),
+        storemanGroup: decodeAccount(this.crossChain, this.config.storemanOri),
         xHash: this.hashKey.split('0x')[1],
-        user: decodeEosAccount(this.crossAddress),
+        user: decodeAccount(this.crossChain, this.crossAddress),
         value: this.amount
       }
     }];
@@ -135,7 +136,7 @@ module.exports = class EosAgent extends baseAgent{
         permission: 'active',
       }],
       data: {
-        storemanGroup: decodeEosAccount(this.config.storemanOri),
+        storemanGroup: decodeAccount(this.crossChain, this.config.storemanOri),
         xHash: this.hashKey.split('0x')[1],
         user: this.record.from,
         x: this.key.split('0x')[1]
@@ -157,7 +158,7 @@ module.exports = class EosAgent extends baseAgent{
         permission: 'active',
       }],
       data: {
-        storemanGroup: decodeEosAccount(this.config.storemanOri),
+        storemanGroup: decodeAccount(this.crossChain, this.config.storemanOri),
         xHash: this.hashKey.split('0x')[1]
       }
     }];
@@ -165,13 +166,13 @@ module.exports = class EosAgent extends baseAgent{
   }
 
   getDecodeEventTokenAddr(decodeEvent) {
-    return decodeEvent.args.tokenOrigAddr;
+    return decodeEvent.args.tokenOrigAccount;
   }
 
   getDecodeEventStoremanGroup(decodeEvent) {
     // return decodeEvent.args.storemanGroup;
-    // storeman = encodeEosAccount(storeman);
-    return '0x0c00010373746f72656d616e0000000000000000';
+    // storeman = encodeAccount(this.crossChain, storeman);
+    return '0x01000373746f72656d616e';
   }
 
   getDecodeEventValue(decodeEvent) {

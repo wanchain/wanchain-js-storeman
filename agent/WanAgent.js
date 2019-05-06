@@ -7,10 +7,12 @@ const web3 = new Web3();
 let Contract = require("contract/Contract.js");
 let RawTrans = require("trans/WanRawTrans.js");
 
+const moduleConfig = require('conf/moduleConfig.js');
+
 const {
   getGlobalChain,
-  encodeEosAccount,
-  decodeEosAccount,
+  encodeAccount,
+  decodeAccount,
   eosToFloat,
   floatToEos
 } = require('comm/lib');
@@ -20,17 +22,36 @@ module.exports = class WanAgent extends baseAgent{
     super(crossChain, tokenType, crossDirection, record, action);
 
     this.RawTrans = RawTrans;
-    this.transChainType = 'wan';
     this.chain = getGlobalChain(this.transChainType);
     this.storemanAddress = this.config.storemanWan;
 
     console.log("aaron debug here, wan agent", this.storemanAddress);
    
-    this.getNonce();
+    // this.getNonce();
 
-    let abi = (this.transChainType !== 'wan') ? this.crossInfoInst.originalChainHtlcAbi : this.crossInfoInst.wanchainHtlcAbi;
-    this.contractAddr = (this.transChainType !== 'wan') ? this.crossInfoInst.originalChainHtlcAddr : this.crossInfoInst.wanchainHtlcAddr;
-    this.contract = new Contract(abi, this.contractAddr);
+    // let abi = (this.transChainType !== 'wan') ? this.crossInfoInst.originalChainHtlcAbi : this.crossInfoInst.wanchainHtlcAbi;
+    // this.contractAddr = (this.transChainType !== 'wan') ? this.crossInfoInst.originalChainHtlcAddr : this.crossInfoInst.wanchainHtlcAddr;
+    // this.contract = new Contract(abi, this.contractAddr);
+
+    // this.depositLockEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[0]);
+    // this.depositRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[1]);
+    // this.depositRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[2]);
+    // this.withdrawLockEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[0]);
+    // this.withdrawRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[1]);
+    // this.withdrawRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[2]);
+  
+  
+    // console.log("this.depositLockEvent", this.depositLockEvent);
+    // console.log("this.depositRedeemEvent", this.depositRedeemEvent);
+    // console.log("this.depositRevokeEvent", this.depositRevokeEvent);
+    // console.log("this.withdrawLockEvent", this.withdrawLockEvent);
+    // console.log("this.withdrawRedeemEvent", this.withdrawRedeemEvent);
+    // console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
+
+  }
+
+  getChainType() {
+    return 'wan';
   }
 
   getLockedTime() {
@@ -132,7 +153,7 @@ module.exports = class WanAgent extends baseAgent{
   getLockData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
-    return this.contract.constructData(this.crossFunc[0], encodeEosAccount(this.tokenAddr), this.hashKey, this.crossAddress, web3.toBigNumber(eosToFloat(this.amount)));
+    return this.contract.constructData(this.crossFunc[0], encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, web3.toBigNumber(eosToFloat(this.amount)));
   }
 
   getRedeemData() {
@@ -144,11 +165,11 @@ module.exports = class WanAgent extends baseAgent{
   getRevokeData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
     this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
-    return this.contract.constructData(this.crossFunc[2], encodeEosAccount(this.tokenAddr), this.hashKey);
+    return this.contract.constructData(this.crossFunc[2], encodeAccount(this.crossChain, this.tokenAddr), this.hashKey);
   }
 
   getDecodeEventTokenAddr(decodeEvent) {
-    return decodeEosAccount(decodeEvent.args.tokenOrigAddr);
+    return decodeAccount(this.crossChain, decodeEvent.args.tokenOrigAccount);
   }
 
   getDecodeEventStoremanGroup(decodeEvent) {

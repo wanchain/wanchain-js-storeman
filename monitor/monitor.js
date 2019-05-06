@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require("path");
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
-const config = moduleConfig.testnet?configJson.testnet:configJson.main;
+const config = global.testnet?configJson.testnet:configJson.main;
 
 const retryTimes = moduleConfig.retryTimes;
 const retryWaitTime = moduleConfig.retryWaitTime;

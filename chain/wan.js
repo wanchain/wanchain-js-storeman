@@ -1,5 +1,5 @@
 const baseChain = require("chain/base.js");
-const chainSCConfig = require('conf/moduleConfig.js');
+const moduleConfig = require('conf/moduleConfig.js');
 let Contract = require("contract/Contract.js");
 
 class WanChain extends baseChain {
@@ -9,8 +9,8 @@ class WanChain extends baseChain {
   }
 
   getTokenScManagerFuncInterface(crossChain, tokenType, contractFunc) {
-    let scAbi = chainSCConfig.crossInfoDict[crossChain][tokenType]["tokenManagerAbi"];
-    let contractAddr = chainSCConfig.crossInfoDict[crossChain][tokenType]["tokenManagerAddr"];
+    let scAbi = moduleConfig.crossInfoDict[crossChain][tokenType]["tokenManagerAbi"];
+    let contractAddr = moduleConfig.crossInfoDict[crossChain][tokenType]["tokenManagerAddr"];
     return this.getSolInferface(scAbi, contractAddr, contractFunc);
   }
 
@@ -28,15 +28,15 @@ class WanChain extends baseChain {
   }
 
   getQuotaLedgerFunc(crossChain, tokenType, contractFunc) {
-    let scAbi = chainSCConfig.crossInfoDict[crossChain][tokenType]["quotaLedgerAbi"];
-    let contractAddr = chainSCConfig.crossInfoDict[crossChain][tokenType]["quotaLedgerAddr"];
+    let scAbi = moduleConfig.crossInfoDict[crossChain][tokenType]["quotaLedgerAbi"];
+    let contractAddr = moduleConfig.crossInfoDict[crossChain][tokenType]["quotaLedgerAddr"];
     return this.getSolInferface(scAbi, contractAddr, contractFunc);
   }
 
-  getErc20StoremanQuota(crossChain, tokenType, tokenOrigAddr, smgAddress) {
+  getErc20StoremanQuota(crossChain, tokenType, tokenOrigAccount, smgAddress) {
     let func = this.getQuotaLedgerFunc(crossChain, tokenType, 'queryStoremanGroupQuota');
     return new Promise((resolve, reject) => {
-      func(tokenOrigAddr, smgAddress, function(err, result) {
+      func(tokenOrigAccount, smgAddress, function(err, result) {
         if (err) {
           return reject(err);
         } else {
@@ -49,8 +49,8 @@ class WanChain extends baseChain {
   getStoremanGroups(crossChain) {
     let log = this.log;
     let self = this;
-    let abi = chainSCConfig.crossInfoDict[crossChain].COIN.smgAdminAbi;
-    let contractAddr = chainSCConfig.crossInfoDict[crossChain].COIN.smgAdminAddr;
+    let abi = moduleConfig.crossInfoDict[crossChain].COIN.smgAdminAbi;
+    let contractAddr = moduleConfig.crossInfoDict[crossChain].COIN.smgAdminAddr;
     let topic = [];
 
     return new Promise((resolve, reject) => {
@@ -74,7 +74,7 @@ class WanChain extends baseChain {
           for (let i of parsedLogs) {
             if (i.event === 'SmgApplyUnRegister') {
               for (let index = 0; index < storemanGroup.length; index++) {
-                if ((storemanGroup[index].tokenOrigAddr === i.args.tokenOrigAddr && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
+                if ((storemanGroup[index].tokenOrigAccount === i.args.tokenOrigAccount && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
                   storemanGroup.splice(index, 1);
                   break;
                 }
@@ -100,7 +100,7 @@ class WanChain extends baseChain {
       return new Promise(async (resolve, reject) => {
         let storeman;
         try {
-          storeman = await self.getErc20StoremanGroups(crossChain, token.tokenOrigAddr);
+          storeman = await self.getErc20StoremanGroups(crossChain, token.tokenOrigAccount);
         } catch (err) {
           reject(err);
         }
@@ -120,14 +120,15 @@ class WanChain extends baseChain {
   async getErc20StoremanGroups(crossChain, tokenAddr) {
     let log = this.log;
     let self = this;
-    let abi = chainSCConfig.crossInfoDict[crossChain].ERC20.smgAdminAbi;
-    let topic = [null, this.encodeTopic('address', tokenAddr)];
+    let abi = moduleConfig.crossInfoDict[crossChain].ERC20.smgAdminAbi;
+    // let topic = [null, this.encodeTopic('address', tokenAddr)];
+    let topic = [];
 
     let addrs;
-    if (Array.isArray(chainSCConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr)) {
-      addrs = chainSCConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr;
+    if (Array.isArray(moduleConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr)) {
+      addrs = moduleConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr;
     } else {
-      addrs = [chainSCConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr];
+      addrs = [moduleConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr];
     }
 
     let storemanGroup = [];
@@ -141,18 +142,20 @@ class WanChain extends baseChain {
             let parsedLogs = [];
             if (logs !== null) {
               let contract = new Contract(abi, contractAddr);
+              let sign = contract.getEventSignature("StoremanGroupRegistrationLogger");
+              console.log("aaron debug here", sign);
               parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
             }
 
             for (let i of parsedLogs) {
-              if (i.event === 'StoremanGroupRegistrationLogger') {
+              if (i.event === 'StoremanGroupRegistrationLogger' && i.args.tokenOrigAccount === tokenAddr) {
                 storemanGroup.push(i.args);
               }
             }
             for (let i of parsedLogs) {
-              if (i.event === 'StoremanGroupApplyUnRegistrationLogger') {
+              if (i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args.tokenOrigAccount === tokenAddr) {
                 for (let index = 0; index < storemanGroup.length; index++) {
-                  if ((storemanGroup[index].tokenOrigAddr === i.args.tokenOrigAddr && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
+                  if ((storemanGroup[index].tokenOrigAccount === i.args.tokenOrigAccount && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
                     storemanGroup.splice(index, 1);
                     break;
                   }
@@ -177,8 +180,8 @@ class WanChain extends baseChain {
   getRegErc20Tokens(crossChain) {
     let log = this.log;
     let self = this;
-    let abi = chainSCConfig.crossInfoDict[crossChain].ERC20.tokenManagerAbi;
-    let contractAddr = chainSCConfig.crossInfoDict[crossChain].ERC20.tokenManagerAddr;
+    let abi = moduleConfig.crossInfoDict[crossChain].ERC20.tokenManagerAbi;
+    let contractAddr = moduleConfig.crossInfoDict[crossChain].ERC20.tokenManagerAddr;
 
     return new Promise((resolve, reject) => {
       self.getScEvent(contractAddr, [], 0, 'latest', async (err, logs) => {
@@ -195,15 +198,15 @@ class WanChain extends baseChain {
           let regTokenRecord = {};
           for (let i of parsedLogs) {
             if (i.event === 'TokenAddedLogger') {
-              if (regTokenRecord.hasOwnProperty(i.args.tokenOrigAddr) && (regTokenRecord[i.args.tokenOrigAddr] < i.blockNumber)) {
+              if (regTokenRecord.hasOwnProperty(i.args.tokenOrigAccount) && (regTokenRecord[i.args.tokenOrigAccount] < i.blockNumber)) {
                 for (let index = 0; index < regEvents.length; index++) {
-                  if (regEvents[index].tokenOrigAddr === i.args.tokenOrigAddr) {
+                  if (regEvents[index].tokenOrigAccount === i.args.tokenOrigAccount) {
                     regEvents.splice(index, 1);
                     break;
                   }
                 }
               }
-              regTokenRecord[i.args.tokenOrigAddr] = i.blockNumber;
+              regTokenRecord[i.args.tokenOrigAccount] = i.blockNumber;
               regEvents.push(i.args);
             }
           }

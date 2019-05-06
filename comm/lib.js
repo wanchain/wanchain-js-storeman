@@ -1,7 +1,7 @@
 const moduleConfig = require('conf/moduleConfig.js');
 const configPath = 'conf/config.json';
 let configJson = require('conf/config.json');
-let config = moduleConfig.testnet?configJson.testnet:configJson.main;
+let config = global.testnet?configJson.testnet:configJson.main;
 const fs = require('fs');
 
 const Eos = require('eosjs');
@@ -10,11 +10,12 @@ const net = require('net');
 const EthChain = require('chain/eth');
 const WanChain = require('chain/wan');
 const EosChain = require('chain/eos');
+const crossChainAccount = require('utils/encrypt/crossAccountEncrypt');
 
 function getChain(chainType) {
   let loadConfig = function() {
     configJson = JSON.parse(fs.readFileSync('conf/config.json'));
-    config = moduleConfig.testnet?configJson.testnet:configJson.main;
+    config = global.testnet?configJson.testnet:configJson.main;
   }
   try{
     loadConfig();
@@ -125,7 +126,8 @@ async function initCrossTokens(storemanWan, storemanOri) {
   });
 }
 
-async function initEosCrossTokens(storemanWan, storemanOri) {
+async function initEosCrossTokens(chainSymbol, storemanWan, storemanOri) {
+  let chainType = chainSymbol.toLowerCase();
   let wanChain = getGlobalChain('wan');
   let crossTokens = {};
   let empty = true;
@@ -151,17 +153,17 @@ console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
         // }
 
         for (let storeman of oriTokenStoremanGroups) {
-          if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanOri) {
+          if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
             for (let token of oriTokens) {
               console.log(token);
-              if (token.tokenOrigAddr === storeman.tokenOrigAddr) {
+              if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
                 // let chain = getGlobalChain(crossChain.toLowerCase());
-                // let tokenInfo = await chain.getErc20Info(token.tokenOrigAddr);
+                // let tokenInfo = await chain.getErc20Info(token.tokenOrigAccount);
                 let chain = getGlobalChain('wan');
                 let tokenInfo = await chain.getErc20Info(token.tokenWanAddr);
                 Object.assign(token, tokenInfo);
                 chain.bigNumber2String(token, 10);
-                crossTokens[crossChain][decodeEosAccount(token.tokenOrigAddr)] = token;
+                crossTokens[crossChain][decodeAccount(chainType, token.tokenOrigAccount)] = token;
                 empty = false;
                 break;
               }
@@ -180,13 +182,15 @@ console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
   });
 }
 
-async function initEosConfig(storemanWan, storemanOri) {
+async function initEosConfig(chainSymbol, storemanWan, storemanOri) {
+  let chainType = chainSymbol.toLowerCase();
   let storemanWanAddr = storemanWan.toLowerCase();
-  let storemanOriAddr = storemanOri.toLowerCase();
+  let storemanOriAddr = encodeAccount(chainType, storemanOri.toLowerCase());
+  console.log("aaron debug here, storemanOriAddr", storemanOri, storemanOriAddr)
 
   return new Promise(async (resolve, reject) => {
     try {
-      let crossTokens = await initEosCrossTokens(storemanWanAddr, storemanOriAddr);
+      let crossTokens = await initEosCrossTokens(chainType, storemanWanAddr, storemanOriAddr);
       if (crossTokens != null) {
         fs.readFile(configPath, (err, data) => {
           if (err) {
@@ -197,7 +201,7 @@ async function initEosConfig(storemanWan, storemanOri) {
           config = JSON.parse(config);
 
           var net;
-          if (moduleConfig.testnet) {
+          if (global.testnet) {
             net = "testnet";
           } else {
             net = "main";
@@ -241,7 +245,7 @@ async function initConfig(storemanWan, storemanOri) {
           config = JSON.parse(config);
 
           var net;
-          if (moduleConfig.testnet) {
+          if (global.testnet) {
             net = "testnet";
           } else {
             net = "main";
@@ -298,19 +302,23 @@ function backupIssueFile() {
   });
 }
 
-function decodeEosAccount(account) {
-  if (account === "0x0f000101656f73696f2e746f6b656e0000000000") {
-    return 'eosio.token';
-  } else if (account === "0x0b00010268746c63656f73000000000000000000" || account === "0x0c00010373746f72656d616e0000000000000000") {
-    return 'htlceos';
-  } else if (account === "0x0800010474657374000000000000000000000000") {
-    return 'aaron';
-  }
+function decodeAccount(chain, account) {
+  let crossAccount = new crossChainAccount(chain.toLowerCase());
+  return crossAccount.decodeAccount(account).account;
+  // if (account === "0x0f000101656f73696f2e746f6b656e0000000000" || account === "0x010003656f73696f2e746f6b656e") {
+  //   return 'eosio.token';
+  // } else if (account === "0x0b00010268746c63656f73000000000000000000" || account === "0x01000368746c63656f73") {
+  //   return 'htlceos';
+  // } else if (account === "0x0800010474657374000000000000000000000000") {
+  //   return 'aaron';
+  // }
 }
 
-function encodeEosAccount(account) {
+function encodeAccount(chain, account) {
+  let crossAccount = new crossChainAccount(chain.toLowerCase());
+  return crossAccount.encodeAccount(account);
   // return '0x0c00010373746f72656d616e0000000000000000';
-  return '0x0f000101656f73696f2e746f6b656e0000000000';
+  return '0x010003656f73696f2e746f6b656e';
 }
 
 function eosToFloat(str) 
@@ -338,10 +346,10 @@ exports.initChain = initChain;
 exports.getGlobalChain = getGlobalChain;
 exports.getChain = getChain;
 exports.initNonce = initNonce;
-exports.initConfig = initConfig;
+exports.initConfig = initEosConfig;
 exports.initCrossTokens = initCrossTokens;
 exports.backupIssueFile = backupIssueFile;
-exports.encodeEosAccount = encodeEosAccount;
-exports.decodeEosAccount = decodeEosAccount;
+exports.encodeAccount = encodeAccount;
+exports.decodeAccount = decodeAccount;
 exports.eosToFloat = eosToFloat;
 exports.floatToEos = floatToEos;

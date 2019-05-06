@@ -22,9 +22,6 @@ sudo apt-get install -y mongodb-org
 If you have already registered the storemanGroup on Wanchain cross-chain HTLC, you can initialize the storeman agent with the storemanWanAddr and storemanEthAddr.
 ```javascript
 
-// config the testnet or mainnet in moduleConfig.js
-const testnet = true; 
-
 // configure with valid node urls in config.json, take mainnet as an example
 {
   "main": {
@@ -34,15 +31,18 @@ const testnet = true;
   }
 };
 
+// config the testnet or mainnet
+If testnet, plz run the command with '--testnet'
+
 ```
-Then you can use follow commands to initialize the storeman agent. Plz replace the exactly address to storemanWanAddr and storemanEthAddr.
+Then you can use follow commands to initialize the storeman agent. Plz replace the exactly address to storemanWanAddr and storemanOriAddr.
 ```bash
-./init.sh storemanWanAddr storemanEthAddr
+./init.sh chainSymbol storemanWanAddr storemanOriAddr (--testnet)
 ```
 And you can check the detail config info in the config.json file, which chains and what tokens are been supported for cross-chain transaction that the storemanGroup is in charge of.
 
 ## Basic Usage
 You can directly start the agent via start.sh.
 ```bash
-./start.sh
+./start.sh (--testnet)
 ```

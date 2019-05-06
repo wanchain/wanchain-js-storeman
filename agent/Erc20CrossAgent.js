@@ -10,7 +10,7 @@ const EthCrossAgent = require("agent/EthCrossAgent.js");
 
 const moduleConfig = require('conf/moduleConfig.js');
 const configJson = require('conf/config.json');
-const config = moduleConfig.testnet?configJson.testnet:configJson.main;
+const config = global.testnet?configJson.testnet:configJson.main;
 
 const Web3 = require("web3");
 const web3 = new Web3();
