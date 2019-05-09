@@ -1,5 +1,6 @@
 const chainSCConfig = require('conf/moduleConfig.js');
 const coder = require('web3/lib/solidity/coder');
+const TimeoutPromise = require('utils/timeoutPromise.js')
 
 function sleep(time) {
   return new Promise(function(resolve, reject) {
@@ -75,7 +76,7 @@ class baseChain {
   getScEventSync(address, topics, fromBlk, toBlk, retryTimes = 0) {
     let baseChain = this;
     let times = 0;
-    return new Promise(function(resolve, reject) {
+    return new TimeoutPromise(function(resolve, reject) {
       let filterValue = {
         fromBlock: fromBlk,
         toBlock: toBlk,
@@ -107,7 +108,7 @@ class baseChain {
         reject(err);
       }
 
-    });
+    }, chainSCConfig.promiseTimeout, 'getScEventSync timeout');
   }
 
   getGasPrice(callback) {
