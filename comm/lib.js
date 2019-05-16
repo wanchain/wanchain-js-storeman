@@ -9,7 +9,7 @@ const net = require('net');
 const EthChain = require('chain/eth');
 const WanChain = require('chain/wan');
 
-function getChain(chainType) {
+function getChain(chainType, preChain = null) {
   let loadConfig = function() {
     configJson = JSON.parse(fs.readFileSync('conf/config.json'));
     config = moduleConfig.testnet?configJson.testnet:configJson.main;
@@ -22,13 +22,21 @@ function getChain(chainType) {
   let chain = chainType.toLowerCase();
   if (chain === 'eth') {
     if (config.ethWeb3Url.indexOf("http://") !== -1) {
-      return new EthChain(global.syncLogger, new Web3(new Web3.providers.HttpProvider(config.ethWeb3Url)));
+      if (preChain && preChain.theWeb3.isConnected() && preChain.theWeb3.currentProvider.host === config.ethWeb3Url) {
+        return preChain;
+      } else {
+        return new EthChain(global.syncLogger, new Web3(new Web3.providers.HttpProvider(config.ethWeb3Url)));
+      }
     } else {
       return new EthChain(global.syncLogger, new Web3(new Web3.providers.IpcProvider(config.ethWeb3Url, net)));
     }
   } else if (chain === 'wan') {
     if (config.wanWeb3Url.indexOf("http://") !== -1) {
-      return new WanChain(global.syncLogger, new Web3(new Web3.providers.HttpProvider(config.wanWeb3Url)));
+      if (preChain && preChain.theWeb3.isConnected() && preChain.theWeb3.currentProvider.host === config.wanWeb3Url) {
+        return preChain;
+      } else {
+        return new WanChain(global.syncLogger, new Web3(new Web3.providers.HttpProvider(config.wanWeb3Url)));
+      }
     } else {
       return new WanChain(global.syncLogger, new Web3(new Web3.providers.IpcProvider(config.wanWeb3Url, net)));
     }
@@ -161,7 +169,11 @@ async function initConfig(storemanWan, storemanEth) {
 
 function getGlobalChain(chainType) {
   let chainName = chainType.toLowerCase() + "Chain";
-  global[chainName] = getChain(chainType);
+  let preChain = null;
+  if (global[chainName] && global[chainName].theWeb3) {
+    preChain = global[chainName];
+  }
+  global[chainName] = getChain(chainType, preChain);
   return global[chainName];
 }
 
