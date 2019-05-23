@@ -413,7 +413,7 @@ module.exports = class stateAction {
   async checkAllowance(nextState, rollState) {
     let newAgent = new global.agentDict['WAN'](this.crossChain, this.tokenType, 0, this.record);
     let chain = getGlobalChain(this.crossChain);
-    await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanOri, newAgent.contractAddr, moduleConfig.erc20Abi)
+    await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanOri, newAgent.contractAddr, moduleConfig.tokenAbi)
       .then(async (result) => {
         if (result < Math.max(getWeiFromEther(web3.toBigNumber(moduleConfig.tokenAllowanceThreshold)), web3.toBigNumber(this.record.value))) {
           await this.updateState(rollState);
@@ -488,12 +488,15 @@ module.exports = class stateAction {
 
       let receipt;
       let chain = getGlobalChain(transOnChain);
+      let confirm_block_num = moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.CONFIRM_BLOCK_NUM
+        ? moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.CONFIRM_BLOCK_NUM
+        : moduleConfig.CONFIRM_BLOCK_NUM;
       let txHashArray = this.record[transHashName];
       txHashArray = (Array.isArray(txHashArray)) ? [...txHashArray] : [txHashArray];
 
       for (var txHash of txHashArray) {
         this.logger.debug("********************************** checkStoremanTransOnline checkHash**********************************", this.hashX, transHashName, txHash);
-        receipt = await chain.getTransactionConfirmSync(txHash, moduleConfig.CONFIRM_BLOCK_NUM);
+        receipt = await chain.getTransactionConfirmSync(txHash, confirm_block_num);
         if (receipt !== null) {
           if (receipt.status === '0x1') {
             content = {
@@ -555,7 +558,7 @@ module.exports = class stateAction {
       if(this.tokenType === 'COIN') {
         storemanQuotaInfo = await chain.getStoremanQuota(this.crossChain.toUpperCase(), this.tokenType, storemanGroupAddr);
       } else {
-        storemanQuotaInfo = await chain.getErc20StoremanQuota(this.crossChain.toUpperCase(), this.tokenType, this.record.tokenAddr, storemanGroupAddr);
+        storemanQuotaInfo = await chain.getTokenStoremanQuota(this.crossChain.toUpperCase(), this.tokenType, this.record.tokenAddr, storemanGroupAddr);
       }
       this.logger.debug("getStoremanQuota result is", storemanQuotaInfo, this.hashX);
 

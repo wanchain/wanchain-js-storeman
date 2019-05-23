@@ -11,7 +11,7 @@ const Logger = require('comm/logger.js');
 
 const mongoose = require('mongoose');
 const ModelOps = require('db/modelOps');
-const Erc20CrossAgent = require("agent/Erc20CrossAgent.js");
+const TokenCrossAgent = require("agent/Erc20CrossAgent.js");
 const EthCrossAgent = require("agent/EthCrossAgent.js");
 const EosCrossAgent = require("agent/EosCrossAgent.js");
 
@@ -40,17 +40,17 @@ global.storemanRestart = false;
 global.agentDict1 = {
   ETH: {
     COIN: EthCrossAgent,
-    ERC20: Erc20CrossAgent
+    Token: TokenCrossAgent
   },
   EOS: {
-    ERC20: EosCrossAgent,
+    Token: EosCrossAgent,
   }
 }
 
 global.agentDict = {
   // ETH: {
   //   COIN: EthCrossAgent,
-  //   ERC20: Erc20CrossAgent
+  //   Token: TokenCrossAgent
   // },
   EOS: EosAgent,
   WAN: WanAgent
@@ -73,6 +73,9 @@ async function init() {
     tokenList.wanchainHtlcAddr = [];
     tokenList.originalChainHtlcAddr = [];
     for (let crossChain in moduleConfig.crossInfoDict) {
+      if (!crossChain.CONF.enable) {
+        continue;
+      }
 
       global[crossChain + 'NonceRenew'] = false;
       global[crossChain + 'NoncePending'] = false;
@@ -90,6 +93,9 @@ async function init() {
       }
 
       for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
+        if (tokenType === 'CONF') {
+          continue;
+        }
         tokenList[crossChain][tokenType] = {};
 
         tokenList[crossChain][tokenType].wanchainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr;
@@ -236,11 +242,18 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
 
 async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
   logger.debug("********************************** syncChain **********************************", chainType, crossChain, tokenType);
+  let safe_block_num = moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.SAFE_BLOCK_NUM
+    ? moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.SAFE_BLOCK_NUM
+    : moduleConfig.SAFE_BLOCK_NUM;
+  let confirm_block_num = moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.CONFIRM_BLOCK_NUM
+    ? moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.CONFIRM_BLOCK_NUM
+    : moduleConfig.CONFIRM_BLOCK_NUM;
+
   let blockNumber = 0;
   try {
     blockNumber = await modelOps.getScannedBlockNumberSync(chainType);
-    if (blockNumber > moduleConfig.SAFE_BLOCK_NUM) {
-      blockNumber -= moduleConfig.SAFE_BLOCK_NUM;
+    if (blockNumber > safe_block_num) {
+      blockNumber -= safe_block_num;
     } else {
       blockNumber = moduleConfig.startSyncBlockNum[chainType.toUpperCase()];
     }
@@ -263,8 +276,8 @@ async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
     logger.error("getBlockNumberSync from :", chainType, err);
     return;
   }
-  if (curBlock > moduleConfig.CONFIRM_BLOCK_NUM) {
-    let to = curBlock - moduleConfig.CONFIRM_BLOCK_NUM;
+  if (curBlock > confirm_block_num) {
+    let to = curBlock - confirm_block_num;
     try {
       if (from <= to) {
         events = await getScEvents(logger, chain, scAddr, topics, from, to);
@@ -289,6 +302,9 @@ async function syncMain(logger, db) {
     try {
       for (let crossChain in moduleConfig.crossInfoDict) {
         for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
+          if (tokenType === 'CONF') {
+            continue;
+          }
           syncChain(crossChain.toLowerCase(), crossChain, tokenType, tokenList[crossChain][tokenType].originalChainHtlcAddr, logger, db);
           syncChain('wan', crossChain, tokenType, tokenList[crossChain][tokenType].wanchainHtlcAddr, logger, db);
         }

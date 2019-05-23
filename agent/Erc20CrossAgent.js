@@ -15,14 +15,14 @@ const config = global.testnet?configJson.testnet:configJson.main;
 const Web3 = require("web3");
 const web3 = new Web3();
 
-module.exports = class Erc20CrossAgent extends EthCrossAgent {
+module.exports = class TokenCrossAgent extends EthCrossAgent {
   constructor(crossChain, tokenType, crossDirection, record = null, action = null, logger = null) {
     super(crossChain, tokenType, crossDirection, record, action, logger);
     this.approveFunc = 'approve';
 
     if (record !== null) {
-      let erc20Abi = moduleConfig.erc20Abi;
-      this.tokenContract = new Contract(erc20Abi, this.tokenAddr);
+      let tokenAbi = moduleConfig.tokenAbi;
+      this.tokenContract = new Contract(tokenAbi, this.tokenAddr);
     }
   }
 

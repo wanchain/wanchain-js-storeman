@@ -33,7 +33,7 @@ class WanChain extends baseChain {
     return this.getSolInferface(scAbi, contractAddr, contractFunc);
   }
 
-  getErc20StoremanQuota(crossChain, tokenType, tokenOrigAccount, smgAddress) {
+  getTokenStoremanQuota(crossChain, tokenType, tokenOrigAccount, smgAddress) {
     let func = this.getQuotaLedgerFunc(crossChain, tokenType, 'queryStoremanGroupQuota');
     return new Promise((resolve, reject) => {
       func(tokenOrigAccount, smgAddress, function(err, result) {
@@ -91,44 +91,44 @@ class WanChain extends baseChain {
     });
   }
 
-  async getErc20StoremanGroupsOfMutiTokens(crossChain, tokens) {
+  async getTokenStoremanGroupsOfMutiTokens(crossChain, tokens) {
     let log = this.log;
     let self = this;
-    let erc20StoremanGroups = [];
+    let tokenStoremanGroups = [];
 
     let multiTokens = tokens.map((token) => {
       return new Promise(async (resolve, reject) => {
         let storeman;
         try {
-          storeman = await self.getErc20StoremanGroups(crossChain, token.tokenOrigAccount);
+          storeman = await self.getTokenStoremanGroups(crossChain, token.tokenOrigAccount);
         } catch (err) {
           reject(err);
         }
-        erc20StoremanGroups = erc20StoremanGroups.concat(storeman);
+        tokenStoremanGroups = tokenStoremanGroups.concat(storeman);
         resolve();
       });
     })
     try {
       await Promise.all(multiTokens);
     } catch (err) {
-      log.error("getErc20StoremanGroupsOfMutiTokens", err);
+      log.error("getTokenStoremanGroupsOfMutiTokens", err);
       return Promise.reject(err);
     }
-    return erc20StoremanGroups;
+    return tokenStoremanGroups;
   }
 
-  async getErc20StoremanGroups(crossChain, tokenAddr) {
+  async getTokenStoremanGroups(crossChain, tokenAddr) {
     let log = this.log;
     let self = this;
-    let abi = moduleConfig.crossInfoDict[crossChain].ERC20.smgAdminAbi;
+    let abi = moduleConfig.crossInfoDict[crossChain].TOKEN.smgAdminAbi;
     // let topic = [null, this.encodeTopic('address', tokenAddr)];
     let topic = [];
 
     let addrs;
-    if (Array.isArray(moduleConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr)) {
-      addrs = moduleConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr;
+    if (Array.isArray(moduleConfig.crossInfoDict[crossChain].TOKEN.smgAdminAddr)) {
+      addrs = moduleConfig.crossInfoDict[crossChain].TOKEN.smgAdminAddr;
     } else {
-      addrs = [moduleConfig.crossInfoDict[crossChain].ERC20.smgAdminAddr];
+      addrs = [moduleConfig.crossInfoDict[crossChain].TOKEN.smgAdminAddr];
     }
 
     let storemanGroup = [];
@@ -171,17 +171,17 @@ class WanChain extends baseChain {
     try {
       await Promise.all(getMultiStoremanEvent);
     } catch (err) {
-      log.error("getErc20StoremanGroups", err);
+      log.error("getTokenStoremanGroups", err);
       return Promise.reject(err);
     }
     return storemanGroup;
   }
 
-  getRegErc20Tokens(crossChain) {
+  getRegTokenTokens(crossChain) {
     let log = this.log;
     let self = this;
-    let abi = moduleConfig.crossInfoDict[crossChain].ERC20.tokenManagerAbi;
-    let contractAddr = moduleConfig.crossInfoDict[crossChain].ERC20.tokenManagerAddr;
+    let abi = moduleConfig.crossInfoDict[crossChain].TOKEN.tokenManagerAbi;
+    let contractAddr = moduleConfig.crossInfoDict[crossChain].TOKEN.tokenManagerAddr;
 
     return new Promise((resolve, reject) => {
       self.getScEvent(contractAddr, [], 0, 'latest', async (err, logs) => {

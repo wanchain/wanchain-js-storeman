@@ -85,8 +85,8 @@ async function initCrossTokens(storemanWan, storemanOri) {
       for (let crossChain in moduleConfig.crossInfoDict) {
         crossTokens[crossChain] = {};
         let ethStoremanGroups = await wanChain.getStoremanGroups(crossChain);
-        let ethErc20Tokens = await wanChain.getRegErc20Tokens(crossChain);
-        let ethErc20StoremanGroups = await wanChain.getErc20StoremanGroupsOfMutiTokens(crossChain, ethErc20Tokens);
+        let ethTokenTokens = await wanChain.getRegTokenTokens(crossChain);
+        let ethTokenStoremanGroups = await wanChain.getTokenStoremanGroupsOfMutiTokens(crossChain, ethTokenTokens);
 
         for (let storeman of ethStoremanGroups) {
           if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanOri) {
@@ -99,12 +99,12 @@ async function initCrossTokens(storemanWan, storemanOri) {
           }
         }
 
-        for (let storeman of ethErc20StoremanGroups) {
+        for (let storeman of ethTokenStoremanGroups) {
           if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanOri) {
-            for (let token of ethErc20Tokens) {
+            for (let token of ethTokenTokens) {
               if (token.tokenOrigAddr === storeman.tokenOrigAddr) {
                 let chain = getGlobalChain(crossChain.toLowerCase());
-                let tokenInfo = await chain.getErc20Info(token.tokenOrigAddr);
+                let tokenInfo = await chain.getTokenInfo(token.tokenOrigAddr);
                 Object.assign(token, tokenInfo);
                 chain.bigNumber2String(token, 10);
                 crossTokens[crossChain][token.tokenOrigAddr] = token;
@@ -137,35 +137,38 @@ async function initEosCrossTokens(chainSymbol, storemanWan, storemanOri) {
       for (let crossChain in moduleConfig.crossInfoDict) {
         crossTokens[crossChain] = {};
         console.log(crossChain);
-        // let oriStoremanGroups = await wanChain.getStoremanGroups(crossChain);
-        let oriTokens = await wanChain.getRegErc20Tokens(crossChain);
-        let oriTokenStoremanGroups = await wanChain.getErc20StoremanGroupsOfMutiTokens(crossChain, oriTokens);
-console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
-        // for (let storeman of oriStoremanGroups) {
-        //   if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanOri) {
-        //     crossTokens[crossChain]['0x'] = {
-        //       "tokenType": "COIN",
-        //       "tokenSymbol": crossChain
-        //     };
-        //     empty = false;
-        //     break;
-        //   }
-        // }
+        if (crossChain.COIN) {
+          let oriStoremanGroups = await wanChain.getStoremanGroups(crossChain);
+          for (let storeman of oriStoremanGroups) {
+            if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanOri) {
+              crossTokens[crossChain]['0x'] = {
+                "tokenType": "COIN",
+                "tokenSymbol": crossChain
+              };
+              empty = false;
+              break;
+            }
+          }
+        }
 
-        for (let storeman of oriTokenStoremanGroups) {
-          if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
-            for (let token of oriTokens) {
-              console.log(token);
-              if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
-                // let chain = getGlobalChain(crossChain.toLowerCase());
-                // let tokenInfo = await chain.getErc20Info(token.tokenOrigAccount);
-                let chain = getGlobalChain('wan');
-                let tokenInfo = await chain.getErc20Info(token.tokenWanAddr);
-                Object.assign(token, tokenInfo);
-                chain.bigNumber2String(token, 10);
-                crossTokens[crossChain][decodeAccount(chainType, token.tokenOrigAccount)] = token;
-                empty = false;
-                break;
+        if (crossChain.TOKEN) {
+          let oriTokens = await wanChain.getRegTokenTokens(crossChain);
+          let oriTokenStoremanGroups = await wanChain.getTokenStoremanGroupsOfMutiTokens(crossChain, oriTokens);
+          console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
+
+          for (let storeman of oriTokenStoremanGroups) {
+            if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
+              for (let token of oriTokens) {
+                console.log(token);
+                if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
+                  let chain = getGlobalChain('wan');
+                  let tokenInfo = await chain.getTokenInfo(token.tokenWanAddr);
+                  Object.assign(token, tokenInfo);
+                  chain.bigNumber2String(token, 10);
+                  crossTokens[crossChain][decodeAccount(chainType, token.tokenOrigAccount)] = token;
+                  empty = false;
+                  break;
+                }
               }
             }
           }

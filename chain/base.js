@@ -445,39 +445,39 @@ class baseChain {
     });
   }
 
-  getErc20Info(tokenScAddr) {
+  getTokenInfo(tokenScAddr) {
     let log = this.log;
     let self = this;
-    let erc20Abi = moduleConfig.erc20Abi;
+    let tokenAbi = moduleConfig.tokenAbi;
     let symbol = 'symbol';
     let decimals = 'decimals';
 
     let token = {};
-    token.tokenType = "ERC20";
+    token.tokenType = "TOKEN";
 
-    if (moduleConfig.informalErc20.hasOwnProperty(tokenScAddr)) {
-      let informalErc20 = moduleConfig.informalErc20[tokenScAddr];
-      if (informalErc20.hasOwnProperty('implementation')) {
-        let implTokenScAddr = self.getSolVar(informalErc20.abi, tokenScAddr, informalErc20.implementation)();
+    if (moduleConfig.informalToken.hasOwnProperty(tokenScAddr)) {
+      let informalToken = moduleConfig.informalToken[tokenScAddr];
+      if (informalToken.hasOwnProperty('implementation')) {
+        let implTokenScAddr = self.getSolVar(informalToken.abi, tokenScAddr, informalToken.implementation)();
         tokenScAddr = implTokenScAddr;
       } else {
-        erc20Abi = informalErc20.abi;
-        symbol = informalErc20.symbol;
-        decimals = informalErc20.decimals;
+        tokenAbi = informalToken.abi;
+        symbol = informalToken.symbol;
+        decimals = informalToken.decimals;
       }
     }
 
     return new Promise((resolve, reject) => {
       try {
-        token.tokenSymbol = self.getSolVar(erc20Abi, tokenScAddr, symbol)();
-        token.decimals = self.getSolVar(erc20Abi, tokenScAddr, decimals)().toString(10);
+        token.tokenSymbol = self.getSolVar(tokenAbi, tokenScAddr, symbol)();
+        token.decimals = self.getSolVar(tokenAbi, tokenScAddr, decimals)().toString(10);
         resolve(token);
       } catch (err) {
         if (err.hasOwnProperty("message") && (err.message === "new BigNumber() not a base 16 number: ")) {
           try {
-            let unusualErc20Abi = moduleConfig.unusualErc20Abi;
-            token.tokenSymbol = self.theWeb3.toAscii(self.getSolVar(unusualErc20Abi, tokenScAddr, 'symbol')()).replace(/\u0000/g, '');
-            token.decimals = self.getSolVar(erc20Abi, tokenScAddr, 'decimals')().toString(10);
+            let unusualTokenAbi = moduleConfig.unusualTokenAbi;
+            token.tokenSymbol = self.theWeb3.toAscii(self.getSolVar(unusualTokenAbi, tokenScAddr, 'symbol')()).replace(/\u0000/g, '');
+            token.decimals = self.getSolVar(tokenAbi, tokenScAddr, 'decimals')().toString(10);
             resolve(token);
           } catch (err) {
             log.error(err);
