@@ -50,7 +50,7 @@ function initChain(chainType) {
 }
 
 async function initNonce(chainType) {
-  if (moduleConfig.nonceless.includes(chainType)) {
+  if (moduleConfig.nonceless && moduleConfig.nonceless.includes(chainType)) {
     return;
   }
 
