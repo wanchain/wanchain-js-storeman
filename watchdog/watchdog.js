@@ -34,7 +34,7 @@ function checkTimeout(timeTicks,timeOutOfLastBlock,chainType){
   }
 }
 
-function watchdog(chainType) {
+async function watchdog(chainType) {
   let blockNumber;
   let blockTimeStamp;
   let timeOutOrNot;
@@ -45,13 +45,14 @@ function watchdog(chainType) {
   let web3Ips = nodeIpOps.web3Ips;
 
   if (firstStart && (web3Ips.indexOf(curEthWeb3Ip) !== -1)) {
+    await writeConfigToFile(fileName);
     currentOKWeb3IpIndex = web3Ips.indexOf(curEthWeb3Ip);
     firstStart = false;
   }
 
-  let chain = getGlobalChain('ETH');
+  let chain = getGlobalChain(chainType.toUpperCase());
 
-  let updateWeb3Ip = async function() {
+  let updateWeb3Ip = async function(chainType) {
     try {
       let nextIp;
       let len = web3Ips.length;
@@ -60,7 +61,7 @@ function watchdog(chainType) {
       log.debug("nextOKWeb3IpIndex = %s nextIp = %s chainType = %s",
         currentOKWeb3IpIndex, nextIp, chainType);
 
-      let update = await writeWeb3IpToFile(fileName, nextIp);
+      let update = await writeWeb3IpToFile(fileName, chainType, nextIp);
       if (update) {
         chainWeb3IpOpsDict[chainType].currentOKWeb3IpIndex = currentOKWeb3IpIndex;
       }
@@ -71,17 +72,17 @@ function watchdog(chainType) {
 
   return new Promise(async (resolve, reject) => {
     try {
-      chain.theWeb3.eth.getBlockNumber((err, result) => {
+      chain.client.eth.getBlockNumber((err, result) => {
         if (err) {
           log.error("getBlockNumber " + err + " chainType " + chainType + " curEthWeb3Ip "+ curEthWeb3Ip);
 
-          updateWeb3Ip();
+          updateWeb3Ip(chainType);
           resolve();
         } else {
           log.debug("getBlockNumber,blockNumber %s chainType %s curEthWeb3Ip %s", result, chainType, curEthWeb3Ip);
           blockNumber = result;
 
-          chain.theWeb3.eth.getBlock(blockNumber, (err, block) => {
+          chain.client.eth.getBlock(blockNumber, (err, block) => {
             try {
               if (err) {
                 log.error("getBlockByNumber " + err + " chainType " + chainType + " curEthWeb3Ip "+ curEthWeb3Ip);
@@ -117,7 +118,7 @@ function watchdog(chainType) {
   });
 }
 
-function writeWeb3IpToFile(filename, nextIp) {
+function writeWeb3IpToFile(filename, chainType, nextIp) {
   return new Promise(async (resolve, reject) => {
     fs.readFile(filename, (err, data) => {
       if (err) {
@@ -140,7 +141,7 @@ function writeWeb3IpToFile(filename, nextIp) {
         return;
       }
 
-      let curIp = config[net].ethWeb3Url;
+      let curIp = config[net].crossTokens[chainType].CONF.nodeUrl;
       config[net].ethWeb3Url = nextIp;
 
       var str = JSON.stringify(config, null, 2);
@@ -150,6 +151,44 @@ function writeWeb3IpToFile(filename, nextIp) {
           resolve(false);
         } else {
           log.info("Update done! curIp %s to nextIp %s", curIp, nextIp);
+          resolve(true);
+        }
+      })
+    })
+  });
+};
+
+function writeConfigToFile(filename) {
+  return new Promise(async (resolve, reject) => {
+    fs.readFile(filename, (err, data) => {
+      if (err) {
+        log.error("writeConfigToFile readFile ", err);
+        resolve(false);
+      }
+
+      var config = data.toString();
+      config = JSON.parse(config);
+
+      var net;
+      if (testnet) {
+        net = "testnet";
+      } else {
+        net = "main";
+      }
+
+      let url = 'http://' + process.env.RPCIP + ':' + process.env.RPCPORT;
+      let isLeader = process.env.IS_LEADER === 'true' ? true : false;
+      config[net].wanWeb3Url = url;
+      config[net].mpcUrl = url;
+      config[net].isLeader = isLeader;
+
+      var str = JSON.stringify(config, null, 2);
+      fs.writeFile(filename, str, (err) => {
+        if (err) {
+          log.error("writeConfigToFile writeFile ", err);
+          resolve(false);
+        } else {
+          log.info("Update done! mpcUrl %s", url);
           resolve(true);
         }
       })

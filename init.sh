@@ -10,7 +10,7 @@ function use() {
 
 if [[ $# == 3 ]] || [[ $# == 4 ]]
 	then
-		NODE_PATH=. node initConfig.js $1 $2 $3 $4
+		NODE_PATH=. node debug initConfig.js $1 $2 $3 $4
 else
     use
     exit

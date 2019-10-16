@@ -64,6 +64,24 @@ class Logger {
     });
   }
 
+  __line() {
+    let logger = this;
+    try {
+      const e = new Error();
+      const regex = /\((.*):(\d+):(\d+)\)$/
+      const errLocation = e.stack.split("\n")[2];
+      const match = regex.exec(errLocation);
+      if (!match) {
+        return errLocation.trim();
+      }
+      return match[1] + ":" + match[2];
+    } catch (err) {
+      logger.warn("Logger::__line error");
+      logger.warn(err);
+      return "";
+    }
+  }
+
   debug(...params) {
     this.logger.debug(...params);
   }

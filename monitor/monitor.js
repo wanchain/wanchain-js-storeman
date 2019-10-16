@@ -163,7 +163,7 @@ module.exports = class stateAction {
     console.log("ahahah", this.record.hashX);
   	if (this.record.walletLockEvent.length !== 0) {
       let status;
-      if(this.record.tokenType === 'COIN' || this.record.crossChain === 'eos') {
+      if(this.record.tokenType === 'COIN' || this.record.crossChain === 'EOS') {
         status = nextState;
       } else {
         status = (this.record.direction === 0) ? nextState : rollState;
@@ -247,7 +247,7 @@ module.exports = class stateAction {
 
     console.log("aaron debug here crossChain", this.crossChain);
     if (!Array.isArray(actionArray)) {
-      if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.record.direction === 0) && (this.crossChain === 'eth')) {
+      if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.record.direction === 0) && (this.crossChain === 'ETH')) {
         if (!await this.checkStoremanQuota()) {
           let content = {
             status: 'transIgnored',
@@ -269,8 +269,8 @@ module.exports = class stateAction {
         await sleep(retryWaitTime);
       }
       for (var action of actionArray) {
-        let transOnChain = ((this.direction === 0) ^ (action === 'redeem')) ? 'wan' : record.crossChain;
-        let newAgent = new global.agentDict[transOnChain.toUpperCase()](this.crossChain, this.tokenType, this.crossDirection, this.record, action);
+        let transOnChain = ((this.direction === 0) ^ (action === 'redeem')) ? 'WAN' : record.crossChain;
+        let newAgent = new global.agentDict[transOnChain](this.crossChain, this.tokenType, this.crossDirection, this.record);
         this.logger.debug("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
 
@@ -440,11 +440,11 @@ module.exports = class stateAction {
       if (eventName === 'storemanRedeemEvent') {
         transOnChain = this.crossChain;
       } else {
-        transOnChain = 'wan';
+        transOnChain = 'WAN';
       }
     } else {
       if (eventName === 'storemanRedeemEvent') {
-        transOnChain = 'wan';
+        transOnChain = 'WAN';
       } else {
         transOnChain = this.crossChain;
       }
@@ -488,15 +488,12 @@ module.exports = class stateAction {
 
       let receipt;
       let chain = getGlobalChain(transOnChain);
-      let confirm_block_num = moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.CONFIRM_BLOCK_NUM
-        ? moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.CONFIRM_BLOCK_NUM
-        : moduleConfig.CONFIRM_BLOCK_NUM;
       let txHashArray = this.record[transHashName];
       txHashArray = (Array.isArray(txHashArray)) ? [...txHashArray] : [txHashArray];
 
       for (var txHash of txHashArray) {
         this.logger.debug("********************************** checkStoremanTransOnline checkHash**********************************", this.hashX, transHashName, txHash);
-        receipt = await chain.getTransactionConfirmSync(txHash, confirm_block_num);
+        receipt = await chain.getTransactionConfirmSync(txHash, chain.confirm_block_num);
         if (receipt !== null) {
           if (receipt.status === '0x1') {
             content = {
@@ -552,13 +549,13 @@ module.exports = class stateAction {
   async getStoremanQuota() {
     let storemanGroupAddr = config.storemanWan;
     let storemanQuotaInfo;
-    let chain = getGlobalChain('wan');
+    let chain = getGlobalChain('WAN');
 
     try{
       if(this.tokenType === 'COIN') {
-        storemanQuotaInfo = await chain.getStoremanQuota(this.crossChain.toUpperCase(), this.tokenType, storemanGroupAddr);
+        storemanQuotaInfo = await chain.getStoremanQuota(this.crossChain, this.tokenType, storemanGroupAddr);
       } else {
-        storemanQuotaInfo = await chain.getTokenStoremanQuota(this.crossChain.toUpperCase(), this.tokenType, this.record.tokenAddr, storemanGroupAddr);
+        storemanQuotaInfo = await chain.getTokenStoremanQuota(this.crossChain, this.tokenType, this.record.tokenAddr, storemanGroupAddr);
       }
       this.logger.debug("getStoremanQuota result is", storemanQuotaInfo, this.hashX);
 

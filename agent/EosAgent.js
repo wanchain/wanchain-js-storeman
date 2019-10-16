@@ -1,22 +1,21 @@
 "use strict"
 const baseAgent = require("agent/BaseAgent.js");
 
-let Eos = require("eosjs");
+// let Eos = require("eosjs");
 let RawTrans = require("trans/EosRawTrans.js");
 
-const moduleConfig = require('conf/moduleConfig.js');
 const {
   encodeAccount,
   decodeAccount
 } = require('comm/lib');
 
 module.exports = class EosAgent extends baseAgent{
-  constructor(crossChain, tokenType, crossDirection = 0, record = null, action = null) {
-    super(crossChain, tokenType, crossDirection, record, action);
+  constructor(crossChain, tokenType, record = null) {
+    super(crossChain, tokenType, record);
 
     this.RawTrans = RawTrans;
 
-    console.log("aaron debug hereh, eos agent", this.storemanAddress);
+    console.log("aaron debug here, eos agent", this.storemanAddress);
     this.crossFunc = (this.crossDirection === 0) ? this.crossInfoInst.depositAction : this.crossInfoInst.withdrawAction;
     this.depositEvent = this.crossInfoInst.depositAction;
     this.withdrawEvent = this.crossInfoInst.withdrawAction;
@@ -29,11 +28,7 @@ module.exports = class EosAgent extends baseAgent{
 
     return new Promise(async (resolve, reject) => {
       try {
-        if (action === 'redeem') {
-          from = (this.crossDirection === 0) ? this.config.storemanOri : this.config.storemanWan;
-        } else {
-          from = (this.crossDirection === 0) ? this.config.storemanWan : this.config.storemanOri;
-        }
+        from = this.storemanAddress;
 
         to = this.contractAddr;
 
@@ -53,12 +48,6 @@ module.exports = class EosAgent extends baseAgent{
     let self = this;
     try {
         let rawTx;
-        if(moduleConfig.mpcSignature) {
-          let chainId = await this.chain.getNetworkId();
-          let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
-          rawTx = await mpc.signViaMpc();
-          this.logger.debug("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, rawTx);
-        } else {
           this.chain.eos.transaction({
             actions: this.trans.actions
           }, {
@@ -78,7 +67,6 @@ module.exports = class EosAgent extends baseAgent{
             }
           });
           return;
-        }
   
         this.logger.debug(this.trans);
   
@@ -115,7 +103,7 @@ module.exports = class EosAgent extends baseAgent{
         // xHash: this.hashKey,
         // user: this.crossAddress,
         // value: this.amount
-        storemanGroup: decodeAccount(this.crossChain, this.config.storemanOri),
+        storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
         xHash: this.hashKey.split('0x')[1],
         user: decodeAccount(this.crossChain, this.crossAddress),
         value: this.amount
@@ -136,7 +124,7 @@ module.exports = class EosAgent extends baseAgent{
         permission: 'active',
       }],
       data: {
-        storemanGroup: decodeAccount(this.crossChain, this.config.storemanOri),
+        storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
         xHash: this.hashKey.split('0x')[1],
         user: this.record.from,
         x: this.key.split('0x')[1]
@@ -158,7 +146,7 @@ module.exports = class EosAgent extends baseAgent{
         permission: 'active',
       }],
       data: {
-        storemanGroup: decodeAccount(this.crossChain, this.config.storemanOri),
+        storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
         xHash: this.hashKey.split('0x')[1]
       }
     }];
@@ -181,5 +169,21 @@ module.exports = class EosAgent extends baseAgent{
 
   getDecodeEventToHtlcAddr(decodeEvent) {
     return decodeEvent.args.toHtlcAddr;
+  }
+
+  encode(signData, typesArray) {
+    let data = '';
+    if (Array.isArray(signData)) {
+      for (var index in signData) {
+        data += signData[index];
+        if (index + 1 < signData.length) {
+          data += ':';
+        }
+      }
+    } else {
+      data = signData;
+    }
+    this.logger.debug("********************************** encode signData **********************************", signData, "hashX:", this.hashX);
+    return new Buffer(data).toString('base64');
   }
 }

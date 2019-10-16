@@ -6,23 +6,29 @@ const Eos = require('eosjs');
 
 class EosChain extends baseChain {
   constructor(log, nodeUrl) {
-    super(log);
-
-    this.eosConfig = {
-      // keyProvider: ['5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'], // 配置私钥字符串
-      
-      // httpEndpoint: 'http://192.168.1.58:8888'
-
-      keyProvider: [], // 配置私钥字符串
-      httpEndpoint: 'http://junglehistory.cryptolions.io:18888'
-    }
-
-    this.eos = Eos(this.eosConfig);
+    super(log, nodeUrl);
     this.chainType = 'EOS';
   }
 
   getNetworkId() {
 
+  }
+
+  getClient(nodeUrl) {
+    if (nodeUrl.indexOf("http://") !== -1 || nodeUrl.indexOf("https://") !== -1) {
+      let eosConfig = {
+        // keyProvider: ['5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'], // 配置私钥字符串
+        
+        // httpEndpoint: 'http://192.168.1.58:8888'
+        // httpEndpoint: 'http://junglehistory.cryptolions.io:18888'
+        keyProvider: [], // 配置私钥字符串
+        httpEndpoint: nodeUrl
+      }
+  
+      return Eos(eosConfig);
+    } else {
+      return null;
+    }
   }
 
   eosToFloat(str) 
@@ -32,6 +38,7 @@ class EosChain extends baseChain {
   }
 
   actionDecode(actions) {
+    let chainType = this.chainType;
     const trx = [];
     actions.map(action => {
       try{
@@ -83,7 +90,7 @@ class EosChain extends baseChain {
         }
         trx.push(obj);
       } catch (err) {
-        console.log("something wrong happened during actionDecode", err);
+        log.error("ChainType:", chainType, "something wrong happened during actionDecode", err, actions);
       }
     })
     return trx;
@@ -91,8 +98,9 @@ class EosChain extends baseChain {
 
   getScEventSync(accountName, topics, fromBlk, toBlk, retryTimes = 0) {
     let times = 0;
+    let chainType = this.chainType;
     let log = this.log;
-    let eos = this.eos;
+    let eos = this.client;
     let self = this;
     return new Promise(async function (resolve, reject) {
       let filter = action => action.block_num >= fromBlk && action.block_num <= toBlk && (['transfer', 'inredeem', 'inrevoke', 'outlock', 'outredeem', 'outrevoke'].includes(action.action_trace.act.name));
@@ -101,10 +109,10 @@ class EosChain extends baseChain {
         eos.getActions(accountName, (err, result) => {
           if (err) {
             if (times >= retryTimes) {
-              log.error("getScEventSync", err);
+              log.error("ChainType:", chainType, "getScEventSync", err);
               reject(err);
             } else {
-              log.debug("getScEventSync retry", times);
+              log.debug("ChainType:", chainType, "getScEventSync retry", times);
               times++;
               filterGet(filter);
             }
@@ -118,14 +126,15 @@ class EosChain extends baseChain {
       try {
         filterGet(filter);
       } catch (err) {
-        log.error("getScEventSync", err);
+        log.error("ChainType:", chainType, "getScEventSync", err);
         reject(err);
       }
     });
   }
 
   getBlockNumberSync() {
-    let eos = this.eos;
+    let chainType = this.chainType;
+    let eos = this.client;
     let self = this;
     let log = this.log;
     return new Promise((resolve, reject) => {
@@ -135,7 +144,7 @@ class EosChain extends baseChain {
           reject(err);
         } else {
           let blockNumber = result.head_block_num;
-          log.debug('getBlockNumberSync successfully with result: ', self.chainType, blockNumber);
+          log.debug("ChainType:", chainType, 'getBlockNumberSync successfully with result: ', self.chainType, blockNumber);
           resolve(blockNumber);
         }
       })
@@ -143,7 +152,8 @@ class EosChain extends baseChain {
   }
 
   getIrreversibleBlockNumberSync() {
-    let eos = this.eos;
+    let chainType = this.chainType;
+    let eos = this.client;
     let self = this;
     let log = this.log;
     return new Promise((resolve, reject) => {
@@ -152,7 +162,7 @@ class EosChain extends baseChain {
           reject(err);
         } else {
           let blockNumber = result.last_irreversible_block_num;
-          log.debug('getIrreversibleBlockNumberSync successfully with result: ', self.chainType, blockNumber);
+          log.debug("ChainType:", chainType, 'getIrreversibleBlockNumberSync successfully with result: ', self.chainType, blockNumber);
           resolve(blockNumber);
         }
       })
@@ -160,7 +170,7 @@ class EosChain extends baseChain {
   }
 
   getBlockByNumber(blockNumber, callback) {
-    this.eos.getBlock(blockNumber, (err, result) => {
+    this.client.getBlock(blockNumber, (err, result) => {
       if (err) {
         callback(err, null);
       } else {
@@ -172,7 +182,7 @@ class EosChain extends baseChain {
   }
 
   getTransactionReceiptSync(id) {
-    let eos = this.eos;
+    let eos = this.client;
     return new Promise(function(resolve, reject) {
       eos.getTransaction(id, function(err, result) {
         if (err) {
@@ -185,6 +195,7 @@ class EosChain extends baseChain {
   }
   
   getTransactionConfirmSync(txHash, waitBlocks) {
+    let chainType = this.chainType;
     let log = this.log;
     let self = this;
     let receipt = null;
@@ -203,7 +214,7 @@ class EosChain extends baseChain {
         let receiptBlockNumber = receipt.block_num;
 
         while (receiptBlockNumber + waitBlocks > curBlockNum) {
-          log.info("getTransactionConfirmSync was called at block: ", receipt.block_num, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
+          log.info("ChainType:", chainType, "getTransactionConfirmSync was called at block: ", receipt.block_num, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
           await sleep(sleepTime * 1000);
           receipt = await self.getTransactionReceiptSync(txHash);
           curBlockNum = await self.getBlockNumberSync();
@@ -218,7 +229,7 @@ class EosChain extends baseChain {
   }
 
   getSignatureSync(from, to, quantity, memo = '') {
-    let eos = this.eos;
+    let eos = this.client;
     return new Promise((resolve, reject) => {
       eos.transfer(from, to, quantity, memo, { broadcast: false }, function(err, result) {
         if (err) {
@@ -231,7 +242,7 @@ class EosChain extends baseChain {
   }
 
   sign(from, to, quantity, memo = '') {
-    let eos = this.eos;
+    let eos = this.client;
     let self = this;
     return new Promise(async (resolve, reject) => {
       try{
@@ -247,7 +258,7 @@ class EosChain extends baseChain {
   }
 
   sendRawTransaction(signedTx, callback) {
-    this.eos.pushTransaction(signedTx, callback);
+    this.client.pushTransaction(signedTx, callback);
   }
 
   getTokenInfo(tokenScAddr) {

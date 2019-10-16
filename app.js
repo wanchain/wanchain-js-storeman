@@ -2,34 +2,69 @@
 
 const optimist = require('optimist');
 
-let argv    = optimist
-  .usage('Usage: nodejs $0  [--testnet]')
+let argv = optimist
+  .usage("Usage: $0  -i [index] -pk [PK] -ip [mpcIP] -port [mpcPort] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] [--testnet] [--dev] [--leader] [--init] [--renew]")
+  .alias('h', 'help')
+  .alias('i', 'index')
+  .describe('h', 'display the usage')
+  .describe('i', 'identify storemanAgent index')
+  .describe('pk', 'identify storemanGroup public key')
+  .describe('ip', 'identify mpc ip')
+  .describe('port', 'identify mpc port')
+  .describe('c', 'identify chainType')
+  .describe('w', 'identify storemanWanAddr')
+  .describe('o', 'identify storemanOriAddr')
+  .describe('testnet', 'identify whether using testnet or not, if no "--testnet", using mainnet as default')
+  .describe('dev', 'identify whether production env or development env, if no "--dev", production env as default')
+  .describe('leader', 'identify whether is leader agent, only leader can send the transaction')
+  .describe('init', 'identify whether to init after startup')
+  .describe('renew', 'identify whether to renew the storemanAgent in cycle')
+  .default('i', 0)
+  .string('pk')
+  .string('ip')
+  .string('c')
+  .string('w')
+  .string('o')
+  .boolean('testnet', 'dev', 'leader', 'init', 'renew')
   .argv;
+
+if (argv.help) {
+  optimist.showHelp();
+  process.exit(0);
+}
+
+global.argv = argv;
+
+global.pk = argv.pk;
 global.testnet = argv.testnet ? true : false;
+global.dev = argv.dev ? true : false;
+global.isLeader = argv.leader ? true : false;
 
 const Logger = require('comm/logger.js');
 
 const mongoose = require('mongoose');
 const ModelOps = require('db/modelOps');
-const TokenCrossAgent = require("agent/Erc20CrossAgent.js");
-const EthCrossAgent = require("agent/EthCrossAgent.js");
-const EosCrossAgent = require("agent/EosCrossAgent.js");
+// const TokenCrossAgent = require("agent/Erc20CrossAgent.js");
+// const EthCrossAgent = require("agent/EthCrossAgent.js");
+// const EosCrossAgent = require("agent/EosCrossAgent.js");
 
+const EthAgent = require("agent/EthAgent.js");
 const EosAgent = require("agent/EosAgent.js");
 const WanAgent = require("agent/WanAgent.js");
 const StateAction = require("monitor/monitor.js");
 
-const moduleConfig = require('conf/moduleConfig.js');
-const configJson = require('conf/config.json');
-const config = global.testnet?configJson.testnet:configJson.main;
 
 const {
+  loadConfig,
   initChain,
+  initConfig,
   initNonce,
   getGlobalChain,
   backupIssueFile,
   sleep
 } = require('comm/lib');
+const moduleConfig = require('conf/moduleConfig.js');
+const config = loadConfig();
 
 let handlingList = {};
 
@@ -37,21 +72,12 @@ let tokenList = {};
 
 global.storemanRestart = false;
 
-global.agentDict1 = {
-  ETH: {
-    COIN: EthCrossAgent,
-    Token: TokenCrossAgent
-  },
-  EOS: {
-    Token: EosCrossAgent,
-  }
-}
-
 global.agentDict = {
   // ETH: {
   //   COIN: EthCrossAgent,
   //   Token: TokenCrossAgent
   // },
+  ETH: EthAgent,
   EOS: EosAgent,
   WAN: WanAgent
 }
@@ -61,35 +87,30 @@ global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log
 
 async function init() {
   try {
-    initChain('wan');
-    await initNonce('wan');
-    global.wanNonceRenew = false;
-    global.wanNoncePending = false;
-
+    initChain('WAN');
+    await initNonce('WAN');
+ 
     global.storemanRestart = true;
-    backupIssueFile();
+    backupIssueFile(config.issueCollectionPath);
 
     tokenList.supportTokenAddrs = [];
     tokenList.wanchainHtlcAddr = [];
     tokenList.originalChainHtlcAddr = [];
-    for (let crossChain in moduleConfig.crossInfoDict) {
-      if (!crossChain.CONF.enable) {
-        continue;
-      }
+    tokenList.storemanWan = config.storemanWan;
+    tokenList.storemanAddress = [config.storemanWan];
 
-      global[crossChain + 'NonceRenew'] = false;
-      global[crossChain + 'NoncePending'] = false;
-
+    for (let crossChain in config.crossTokens) {
       initChain(crossChain);
       await initNonce(crossChain);
 
       tokenList[crossChain] = {};
-
+      tokenList[crossChain].storemanOri = config.crossTokens[crossChain].CONF.storemanOri;
+      tokenList.storemanAddress.push(tokenList[crossChain].storemanOri);
       tokenList[crossChain].supportTokens = {};
 
-      for (let token in config["crossTokens"][crossChain]) {
+      for (let token in config["crossTokens"][crossChain]["TOKEN"]) {
         tokenList.supportTokenAddrs.push(token);
-        tokenList[crossChain].supportTokens[token] = config["crossTokens"][crossChain][token].tokenSymbol;
+        tokenList[crossChain].supportTokens[token] = config["crossTokens"][crossChain]["TOKEN"][token].tokenSymbol;
       }
 
       for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
@@ -112,7 +133,7 @@ async function init() {
     monitorLogger.info(tokenList);
 
     for (let crossChain in moduleConfig.crossInfoDict) {
-      if (!moduleConfig.nonceless.includes(crossChain)) {
+      if (!moduleConfig.crossInfoDict[crossChain].CONF.nonceless) {
         syncLogger.debug("Nonce of chain:", crossChain, global[crossChain.toLowerCase() + 'LastNonce']);
       }
     }
@@ -121,6 +142,30 @@ async function init() {
     console.log("init error ", err);
     process.exit();
   }
+}
+
+async function update() {
+  let storemanWan = config.storemanWan;
+  let storemanOri;
+  for (let crossChain in config.crossTokens) {
+    try {
+      // if (Object.keys(config["crossTokens"][crossChain].TOKEN).length === 0) {
+      //   continue;
+      // }
+      if (config["crossTokens"][crossChain].CONF.storemanOri) {
+        storemanOri = config["crossTokens"][crossChain].CONF.storemanOri;
+        let crossTokens = await initConfig(crossChain, storemanWan, storemanOri);
+        if (crossTokens === null) {
+          console.log("Couldn't find any tokens that the storeman is in charge of. ", crossChain, storemanWan, storemanOri);
+        }
+        console.log(crossTokens);
+      } else {
+        console.log("Storeman agent should be initialized with storemanWanAddr storemanOriAddr at the first time!");
+      }
+    } catch (err) {
+      console.log("Storeman agent update error, plz check the config and try again.", err);
+    }
+  } 
 }
 
 function splitData(string) {
@@ -188,7 +233,7 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
         let tokenTypeHandler = tokenList[crossChain][tokenType];
         let lockedTime = tokenList[crossChain][tokenType].lockedTime; 
         let crossAgent;
-        if (chainType === 'wan') {
+        if (chainType === 'WAN') {
           crossAgent = tokenTypeHandler.wanCrossAgent;
         } else {
           crossAgent = tokenTypeHandler.originCrossAgent;
@@ -200,7 +245,7 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
         } else {
           decodeEvent = event;
         }
-
+        console.log("aaron debug here decodeEvent", decodeEvent.args);
         let content;
         if (decodeEvent === null) {
           resolve();
@@ -242,20 +287,15 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
 
 async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
   logger.debug("********************************** syncChain **********************************", chainType, crossChain, tokenType);
-  let safe_block_num = moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.SAFE_BLOCK_NUM
-    ? moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.SAFE_BLOCK_NUM
-    : moduleConfig.SAFE_BLOCK_NUM;
-  let confirm_block_num = moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.CONFIRM_BLOCK_NUM
-    ? moduleConfig.crossInfoDict[chainType.toUpperCase()].CONF.CONFIRM_BLOCK_NUM
-    : moduleConfig.CONFIRM_BLOCK_NUM;
 
   let blockNumber = 0;
+  let chain = getGlobalChain(chainType);
   try {
     blockNumber = await modelOps.getScannedBlockNumberSync(chainType);
-    if (blockNumber > safe_block_num) {
-      blockNumber -= safe_block_num;
+    if (blockNumber > chain.safe_block_num) {
+      blockNumber -= chain.safe_block_num;
     } else {
-      blockNumber = moduleConfig.startSyncBlockNum[chainType.toUpperCase()];
+      blockNumber = moduleConfig.startSyncBlockNum[chainType];
     }
     logger.info("Current blockNumber in db is:", blockNumber, chainType);
   } catch (err) {
@@ -263,7 +303,6 @@ async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
     return;
   }
 
-  let chain = getGlobalChain(chainType);
   let from = blockNumber;
   let curBlock = 0;
   let topics = [];
@@ -276,8 +315,8 @@ async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
     logger.error("getBlockNumberSync from :", chainType, err);
     return;
   }
-  if (curBlock > confirm_block_num) {
-    let to = curBlock - confirm_block_num;
+  if (curBlock > chain.confirm_block_num) {
+    let to = curBlock - chain.confirm_block_num;
     try {
       if (from <= to) {
         events = await getScEvents(logger, chain, scAddr, topics, from, to);
@@ -296,7 +335,6 @@ async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
 }
 
 async function syncMain(logger, db) {
-  let ethBlockNumber, wanBlockNumber;
 
   while (1) {
     try {
@@ -305,8 +343,10 @@ async function syncMain(logger, db) {
           if (tokenType === 'CONF') {
             continue;
           }
-          syncChain(crossChain.toLowerCase(), crossChain, tokenType, tokenList[crossChain][tokenType].originalChainHtlcAddr, logger, db);
-          syncChain('wan', crossChain, tokenType, tokenList[crossChain][tokenType].wanchainHtlcAddr, logger, db);
+          if (moduleConfig.crossInfoDict[crossChain].CONF.enable) {
+            syncChain(crossChain, crossChain, tokenType, tokenList[crossChain][tokenType].originalChainHtlcAddr, logger, db);
+            syncChain('WAN', crossChain, tokenType, tokenList[crossChain][tokenType].wanchainHtlcAddr, logger, db);
+          }
         }
       }
     } catch (err) {
@@ -365,7 +405,7 @@ async function handlerMain(logger, db) {
         //   $in: ['0x9f2d25cbc77f4d3bf42b4949f9c2485e68611586d72c7a85c281b3483c295207']
         // },
         storeman: {
-          $in: [config.storemanOri, config.storemanWan]
+          $in: tokenList.storemanAddress
         }
       }
       if (global.storemanRestart) {
@@ -378,9 +418,9 @@ async function handlerMain(logger, db) {
           $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'fundLostFinished', 'interventionPending']
         }
       }
-      console.log("aaron debug here", option);
+      console.log("aaron debug here handlerMain option", option);
       let history = await modelOps.getEventHistory(option);
-      logger.debug('history length is ', history);
+      logger.debug('history length is ', history.length);
       logger.debug('handlingList length is ', Object.keys(handlingList).length);
 
       for (let i = 0; i < history.length; i++) {
@@ -421,10 +461,14 @@ db.on('connected', function(err) {
 let modelOps = new ModelOps(global.syncLogger, db);
 
 async function main() {
+  if (global.argv.init && global.argv.c && global.argv.w && global.argv.o) {
+    await initConfig(global.argv.c, global.argv.w, global.argv.o);
+  }
+
   global.syncLogger.info("start storeman agent");
   if (Object.keys(config["crossTokens"]).length === 0) {
-    global.syncLogger.error("./init.sh storemanWanAddr storemanEthAddr");
-    global.syncLogger.error("To start storeman agent at the first time, you need to run init.sh with storemanWanAddr storemanEthAddr as paras!");
+    global.syncLogger.error("./init.sh storemanWanAddr storemanOriAddr");
+    global.syncLogger.error("To start storeman agent at the first time, you need to run init.sh with storemanWanAddr storemanOriAddr as paras!");
     process.exit();
   }
   await init();
@@ -433,4 +477,11 @@ async function main() {
   // await updateRecordAfterRestart(global.monitorLogger);
   // handlerMain(global.monitorLogger, db);
 }
+
+process.on('unhandledRejection', error => {
+  // Will print "unhandledRejection err is not defined"
+  console.log('unhandledRejection', error.message);
+});
+
+
 main();

@@ -6,58 +6,39 @@ const config = global.testnet ? configJson.testnet : configJson.main;
 
 let Contract = require("contract/Contract.js");
 
+let MPC = require("mpc/mpc.js");
+
 const {
   getGlobalChain,
   sleep
 } = require('comm/lib');
 
 module.exports = class BaseAgent {
-  constructor(crossChain, tokenType, crossDirection, record = null, action = null) {
+  constructor(crossChain, tokenType, record = null) {
     this.logger = global.monitorLogger;
     this.config = config;
+    this.crossChain = crossChain;
+    this.tokenType = tokenType;
+    this.crossConf = config.crossTokens[crossChain].CONF;
+    this.crossTokens = config.crossTokens[crossChain].TOKEN;
     this.isLeader = config.isLeader;
 
     this.mpcSignature = moduleConfig.mpcSignature;
     this.secureLockIntervalRatio = moduleConfig.secureLockIntervalRatio;
 
-    this.crossChain = crossChain;
-    this.crossDirection = crossDirection; /* 0 -- token to Wtoken, 1 -- Wtoken to token */
-
-    let crossInfoInst = moduleConfig.crossInfoDict[crossChain.toUpperCase()][tokenType];
+    let crossInfoInst = moduleConfig.crossInfoDict[crossChain][tokenType];
     this.crossInfoInst = crossInfoInst;
+    this.getContractInfo();
 
     this.transChainType = this.getChainType();
     this.chain = getGlobalChain(this.transChainType);
-    this.storemanAddress = config.storemanOri;
+    this.storemanAddress = this.crossConf.storemanOri;
 
-    this.crossFunc = (this.crossDirection === 0) ? crossInfoInst.depositFunc : crossInfoInst.withdrawFunc;
     this.depositEvent = crossInfoInst.depositEvent;
     this.withdrawEvent = crossInfoInst.withdrawEvent;
 
-    let abi = (this.transChainType !== 'wan') ? this.crossInfoInst.originalChainHtlcAbi : this.crossInfoInst.wanchainHtlcAbi;
-    this.contractAddr = (this.transChainType !== 'wan') ? this.crossInfoInst.originalChainHtlcAddr : this.crossInfoInst.wanchainHtlcAddr;
-    this.contract = new Contract(abi, this.contractAddr);
-
-    if (this.contract.contractAddr) {
-      if (this.contract) {
-        console.log("this.chainType", this.transChainType);
-        this.depositLockEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[0]);
-        this.depositRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[1]);
-        this.depositRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[2]);
-        this.withdrawLockEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[0]);
-        this.withdrawRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[1]);
-        this.withdrawRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[2]);
-      
-      
-        console.log("this.depositLockEvent", this.depositLockEvent);
-        console.log("this.depositRedeemEvent", this.depositRedeemEvent);
-        console.log("this.depositRevokeEvent", this.depositRevokeEvent);
-        console.log("this.withdrawLockEvent", this.withdrawLockEvent);
-        console.log("this.withdrawRedeemEvent", this.withdrawRedeemEvent);
-        console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
-      }
-    } else {
-      this.contract = null;
+    if (this.mpcSignature) {
+      this.mpcSignData = '';
     }
 
     this.record = record;
@@ -65,6 +46,10 @@ module.exports = class BaseAgent {
       if (record.x !== '0x') {
         this.key = record.x;
       }
+
+      // this.crossDirection = crossDirection; /* 0 -- token to Wtoken, 1 -- Wtoken to token */
+      this.crossDirection = this.record.direction;
+      this.crossFunc = (this.crossDirection === 0) ? crossInfoInst.depositFunc : crossInfoInst.withdrawFunc;
 
       this.hashKey = record.hashX;
       this.amount = record.value;
@@ -75,8 +60,49 @@ module.exports = class BaseAgent {
     }
   }
 
+  setKey(key) {
+    this.key = key;
+  }
+  setHashKey(hashKey) {
+    this.hashKey = hashKey;
+  }
+
   getChainType() {
-    return this.crossChain.toLowerCase();
+    return this.crossChain;
+  }
+
+  // getContract() {
+  //   if (this.contract.contractAddr) {
+  //     if (this.  ) {
+  //       console.log("this.chainType", this.transChainType);
+  //       this.depositLockEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[0]);
+  //       this.depositRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[1]);
+  //       this.depositRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[2]);
+  //       this.withdrawLockEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[0]);
+  //       this.withdrawRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[1]);
+  //       this.withdrawRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[2]);
+      
+      
+  //       console.log("this.depositLockEvent", this.depositLockEvent);
+  //       console.log("this.depositRedeemEvent", this.depositRedeemEvent);
+  //       console.log("this.depositRevokeEvent", this.depositRevokeEvent);
+  //       console.log("this.withdrawLockEvent", this.withdrawLockEvent);
+  //       console.log("this.withdrawRedeemEvent", this.withdrawRedeemEvent);
+  //       console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
+  //     }
+  //   } else {
+      
+  //   }
+  // }
+
+  getContractInfo() {
+    let abi = this.crossInfoInst.originalChainHtlcAbi;
+    this.contractAddr = this.crossInfoInst.originalChainHtlcAddr;
+    if (this.contractAddr) {
+      this.contract = new Contract(abi, this.contractAddr);
+    } else {
+      this.contract = null;
+    }
   }
 
   getNonce() {
@@ -131,8 +157,31 @@ module.exports = class BaseAgent {
     }
   }
 
-  createTrans(action) { 
-    if (action === 'lock') {
+  // createTrans(action) { 
+  //   if (action === 'lock') {
+  //     this.data = this.getLockData();
+  //     this.build = this.buildLockData;
+  //   } else if (action === 'redeem') {
+  //     this.data = this.getRedeemData();
+  //     this.build = this.buildRedeemData;
+  //   } else if (action === 'revoke') {
+  //     this.data = this.getRevokeData();
+  //     this.build = this.buildRevokeData;
+  //   }
+
+  //   this.logger.debug("********************************** setData **********************************", this.data, "hashX", this.hashKey);
+  //   this.trans.setData(this.data);
+  //   this.trans.setValue(0);
+  // }
+
+  createTrans(action) {
+    if (action === 'approveZero') {
+      this.data = this.getApproveData();
+      this.build = this.buildApproveZeroData;
+    } else if (action === 'approve') {
+      this.data = this.getApproveData();
+      this.build = this.buildApproveData;
+    } else if (action === 'lock') {
       this.data = this.getLockData();
       this.build = this.buildLockData;
     } else if (action === 'redeem') {
@@ -145,7 +194,11 @@ module.exports = class BaseAgent {
 
     this.logger.debug("********************************** setData **********************************", this.data, "hashX", this.hashKey);
     this.trans.setData(this.data);
-    this.trans.setValue(0);
+    if (this.tokenType === 'COIN' && this.crossDirection === 1 && action === 'lock'){
+      this.trans.setValue(this.amount.toString(16));
+    } else {
+      this.trans.setValue(0);
+    }
   }
 
   sendTransSync() { 
@@ -161,17 +214,83 @@ module.exports = class BaseAgent {
     });
   }
 
-  validateTrans() {
-    this.logger.debug("********************************** validateTrans ********************************** hashX", this.hashKey);
+  async sendTrans(callback) {
+    this.logger.debug("********************************** sendTransaction ********************************** hashX", this.hashKey);
+    let self = this;
+    try {
+      let rawTx;
+
+      // let password = process.env.KEYSTORE_PWD;
+      let password = 'wanglutech';
+      this.logger.debug("********************************** sendTransaction get signature ********************************** hashX", this.hashKey, this,trans);
+      rawTx = this.trans.signFromKeystore(password);
+      this.logger.debug("********************************** sendTransaction get signature successfully ********************************** hashX", this.hashKey, rawTx);
+
+      this.chain.sendRawTransaction(rawTx, (err, result) => {
+        if (!err) {
+          self.logger.debug("sendRawTransaction result: hashX, result: ", self.hashKey, result);
+          self.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
+          let content = self.build(self.hashKey, result);
+          callback(err, content);
+        } else {
+          self.logger.error("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
+          callback(err, result);
+        }
+      });
+
+    } catch (err) {
+      this.logger.error("********************************** sendTransaction failed ********************************** hashX", this.hashKey, err);
+      callback(err, null);
+    }
+  }
+
+  internalSignViaMpc(signData) {
+    return new Promise(async (resolve, reject) => {
+      if (this.mpcSignature) {
+        try {
+          this.mpcSignData = this.encode(signData);
+          if (this.isLeader) {
+            let internalSignature = await this.getInternalSign(this.mpcSignData);
+            this.mpcSignData = this.mpcSignData.push(internalSignature.R, internalSignature.s);
+          } else {
+            await this.validateInternalSign(this.mpcSignData);
+          }
+          resolve(this.mpcSignData);
+        } catch (err) {
+          reject(err);
+        }
+      } else {
+        resolve(this.mpcSignData);
+      }
+    })
+  }
+
+  getInternalSign(mpcSignData) {
     return new Promise(async (resolve, reject) => {
       try {
-        let chainId = await this.chain.getNetworkId();
-        let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
-
-        mpc.addValidMpcTx();
-        resolve();
+        this.logger.debug("********************************** getInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
+        let mpc = new MPC(mpcSignData, this.pk, this.hashKey);
+        // internalSignature is a object, {R:, S:}
+        let internalSignature = await mpc.signViaMpc();
+        this.logger.debug("********************************** getInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
+        resolve(internalSignature);
       } catch (err) {
-        this.logger.error("********************************** validateTrans failed ********************************** hashX", this.hashKey, err);
+        this.logger.error("********************************** getInternalSign Via Mpc failed ********************************** hashX", this.hashKey, err);
+        reject(err);
+      }
+    });
+  }
+
+  validateInternalSign(mpcSignData) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        this.logger.debug("********************************** validateInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
+        let mpc = new MPC(mpcSignData, this.pk, this.hashKey);
+        let internalSignature = await mpc.addValidDataViaMpc();
+        this.logger.debug("********************************** validateInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
+        resolve(internalSignature);
+      } catch (err) {
+        this.logger.error("********************************** validateInternalSign Via Mpc failed ********************************** hashX", this.hashKey, err);
         reject(err);
       }
     });
@@ -221,28 +340,28 @@ module.exports = class BaseAgent {
 
     console.log("aaron debug event", eventName,chainType, this.crossInfoInst.withdrawAction, this.crossInfoInst.depositAction);
     try {
-      if (!((eventName === this.depositEvent[2] && chainType !== 'wan') ||
-        (eventName === this.withdrawEvent[2] && chainType === 'wan'))) {
+      if (!((eventName === this.depositEvent[2] && chainType !== 'WAN') ||
+        (eventName === this.withdrawEvent[2] && chainType === 'WAN'))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
 
-        if([config.storemanOri, config.storemanWan].indexOf(storeman) === -1) {
+        if([this.crossConf.storemanOri, this.config.storemanWan].indexOf(storeman) === -1) {
           return null;
         }
       }
-      if ((eventName === this.depositEvent[0] && chainType !== 'wan') ||
-        (eventName === this.withdrawEvent[0] && chainType === 'wan')) {
-        this.logger.debug("********************************** 1: found new wallet lock transaction ********************************** hashX", hashX);
+      if ((eventName === this.depositEvent[0] && chainType !== 'WAN') ||
+        (eventName === this.withdrawEvent[0] && chainType === 'WAN')) {
+        this.logger.debug("********************************** 1: found new wallet lock transaction ********************************** hashX", hashX, " on Chain:", chainType);
         let tokenAddr = this.getDecodeEventTokenAddr(decodeEvent);
         content = {
           hashX: hashX,
-          direction: (chainType !== 'wan') ? 0 : 1,
-          crossChain: crossChain.toLowerCase(),
+          direction: (chainType !== 'WAN') ? 0 : 1,
+          crossChain: crossChain,
           tokenType: tokenType,
           tokenAddr: tokenAddr,
-          tokenSymbol: config.crossTokens[crossChain][tokenAddr].tokenSymbol,
+          tokenSymbol: this.crossTokens[tokenAddr].tokenSymbol,
           originChain: chainType,
-          from: (chainType !== 'wan') ? args.user : args.wanAddr,
-          crossAddress: (chainType !== 'wan') ? args.wanAddr : args.ethAddr,
+          from: (chainType !== 'WAN') ? args.user : args.wanAddr,
+          crossAddress: (chainType !== 'WAN') ? args.wanAddr : args.ethAddr,
           toHtlcAddr: this.getDecodeEventToHtlcAddr(decodeEvent),
           storeman: storeman,
           value: this.getDecodeEventValue(decodeEvent),
@@ -253,34 +372,34 @@ module.exports = class BaseAgent {
           HTLCtime: (1000 * 2 * lockedTime + Number(decodeEvent.timestamp) * 1000).toString(),
           walletLockEvent: event
         };
-      } else if ((eventName === this.depositEvent[0] && chainType === 'wan') ||
-        (eventName === this.withdrawEvent[0] && chainType !== 'wan')) {
-        this.logger.debug("********************************** 2: found storeman lock transaction ********************************** hashX", hashX);
+      } else if ((eventName === this.depositEvent[0] && chainType === 'WAN') ||
+        (eventName === this.withdrawEvent[0] && chainType !== 'WAN')) {
+        this.logger.debug("********************************** 2: found storeman lock transaction ********************************** hashX", hashX, " on Chain:", chainType);
         content = {
           storemanLockEvent: event
         };
-      } else if ((eventName === this.depositEvent[1] && chainType === 'wan') ||
-        (eventName === this.withdrawEvent[1] && chainType !== 'wan')) {
-        this.logger.debug("********************************** 3: found wallet redeem transaction ********************************** hashX", hashX);
+      } else if ((eventName === this.depositEvent[1] && chainType === 'WAN') ||
+        (eventName === this.withdrawEvent[1] && chainType !== 'WAN')) {
+        this.logger.debug("********************************** 3: found wallet redeem transaction ********************************** hashX", hashX, " on Chain:", chainType);
         content = {
           x: args.x,
           walletRedeemEvent: event
         };
-      } else if ((eventName === this.depositEvent[1] && chainType !== 'wan') ||
-        (eventName === this.withdrawEvent[1] && chainType === 'wan')) {
-        this.logger.debug("********************************** 4: found storeman redeem transaction ********************************** hashX", hashX);
+      } else if ((eventName === this.depositEvent[1] && chainType !== 'WAN') ||
+        (eventName === this.withdrawEvent[1] && chainType === 'WAN')) {
+        this.logger.debug("********************************** 4: found storeman redeem transaction ********************************** hashX", hashX, " on Chain:", chainType);
         content = {
           storemanRedeemEvent: event
         };
-      } else if ((eventName === this.depositEvent[2] && chainType !== 'wan') ||
-        (eventName === this.withdrawEvent[2] && chainType === 'wan')) {
-        this.logger.debug("********************************** 5: found wallet revoke transaction ********************************** hashX", hashX);
+      } else if ((eventName === this.depositEvent[2] && chainType !== 'WAN') ||
+        (eventName === this.withdrawEvent[2] && chainType === 'WAN')) {
+        this.logger.debug("********************************** 5: found wallet revoke transaction ********************************** hashX", hashX, " on Chain:", chainType);
         content = {
           walletRevokeEvent: event,
         };
-      } else if ((eventName === this.depositEvent[2] && chainType === 'wan') ||
-        (eventName === this.withdrawEvent[2] && chainType !== 'wan')) {
-        this.logger.debug("********************************** 6: found storeman revoke transaction ********************************** hashX", hashX);
+      } else if ((eventName === this.depositEvent[2] && chainType === 'WAN') ||
+        (eventName === this.withdrawEvent[2] && chainType !== 'WAN')) {
+        this.logger.debug("********************************** 6: found storeman revoke transaction ********************************** hashX", hashX, " on Chain:", chainType);
         content = {
           storemanRevokeEvent: event
         };

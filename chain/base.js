@@ -1,5 +1,8 @@
 const moduleConfig = require('conf/moduleConfig.js');
 const coder = require('web3/lib/solidity/coder');
+const TimeoutPromise = require('utils/timeoutPromise.js')
+const Web3 = require("web3");
+const net = require('net');
 
 function sleep(time) {
   return new Promise(function(resolve, reject) {
@@ -10,9 +13,16 @@ function sleep(time) {
 }
 
 class baseChain {
-  constructor(log, theWeb3 = null) {
+  constructor(log, nodeUrl) {
     this.log = log;
-    this.theWeb3 = theWeb3;
+    this.client = this.getClient(nodeUrl);
+
+    this.safe_block_num = (moduleConfig.crossInfoDict[this.chainType] && moduleConfig.crossInfoDict[this.chainType].CONF.SAFE_BLOCK_NUM)
+    ? moduleConfig.crossInfoDict[this.chainType].CONF.SAFE_BLOCK_NUM
+    : moduleConfig.SAFE_BLOCK_NUM;
+    this.confirm_block_num = (moduleConfig.crossInfoDict[this.chainType] && moduleConfig.crossInfoDict[this.chainType].CONF.CONFIRM_BLOCK_NUM)
+    ? moduleConfig.crossInfoDict[this.chainType].CONF.CONFIRM_BLOCK_NUM
+    : moduleConfig.CONFIRM_BLOCK_NUM;
   }
 
   /**
@@ -40,14 +50,23 @@ class baseChain {
     return '0x' + coder.encodeParam(type, param);
   }
 
+  getClient(nodeUrl) {
+    if (nodeUrl.indexOf("http://") !== -1) {
+      return new Web3(new Web3.providers.HttpProvider(nodeUrl));
+    } else {
+      return new Web3(new Web3.providers.IpcProvider(nodeUrl, net));
+    }
+  }
+
   getNetworkId() {
     let log = this.log;
+    let chainType = this.chainType;
 
     return new Promise((resolve, reject)=> {
       try {
-        this.theWeb3.version.getNetwork((err, result) => {
+        this.client.version.getNetwork((err, result) => {
           if(!err) {
-            log.debug("getNetWork result is", result);
+            log.debug("ChainType:", chainType, "getNetWork result is", result);
             resolve(result);
           } else {
             reject(err);
@@ -66,7 +85,7 @@ class baseChain {
       topics: topics,
       address: address
     };
-    let filter = this.theWeb3.eth.filter(filterValue);
+    let filter = this.client.eth.filter(filterValue);
     filter.get(function(err, events) {
       callback(err, events);
     });
@@ -74,51 +93,59 @@ class baseChain {
 
   getScEventSync(address, topics, fromBlk, toBlk, retryTimes = 0) {
     let baseChain = this;
+    let chainType = this.chainType;
     let times = 0;
-    return new Promise(function(resolve, reject) {
-      let filterValue = {
-        fromBlock: fromBlk,
-        toBlock: toBlk,
-        topics: topics,
-        address: address
-      };
-      let filter = baseChain.theWeb3.eth.filter(filterValue);
-      let filterGet = function(filter) {
-        filter.get(function(err, events) {
-          if (err) {
-            if (times >= retryTimes) {
-              baseChain.log.error("getScEventSync", err);
-              reject(err);
+    
+    try {
+      return new TimeoutPromise(function(resolve, reject) {
+        let filterValue = {
+          fromBlock: fromBlk,
+          toBlock: toBlk,
+          topics: topics,
+          address: address
+        };
+        let filter = baseChain.client.eth.filter(filterValue);
+        let filterGet = function(filter) {
+          filter.get(function(err, events) {
+            if (err) {
+              if (times >= retryTimes) {
+                baseChain.log.error("ChainType:", chainType, "getScEventSync", err);
+                reject(err);
+              } else {
+                baseChain.log.debug("ChainType:", chainType, "getScEventSync retry", times);
+                // baseChain.log.error("getScEventSync retry", times, err);
+                times++;
+                filterGet(filter);
+              }
             } else {
-              baseChain.log.debug("getScEventSync retry", times);
-              // baseChain.log.error("getScEventSync retry", times, err);
-              times++;
-              filterGet(filter);
+              resolve(events);
             }
-          } else {
-            resolve(events);
-          }
-        });
-      }
-      try{
-        filterGet(filter);
-      } catch(err) {
-        baseChain.log.error("getScEventSync", err);
-        reject(err);
-      }
+          });
+        }
+        try{
+          filterGet(filter);
+        } catch(err) {
+          baseChain.log.error("ChainType:", chainType, "getScEventSync", err);
+          reject(err);
+        }
+  
+      }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getScEventSync timeout');
+    } catch (err) {
+      console.log("aaron debug here, err",moduleConfig.promiseTimeout);
+    }
 
-    });
   }
 
   getGasPrice(callback) {
     let log = this.log;
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
+    let chainType = this.chainType;
     let gasPrice = null;
     try {
-      theWeb3.eth.getGasPrice(function(err, result) {
+      client.eth.getGasPrice(function(err, result) {
         if (!err) {
           gasPrice = result;
-          log.debug('getGasPrice ', gasPrice, ' successfully');
+          log.debug("ChainType:", chainType, 'getGasPrice ', gasPrice, ' successfully');
         }
         callback(err, gasPrice);
       });
@@ -129,17 +156,18 @@ class baseChain {
 
   getGasPriceSync() {
     let log = this.log;
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
+    let chainType = this.chainType;
     let gasPrice = null;
 
     return new Promise(function (resolve, reject) {
       try {
-        theWeb3.eth.getGasPrice(function(err, result) {
+        client.eth.getGasPrice(function(err, result) {
           if (err) {
             reject(err);
           } else {
             gasPrice = result;
-            log.debug('getGasPriceSync ', gasPrice, ' successfully');
+            log.debug("ChainType:", chainType, 'getGasPriceSync ', gasPrice, ' successfully');
             resolve(gasPrice);
           }
         });
@@ -151,13 +179,14 @@ class baseChain {
 
   getNonce(address, callback) {
     let log = this.log;
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
+    let chainType = this.chainType;
     let nonce = null;
     try {
-      theWeb3.eth.getTransactionCount(address, function(err, result) {
+      client.eth.getTransactionCount(address, function(err, result) {
         if (!err) {
           nonce = '0x' + result.toString(16);
-          log.debug('getNonce ', nonce, ' successfully on address ', address);
+          log.debug("ChainType:", chainType, 'getNonce ', nonce, ' successfully on address ', address);
         }
         callback(err, nonce);
       });
@@ -168,17 +197,18 @@ class baseChain {
 
   getNonceSync(address) {
     let log = this.log;
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
+    let chainType = this.chainType;
     let nonce = null;
 
     return new Promise(function (resolve, reject) {
       try {
-        theWeb3.eth.getTransactionCount(address, function(err, result) {
+        client.eth.getTransactionCount(address, function(err, result) {
           if (err) {
             reject(err);
           } else {
             nonce = '0x' + result.toString(16);
-            log.debug('getNonceSync ', nonce, ' successfully on address ', address);
+            log.debug("ChainType:", chainType, 'getNonceSync ', nonce, ' successfully on address ', address);
             resolve(nonce);
           }
         });
@@ -190,14 +220,15 @@ class baseChain {
 
   getNonceIncludePending(address, optional, callback) {
     let log = this.log;
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
+    let chainType = this.chainType;
     let nonce = null;
 
     try {
-      theWeb3.eth.getTransactionCount(address, optional, function(err, result) {
+      client.eth.getTransactionCount(address, optional, function(err, result) {
         if (!err) {
           nonce = '0x' + result.toString(16);
-          log.debug('getNonceIncludePending ', nonce, ' successfully on address ', address);
+          log.debug("ChainType:", chainType, 'getNonceIncludePending ', nonce, ' successfully on address ', address);
         }
         callback(err, nonce);
       });
@@ -208,17 +239,18 @@ class baseChain {
 
   getNonceIncludePendingSync(address) {
     let log = this.log;
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
+    let chainType = this.chainType;
     let nonce = null;
 
     return new Promise(function (resolve, reject) {
       try {
-        theWeb3.eth.getTransactionCount(address, 'pending', function(err, result) {
+        client.eth.getTransactionCount(address, 'pending', function(err, result) {
           if (err) {
             reject(err);
           } else {
             nonce = '0x' + result.toString(16);
-            log.debug('getNonceIncludePendingSync ', nonce, ' successfully on address ', address);
+            log.debug("ChainType:", chainType, 'getNonceIncludePendingSync ', nonce, ' successfully on address ', address);
             resolve(nonce);
           }
         });
@@ -230,35 +262,36 @@ class baseChain {
 
   getBlockNumber(callback) {
     let log = this.log;
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
+    let chainType = this.chainType;
     let blockNumber = null;
     try {
-      theWeb3.eth.getBlockNumber(function(err, blockNumber) {
+      client.eth.getBlockNumber(function(err, blockNumber) {
         if (!err) {
-          log.debug('getBlockNumber successfully with result: ', blockNumber);
+          log.debug("ChainType:", chainType, 'getBlockNumber successfully with result: ', blockNumber);
         } else {
-          log.error("getBlockNumber", err);
+          log.error("ChainType:", chainType, "getBlockNumber", err);
         }
         callback(err, blockNumber);
       });
     } catch (err) {
-      log.error("getBlockNumber", err);
+      log.error("ChainType:", chainType, "getBlockNumber", err);
       callback(err, blockNumber);
     }
   }
 
   getBlockNumberSync() {
     let log = this.log;
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
     let chainType = this.chainType;
 
     return new Promise(function (resolve, reject) {
       try {
-        theWeb3.eth.getBlockNumber(function(err, blockNumber) {
+        client.eth.getBlockNumber(function(err, blockNumber) {
           if (err) {
             reject(err);
           } else {
-            log.debug('getBlockNumberSync successfully with result: ', chainType, blockNumber);
+            log.debug("ChainType:", chainType, 'getBlockNumberSync successfully with result: ', blockNumber);
             resolve(blockNumber);
           }
         });
@@ -270,50 +303,51 @@ class baseChain {
 
   sendRawTransaction(signedTx, callback) {
     this.log.debug("======================================== sendRawTransaction ====================================", this.chainType)
-    this.theWeb3.eth.sendRawTransaction(signedTx, callback);
+    this.client.eth.sendRawTransaction(signedTx, callback);
   }
 
   sendRawTransactionSync(signedTx) {
     let log = this.log;
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
+    let chainType = this.chainType;
     return new Promise(function (resolve, reject) {
       try {
-        theWeb3.eth.sendRawTransaction(signedTx, function(err, txHash) {
+        client.eth.sendRawTransaction(signedTx, function(err, txHash) {
           if (err) {
-            log.error("sendRawTransactionSync error: ", err);
+            log.error("ChainType:", chainType, "sendRawTransactionSync error: ", err);
             reject(err);
           } else{
-            log.debug('sendRawTransaction successfully with signedTx: ', signedTx);
+            log.debug("ChainType:", chainType, 'sendRawTransaction successfully with signedTx: ', signedTx);
             resolve(txHash);
           }
         });
       } catch (err) {
-        log.error("sendRawTransactionSync error: ", err);
+        log.error("ChainType:", chainType, "sendRawTransactionSync error: ", err);
         reject(err);
       }
     });
   }
 
   getTxInfo(txHash, callback) {
-    this.theWeb3.eth.getTransaction(txHash, callback);
+    this.client.eth.getTransaction(txHash, callback);
   }
 
   getBlockByNumber(blockNumber, callback) {
-    this.theWeb3.eth.getBlock(blockNumber, callback);
+    this.client.eth.getBlock(blockNumber, callback);
   }
 
   getBlockByHash(blockHash, callback) {
-    this.theWeb3.eth.getBlock(blockHash, callback);
+    this.client.eth.getBlock(blockHash, callback);
   }
 
   getBlockTransactionCount(keyValue, callback) {
-    this.theWeb3.eth.getBlockTransactionCount(keyValue, callback);
+    this.client.eth.getBlockTransactionCount(keyValue, callback);
   }
 
   async getTransactionConfirm(txHash, waitBlocks, callback) {
     let log = this.log;
     let sleepTime = 30;
-
+    let chainType = this.chainType;
     let receipt = null;
     let curBlockNum = 0;
 
@@ -328,7 +362,7 @@ class baseChain {
       let receiptBlockNumber = receipt.blockNumber;
 
       while (receiptBlockNumber + waitBlocks > curBlockNum) {
-        log.info("getTransactionReceipt was called at block: ", receipt.blockNumber, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
+        log.info("ChainType:", chainType, "getTransactionReceipt was called at block: ", receipt.blockNumber, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
         await sleep(sleepTime * 1000);
         receipt = await this.getTransactionReceiptSync(txHash);
         curBlockNum = await this.getBlockNumberSync();
@@ -342,7 +376,8 @@ class baseChain {
 
   getTransactionConfirmSync(txHash, waitBlocks) {
     let log = this.log;
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
+    let chainType = this.chainType;
     let self = this;
     let receipt = null;
     let curBlockNum = 0;
@@ -360,7 +395,7 @@ class baseChain {
         let receiptBlockNumber = receipt.blockNumber;
 
         while (receiptBlockNumber + waitBlocks > curBlockNum) {
-          log.info("getTransactionReceipt was called at block: ", receipt.blockNumber, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
+          log.info("ChainType:", chainType, "getTransactionReceipt was called at block: ", receipt.blockNumber, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
           await sleep(sleepTime * 1000);
           receipt = await self.getTransactionReceiptSync(txHash);
           curBlockNum = await self.getBlockNumberSync();
@@ -375,14 +410,14 @@ class baseChain {
   }
 
   getTransactionReceipt(txHash, callback) {
-    this.theWeb3.eth.getTransactionReceipt(txHash, callback);
+    this.client.eth.getTransactionReceipt(txHash, callback);
   }
 
   getTransactionReceiptSync(txHash) {
-    let theWeb3 = this.theWeb3;
+    let client = this.client;
 
     return new Promise(function(resolve, reject) {
-      theWeb3.eth.getTransactionReceipt(txHash, function(err, result) {
+      client.eth.getTransactionReceipt(txHash, function(err, result) {
         if (err) {
           reject(err);
         } else {
@@ -393,54 +428,56 @@ class baseChain {
   }
 
   getSolInferface(abi, contractAddr, contractFunc) {
-    let contract = this.theWeb3.eth.contract(abi);
+    let contract = this.client.eth.contract(abi);
     let conInstance = contract.at(contractAddr);
     return conInstance[contractFunc];
   }
 
   getSolVar(abi, contractAddr, varName) {
-    let contract = this.theWeb3.eth.contract(abi);
+    let contract = this.client.eth.contract(abi);
     let conInstance = contract.at(contractAddr);
     return conInstance[varName];
   }
 
   getTokenBalance(address, tokenScAddr, abi, callback) {
     let log = this.log;
+    let chainType = this.chainType;
     try {
       let balanceOf = this.getSolInferface(abi, tokenScAddr, 'balanceOf');
       balanceOf(address, function(err, balance) {
         if (err) {
-          log.debug('getTokenBalance at tokenScAddr', tokenScAddr, 'on address ', address, 'failed, and error is ', err);
+          log.debug("ChainType:", chainType, 'getTokenBalance at tokenScAddr', tokenScAddr, 'on address ', address, 'failed, and error is ', err);
           callback(err, null);
         } else {
           let tokenBalance = balance.toString();
-          log.debug('getTokenBalance at tokenScAddr', tokenScAddr, 'on address ', address, 'the result is ',tokenBalance);
+          log.debug("ChainType:", chainType, 'getTokenBalance at tokenScAddr', tokenScAddr, 'on address ', address, 'the result is ',tokenBalance);
         }
         callback(null, tokenBalance);
       });
     } catch (err) {
-      log.debug('getTokenBalance at tokenScAddr', tokenScAddr, 'on address ', address, 'failed, and error is ', err);
+      log.debug("ChainType:", chainType, 'getTokenBalance at tokenScAddr', tokenScAddr, 'on address ', address, 'failed, and error is ', err);
       callback(err, null);
     }
   }
 
   getTokenAllowance(tokenScAddr, owner, spender, abi) {
+    let chainType = this.chainType;
     return new Promise((resolve, reject) =>{
     let log = this.log;
     try {
       let allowance = this.getSolInferface(abi, tokenScAddr, 'allowance');
       allowance(owner, spender, function(err, allowance) {
         if (err) {
-          log.debug('getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
+          log.debug("ChainType:", chainType, 'getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
           reject(err);
         } else {
           let tokenAllowance = allowance.toString();
-          log.debug('getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'the result is ',tokenAllowance);
+          log.debug("ChainType:", chainType, 'getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'the result is ',tokenAllowance);
           resolve(tokenAllowance);
         }
       });
     } catch (err) {
-      log.debug('getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
+      log.debug("ChainType:", chainType, 'getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
     }      
     });
   }
@@ -476,7 +513,7 @@ class baseChain {
         if (err.hasOwnProperty("message") && (err.message === "new BigNumber() not a base 16 number: ")) {
           try {
             let unusualTokenAbi = moduleConfig.unusualTokenAbi;
-            token.tokenSymbol = self.theWeb3.toAscii(self.getSolVar(unusualTokenAbi, tokenScAddr, 'symbol')()).replace(/\u0000/g, '');
+            token.tokenSymbol = self.client.toAscii(self.getSolVar(unusualTokenAbi, tokenScAddr, 'symbol')()).replace(/\u0000/g, '');
             token.decimals = self.getSolVar(tokenAbi, tokenScAddr, 'decimals')().toString(10);
             resolve(token);
           } catch (err) {

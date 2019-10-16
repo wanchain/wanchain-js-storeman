@@ -6,6 +6,7 @@ if(user) {
   dbUrl = `mongodb://${user}:${pwd}@localhost:27017`;
 } else {
   dbUrl = `mongodb://localhost:27017`;
+  dbUrl = `mongodb://127.0.0.1:27017`;
 }
 
 const testnet = global.testnet;
@@ -20,6 +21,7 @@ const config = {
   testnet: testnet,
 
   web3RetryTimes: 30,
+  promiseTimeout: 30 * 1000,
 
   retryTimes: 60,
   retryWaitTime: 120 * 1000,
@@ -34,8 +36,8 @@ const config = {
 
   secureLockIntervalRatio: 20, /*lock action needed to be done before suspendTime - 1/20 lockedTime*/ 
 
-  approveTokenAllowance: 40000, /* unit ether*/
-  tokenAllowanceThreshold: 500, /* unit ether*/
+  // approveTokenAllowance: 40000, /* unit ether*/
+  // tokenAllowanceThreshold: 500, /* unit ether*/
 
   informalToken: {
     '0xef68e7c694f40c8202821edf525de3782458639f': {
@@ -60,7 +62,9 @@ const config = {
 
   crossInfoDict: {
     ETH: {
-      CONF: {},
+      CONF: {
+        enable: true
+      },
       COIN: {
         depositFunc: ['eth2wethLock', 'eth2wethRefund', 'eth2wethRevoke'],
         depositEvent: ['ETH2WETHLock', 'ETH2WETHRefund', 'ETH2WETHRevoke'],
@@ -128,7 +132,7 @@ const config = {
 };
 
 const test_Config = {
-  crossDbUrl: dbUrl + "/crossChain_test_eos3",
+  crossDbUrl: dbUrl + "/crossChain_test_schnorr",
   email: {
     "region": "us-west-2",
     "sender": "monitor@wanchain.org"
@@ -137,6 +141,7 @@ const test_Config = {
   testnet: testnet,
 
   web3RetryTimes: 30,
+  promiseTimeout: 300 * 1000,
 
   retryTimes: 5,
   retryWaitTime: 60 * 1000,
@@ -151,8 +156,8 @@ const test_Config = {
 
   secureLockIntervalRatio: 20, /*lock action needed to be done before suspendTime - 1/20 lockedTime*/ 
 
-  approveTokenAllowance: 40000, /* unit ether*/
-  tokenAllowanceThreshold: 500, /* unit ether*/
+  // approveTokenAllowance: 40000, /* unit ether*/
+  // tokenAllowanceThreshold: 500, /* unit ether*/
 
   informalToken: {
     '0xe78f31a33435dd8a43d1c57ae5c89f786369ab35': {
@@ -165,17 +170,17 @@ const test_Config = {
   unusualTokenAbi: [{ "constant": true, "inputs": [], "name": "name", "outputs": [{ "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_spender", "type": "address" }, { "name": "_value", "type": "uint256" }], "name": "approve", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "totalSupply", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_from", "type": "address" }, { "name": "_to", "type": "address" }, { "name": "_value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "decimals", "outputs": [{ "name": "", "type": "uint8" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [{ "name": "_owner", "type": "address" }], "name": "balanceOf", "outputs": [{ "name": "balance", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "symbol", "outputs": [{ "name": "", "type": "bytes32" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_to", "type": "address" }, { "name": "_value", "type": "uint256" }], "name": "transfer", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [{ "name": "_owner", "type": "address" }, { "name": "_spender", "type": "address" }], "name": "allowance", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "payable": true, "stateMutability": "payable", "type": "fallback" }, { "anonymous": false, "inputs": [{ "indexed": true, "name": "owner", "type": "address" }, { "indexed": true, "name": "spender", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }], "name": "Approval", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "name": "from", "type": "address" }, { "indexed": true, "name": "to", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }], "name": "Transfer", "type": "event" }],
 
   startSyncBlockNum: {
-    ETH: 3164963,
+    // ETH: 3164963,
+    ETH: 5256623,
     EOS: 0,
-    WAN: 2017000
+    // WAN: 2017000
+    WAN: 4857823
   },
-
-  nonceless: ["EOS"],
 
   crossInfoDict: {
     ETH: {
       CONF: {
-        enable: false
+        enable: true
       },
       COIN: {
         depositFunc: ['eth2wethLock', 'eth2wethRefund', 'eth2wethRevoke'],
@@ -223,7 +228,8 @@ const test_Config = {
       CONF: {
         SAFE_BLOCK_NUM: 100,
         CONFIRM_BLOCK_NUM: 2,
-        enable: false
+        enable: false,
+        nonceless: true
       },
       TOKEN: {
         depositFunc: ['inboundLock', 'inboundRedeem', 'inboundRevoke'],
@@ -254,7 +260,8 @@ const test_Config = {
       CONF: {
         SAFE_BLOCK_NUM: 100,
         CONFIRM_BLOCK_NUM: 2,
-        enable: true
+        enable: false,
+        nonceless: true
       },
       COIN: {
         depositFunc: ['eth2wethLock', 'eth2wethRefund', 'eth2wethRevoke'],

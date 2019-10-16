@@ -3,8 +3,8 @@ const moduleConfig = require('conf/moduleConfig.js');
 let Contract = require("contract/Contract.js");
 
 class WanChain extends baseChain {
-  constructor(log, web3) {
-    super(log, web3);
+  constructor(log, nodeUrl) {
+    super(log, nodeUrl);
     this.chainType = 'WAN';
   }
 
@@ -33,10 +33,10 @@ class WanChain extends baseChain {
     return this.getSolInferface(scAbi, contractAddr, contractFunc);
   }
 
-  getTokenStoremanQuota(crossChain, tokenType, tokenOrigAccount, smgAddress) {
+  getTokenStoremanQuota(crossChain, tokenType, tokenOrigAddr, smgAddress) {
     let func = this.getQuotaLedgerFunc(crossChain, tokenType, 'queryStoremanGroupQuota');
     return new Promise((resolve, reject) => {
-      func(tokenOrigAccount, smgAddress, function(err, result) {
+      func(tokenOrigAddr, smgAddress, function(err, result) {
         if (err) {
           return reject(err);
         } else {
@@ -74,7 +74,7 @@ class WanChain extends baseChain {
           for (let i of parsedLogs) {
             if (i.event === 'SmgApplyUnRegister') {
               for (let index = 0; index < storemanGroup.length; index++) {
-                if ((storemanGroup[index].tokenOrigAccount === i.args.tokenOrigAccount && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
+                if ((storemanGroup[index].tokenOrigAddr === i.args.tokenOrigAddr && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
                   storemanGroup.splice(index, 1);
                   break;
                 }
@@ -100,7 +100,7 @@ class WanChain extends baseChain {
       return new Promise(async (resolve, reject) => {
         let storeman;
         try {
-          storeman = await self.getTokenStoremanGroups(crossChain, token.tokenOrigAccount);
+          storeman = await self.getTokenStoremanGroups(crossChain, token.tokenOrigAddr);
         } catch (err) {
           reject(err);
         }
@@ -142,20 +142,20 @@ class WanChain extends baseChain {
             let parsedLogs = [];
             if (logs !== null) {
               let contract = new Contract(abi, contractAddr);
-              let sign = contract.getEventSignature("StoremanGroupRegistrationLogger");
-              console.log("aaron debug here", sign);
+              // let sign = contract.getEventSignature("StoremanGroupRegistrationLogger");
+              // console.log("aaron debug here", sign);
               parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
             }
 
             for (let i of parsedLogs) {
-              if (i.event === 'StoremanGroupRegistrationLogger' && i.args.tokenOrigAccount === tokenAddr) {
+              if (i.event === 'StoremanGroupRegistrationLogger' && i.args.tokenOrigAddr === tokenAddr) {
                 storemanGroup.push(i.args);
               }
             }
             for (let i of parsedLogs) {
-              if (i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args.tokenOrigAccount === tokenAddr) {
+              if (i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args.tokenOrigAddr === tokenAddr) {
                 for (let index = 0; index < storemanGroup.length; index++) {
-                  if ((storemanGroup[index].tokenOrigAccount === i.args.tokenOrigAccount && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
+                  if ((storemanGroup[index].tokenOrigAddr === i.args.tokenOrigAddr && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
                     storemanGroup.splice(index, 1);
                     break;
                   }
@@ -198,15 +198,15 @@ class WanChain extends baseChain {
           let regTokenRecord = {};
           for (let i of parsedLogs) {
             if (i.event === 'TokenAddedLogger') {
-              if (regTokenRecord.hasOwnProperty(i.args.tokenOrigAccount) && (regTokenRecord[i.args.tokenOrigAccount] < i.blockNumber)) {
+              if (regTokenRecord.hasOwnProperty(i.args.tokenOrigAddr) && (regTokenRecord[i.args.tokenOrigAddr] < i.blockNumber)) {
                 for (let index = 0; index < regEvents.length; index++) {
-                  if (regEvents[index].tokenOrigAccount === i.args.tokenOrigAccount) {
+                  if (regEvents[index].tokenOrigAddr === i.args.tokenOrigAddr) {
                     regEvents.splice(index, 1);
                     break;
                   }
                 }
               }
-              regTokenRecord[i.args.tokenOrigAccount] = i.blockNumber;
+              regTokenRecord[i.args.tokenOrigAddr] = i.blockNumber;
               regEvents.push(i.args);
             }
           }

@@ -13,6 +13,9 @@ module.exports = class EthRawTrans {
 			nonce: nonce,
 			value: value
 		};
+
+		this.txParams.gasPrice = '0x' + this.trans.txParams.gasPrice.toString(16);
+		this.txParams.gasLimit = '0x' + this.trans.txParams.gasLimit.toString(16);
 	}
 
 	setData(data){

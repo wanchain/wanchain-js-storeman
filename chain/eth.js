@@ -1,8 +1,8 @@
 const baseChain = require("chain/base.js");
 
 class EthChain extends baseChain {
-  constructor(log, web3) {
-    super(log, web3);
+  constructor(log, nodeUrl) {
+    super(log, nodeUrl);
     this.chainType = 'ETH';
   }
 

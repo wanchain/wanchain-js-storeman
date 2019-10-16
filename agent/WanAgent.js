@@ -7,10 +7,7 @@ const web3 = new Web3();
 let Contract = require("contract/Contract.js");
 let RawTrans = require("trans/WanRawTrans.js");
 
-const moduleConfig = require('conf/moduleConfig.js');
-
 const {
-  getGlobalChain,
   encodeAccount,
   decodeAccount,
   eosToFloat,
@@ -18,40 +15,23 @@ const {
 } = require('comm/lib');
 
 module.exports = class WanAgent extends baseAgent{
-  constructor(crossChain, tokenType, crossDirection = 0, record = null, action = null) {
-    super(crossChain, tokenType, crossDirection, record, action);
+  constructor(crossChain, tokenType, record = null) {
+    super(crossChain, tokenType, record);
 
     this.RawTrans = RawTrans;
-    this.chain = getGlobalChain(this.transChainType);
     this.storemanAddress = this.config.storemanWan;
 
-    console.log("aaron debug here, wan agent", this.storemanAddress);
-   
-    // this.getNonce();
-
-    // let abi = (this.transChainType !== 'wan') ? this.crossInfoInst.originalChainHtlcAbi : this.crossInfoInst.wanchainHtlcAbi;
-    // this.contractAddr = (this.transChainType !== 'wan') ? this.crossInfoInst.originalChainHtlcAddr : this.crossInfoInst.wanchainHtlcAddr;
-    // this.contract = new Contract(abi, this.contractAddr);
-
-    // this.depositLockEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[0]);
-    // this.depositRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[1]);
-    // this.depositRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[2]);
-    // this.withdrawLockEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[0]);
-    // this.withdrawRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[1]);
-    // this.withdrawRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[2]);
-  
-  
-    // console.log("this.depositLockEvent", this.depositLockEvent);
-    // console.log("this.depositRedeemEvent", this.depositRedeemEvent);
-    // console.log("this.depositRevokeEvent", this.depositRevokeEvent);
-    // console.log("this.withdrawLockEvent", this.withdrawLockEvent);
-    // console.log("this.withdrawRedeemEvent", this.withdrawRedeemEvent);
-    // console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
-
+    console.log("aaron debug here, WAN agent", this.storemanAddress);
   }
 
   getChainType() {
-    return 'wan';
+    return 'WAN';
+  }
+
+  getContractInfo() {
+    let abi = this.crossInfoInst.wanchainHtlcAbi;
+    this.contractAddr = this.crossInfoInst.wanchainHtlcAddr;
+    this.contract = new Contract(abi, this.contractAddr);
   }
 
   getLockedTime() {
@@ -89,15 +69,10 @@ module.exports = class WanAgent extends baseAgent{
 
     return new Promise(async (resolve, reject) => {
       try {
-        if (action === 'redeem') {
-          from = (this.crossDirection === 0) ? this.config.storemanOri : this.config.storemanWan;
-        } else {
-          from = (this.crossDirection === 0) ? this.config.storemanWan : this.config.storemanOri;
-        }
+        from = this.storemanAddress;
+        to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
 
-        to = this.contractAddr;
-
-        let tempAmount = (this.crossChain.toLowerCase() === 'eos') ? eosToFloat(this.amount) : this.amount;
+        let tempAmount = (this.crossChain === 'EOS') ? eosToFloat(this.amount) : this.amount;
         amount = web3.toBigNumber(tempAmount);
 
         gas = this.config.wanGasLimit;
@@ -110,44 +85,6 @@ module.exports = class WanAgent extends baseAgent{
         reject(err);
       }
     });
-  }
-
-  async sendTrans(callback) {
-    this.logger.debug("********************************** sendTransaction ********************************** hashX", this.hashKey);
-    let self = this;
-    try {
-      let rawTx;
-      if (moduleConfig.mpcSignature) {
-        let chainId = await this.chain.getNetworkId();
-        let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
-        rawTx = await mpc.signViaMpc();
-        this.logger.debug("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, rawTx);
-      } else {
-        // let password = process.env.KEYSTORE_PWD;
-        let password = 'wanglutech';
-        this.trans.txParams.gasPrice = '0x' + this.trans.txParams.gasPrice.toString(16);
-        this.trans.txParams.gasLimit = '0x' + this.trans.txParams.gasLimit.toString(16);
-        rawTx = this.trans.signFromKeystore(password);
-      }
-
-      this.logger.debug(this.trans);
-
-      this.chain.sendRawTransaction(rawTx, (err, result) => {
-        if (!err) {
-          self.logger.debug("sendRawTransaction result: hashX, result: ", self.hashKey, result);
-          self.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
-          let content = self.build(self.hashKey, result);
-          callback(err, content);
-        } else {
-          self.logger.error("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
-          callback(err, result);
-        }
-      });
-
-    } catch (err) {
-      this.logger.error("********************************** sendTransaction failed ********************************** hashX", this.hashKey, err);
-      callback(err, null);
-    }
   }
 
   getLockData() {
@@ -169,18 +106,37 @@ module.exports = class WanAgent extends baseAgent{
   }
 
   getDecodeEventTokenAddr(decodeEvent) {
-    return decodeAccount(this.crossChain, decodeEvent.args.tokenOrigAccount);
+    // return decodeAccount(this.crossChain, decodeEvent.args.tokenOrigAccount);
+    if (this.tokenType === 'COIN') {
+      return '0x';
+    } else {
+      return decodeAccount(this.crossChain, decodeEvent.args.tokenOrigAddr);
+    }
   }
 
   getDecodeEventStoremanGroup(decodeEvent) {
-    return decodeEvent.args.storemanGroup;
+    if (this.tokenType === 'COIN') {
+      return decodeEvent.args.storeman;
+    } else {
+      return decodeEvent.args.storemanGroup;
+    }
   }
 
   getDecodeEventValue(decodeEvent) {
-    return floatToEos(decodeEvent.args.value, this.config.crossTokens[this.crossChain][this.getDecodeEventTokenAddr(decodeEvent)].tokenSymbol)
+    if (this.crossChain === 'EOS') {
+      return floatToEos(decodeEvent.args.value, this.config.crossTokens[this.crossChain].TOKEN[this.getDecodeEventTokenAddr(decodeEvent)].tokenSymbol);
+    } else {
+      return decodeEvent.args.value.toString(10);
+    }
   }
 
   getDecodeEventToHtlcAddr(decodeEvent) {
     return decodeEvent.address;
+  }
+
+  encode(signData, typesArray) {
+    this.logger.debug("********************************** encode signData **********************************", signData, "hashX:", this.hashX);
+
+    return web3.eth.abi.encodeParameters(typesArray, signData);
   }
 }
