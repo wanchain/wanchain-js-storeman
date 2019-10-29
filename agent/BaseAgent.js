@@ -21,7 +21,8 @@ module.exports = class BaseAgent {
     this.tokenType = tokenType;
     this.crossConf = config.crossTokens[crossChain].CONF;
     this.crossTokens = config.crossTokens[crossChain].TOKEN;
-    this.isLeader = config.isLeader;
+    // this.isLeader = config.isLeader;
+    this.isLeader = global.isLeader ? true : false
 
     this.mpcSignature = moduleConfig.mpcSignature;
     this.secureLockIntervalRatio = moduleConfig.secureLockIntervalRatio;
@@ -244,11 +245,11 @@ module.exports = class BaseAgent {
     }
   }
 
-  internalSignViaMpc(signData) {
+  internalSignViaMpc(signData, typesArray) {
     return new Promise(async (resolve, reject) => {
       if (this.mpcSignature) {
         try {
-          this.mpcSignData = this.encode(signData);
+          this.mpcSignData = this.encode(signData, typesArray);
           if (this.isLeader) {
             let internalSignature = await this.getInternalSign(this.mpcSignData);
             this.mpcSignData = this.mpcSignData.push(internalSignature.R, internalSignature.s);
@@ -344,7 +345,7 @@ module.exports = class BaseAgent {
         (eventName === this.withdrawEvent[2] && chainType === 'WAN'))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
 
-        if([this.crossConf.storemanOri, this.config.storemanWan].indexOf(storeman) === -1) {
+        if([this.crossConf.storemanOri, this.crossConf.PK, this.config.storemanWan].indexOf(storeman) === -1) {
           return null;
         }
       }

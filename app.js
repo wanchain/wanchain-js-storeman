@@ -100,6 +100,9 @@ async function init() {
     tokenList.storemanAddress = [config.storemanWan];
 
     for (let crossChain in config.crossTokens) {
+      if (!moduleConfig.crossInfoDict[crossChain].CONF.enable) {
+        continue;
+      }
       initChain(crossChain);
       await initNonce(crossChain);
 
@@ -133,7 +136,7 @@ async function init() {
     monitorLogger.info(tokenList);
 
     for (let crossChain in moduleConfig.crossInfoDict) {
-      if (!moduleConfig.crossInfoDict[crossChain].CONF.nonceless) {
+      if (moduleConfig.crossInfoDict[crossChain].CONF.enable && !moduleConfig.crossInfoDict[crossChain].CONF.nonceless) {
         syncLogger.debug("Nonce of chain:", crossChain, global[crossChain.toLowerCase() + 'LastNonce']);
       }
     }
@@ -345,7 +348,7 @@ async function syncMain(logger, db) {
           }
           if (moduleConfig.crossInfoDict[crossChain].CONF.enable) {
             syncChain(crossChain, crossChain, tokenType, tokenList[crossChain][tokenType].originalChainHtlcAddr, logger, db);
-            syncChain('WAN', crossChain, tokenType, tokenList[crossChain][tokenType].wanchainHtlcAddr, logger, db);
+            // syncChain('WAN', crossChain, tokenType, tokenList[crossChain][tokenType].wanchainHtlcAddr, logger, db);
           }
         }
       }

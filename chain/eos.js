@@ -52,17 +52,17 @@ class EosChain extends baseChain {
           event: name
         }
         if (name === 'transfer') {
-          if (action.action_trace.act.data.memo.split(':').length === 2) {
+          if (action.action_trace.act.data.memo.split(':').length === 4 && action.action_trace.act.data.memo.split(':')[0] === 'inlock') {
             const { from, to, quantity, memo } = action.action_trace.act.data;
             obj = {
               ...obj,
               args: {
                 user: from,
                 toHtlcAddr: to,
-                storemanGroup: to,
+                storemanGroup: '0x' + memo.split(':')[3],
                 value: quantity,
-                xHash: '0x' + memo.split(':')[0],
-                wanAddr: memo.split(':')[1],
+                xHash: '0x' + memo.split(':')[1],
+                wanAddr: '0x' + memo.split(':')[2],
                 tokenOrigAccount: account
               }
             };
@@ -174,7 +174,7 @@ class EosChain extends baseChain {
       if (err) {
         callback(err, null);
       } else {
-        let date = new Date(result.timestamp);
+        let date = new Date(result.timestamp + 'Z'); // "Z" is a zero time offset
         result.timestamp = date.getTime()/1000;
         callback(null, result);
       }

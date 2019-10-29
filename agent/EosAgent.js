@@ -99,7 +99,7 @@ module.exports = class EosAgent extends baseAgent{
         permission: 'active',
       }],
       data: {
-        // tokenOrigAddr: 'htlceos',
+        // tokenOrigAccount: 'htlceos',
         // xHash: this.hashKey,
         // user: this.crossAddress,
         // value: this.amount
@@ -158,9 +158,9 @@ module.exports = class EosAgent extends baseAgent{
   }
 
   getDecodeEventStoremanGroup(decodeEvent) {
-    // return decodeEvent.args.storemanGroup;
+    return decodeEvent.args.storemanGroup;
     // storeman = encodeAccount(this.crossChain, storeman);
-    return '0x01000373746f72656d616e';
+    // return '0x01000373746f72656d616e';
   }
 
   getDecodeEventValue(decodeEvent) {

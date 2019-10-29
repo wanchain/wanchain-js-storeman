@@ -270,12 +270,12 @@ module.exports = class stateAction {
       }
       for (var action of actionArray) {
         let transOnChain = ((this.direction === 0) ^ (action === 'redeem')) ? 'WAN' : record.crossChain;
-        let newAgent = new global.agentDict[transOnChain](this.crossChain, this.tokenType, this.crossDirection, this.record);
+        let newAgent = new global.agentDict[transOnChain](this.crossChain, this.tokenType, this.record);
         this.logger.debug("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
 
         newAgent.createTrans(action);
-        if (config.isLeader || !(moduleConfig.mpcSignature)) {
+        if (global.isLeader || !(moduleConfig.mpcSignature)) {
           let content = await newAgent.sendTransSync();
           this.logger.debug("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
           this.logger.debug("sendTrans result is ", content);
@@ -411,7 +411,7 @@ module.exports = class stateAction {
   }
 
   async checkAllowance(nextState, rollState) {
-    let newAgent = new global.agentDict['WAN'](this.crossChain, this.tokenType, 0, this.record);
+    let newAgent = new global.agentDict['WAN'](this.crossChain, this.tokenType, this.record);
     let chain = getGlobalChain(this.crossChain);
     await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanOri, newAgent.contractAddr, moduleConfig.tokenAbi)
       .then(async (result) => {
@@ -478,7 +478,8 @@ module.exports = class stateAction {
         }
       }
 
-      if (!config.isLeader && moduleConfig.mpcSignature) {
+      // if (!global.isLeader && moduleConfig.mpcSignature) {
+      if (!global.isLeader) {
         content = {
           transConfirmed: transConfirmed + 1
         }

@@ -21,7 +21,7 @@ module.exports = class WanAgent extends baseAgent{
     this.RawTrans = RawTrans;
     this.storemanAddress = this.config.storemanWan;
 
-    console.log("aaron debug here, WAN agent", this.storemanAddress);
+    console.log("aaron debug here, WAN agent", crossChain, this.storemanAddress);
   }
 
   getChainType() {
@@ -90,18 +90,21 @@ module.exports = class WanAgent extends baseAgent{
   getLockData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
+    this.internalSignViaMpc([encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, web3.toBigNumber(eosToFloat(this.amount))],[]);
     return this.contract.constructData(this.crossFunc[0], encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, web3.toBigNumber(eosToFloat(this.amount)));
   }
 
   getRedeemData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
     this.logger.debug('getRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
+    this.internalSignViaMpc([this.tokenAddr, this.key],[]);
     return this.contract.constructData(this.crossFunc[1], this.tokenAddr, this.key);
   }
 
   getRevokeData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
     this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
+    this.internalSignViaMpc([encodeAccount(this.crossChain, this.tokenAddr), this.hashKey],[]);
     return this.contract.constructData(this.crossFunc[2], encodeAccount(this.crossChain, this.tokenAddr), this.hashKey);
   }
 
@@ -110,7 +113,7 @@ module.exports = class WanAgent extends baseAgent{
     if (this.tokenType === 'COIN') {
       return '0x';
     } else {
-      return decodeAccount(this.crossChain, decodeEvent.args.tokenOrigAddr);
+      return decodeAccount(this.crossChain, decodeEvent.args.tokenOrigAccount);
     }
   }
 

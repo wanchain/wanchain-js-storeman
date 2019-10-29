@@ -112,16 +112,16 @@ async function initCrossTokens(chainType, storemanWan, storemanOri) {
           // console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
 
           for (let storeman of oriTokenStoremanGroups) {
-            if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanOri) {
+            if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
             // if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
               for (let token of oriTokens) {
-                if (token.tokenOrigAddr === storeman.tokenOrigAddr) {
+                if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
                 // if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
                   let chain = getGlobalChain('WAN');
                   let tokenInfo = await chain.getTokenInfo(token.tokenWanAddr);
                   Object.assign(token, tokenInfo);
                   chain.bigNumber2String(token, 10);
-                  crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAddr)] = token;
+                  crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
                   // crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
                   empty = false;
                   break;
@@ -244,6 +244,20 @@ function floatToEos(amount, symbol) {
   return `${DecimalPad(amount, precision)} ${symbol}`
 }
 
+function hexTrip0x(hexs) {
+  if (0 == hexs.indexOf('0x')) {
+      return hexs.slice(2);
+  }
+  return hexs;
+}
+
+function hexAdd0x(hexs) {
+  if (0 != hexs.indexOf('0x')) {
+      return '0x' + hexs;
+  }
+  return hexs;
+}
+
 function sleep(time) {
   return new Promise(function(resolve, reject) {
     setTimeout(function() {
@@ -276,7 +290,8 @@ function writeConfigToFile(argv) {
 
       }
       let url = 'http://' + process.env.RPCIP + ':' + process.env.RPCPORT;
-      let isLeader = process.env.IS_LEADER === 'true' ? true : false;
+      // let isLeader = process.env.IS_LEADER === 'true' ? true : false;
+      let isLeader = global.isLeader ? true : false
       config[net].wanWeb3Url = url;
       config[net].mpcUrl = url;
       config[net].isLeader = isLeader;
@@ -308,4 +323,6 @@ exports.encodeAccount = encodeAccount;
 exports.decodeAccount = decodeAccount;
 exports.eosToFloat = eosToFloat;
 exports.floatToEos = floatToEos;
+exports.hexTrip0x = hexTrip0x;
+exports.hexAdd0x = hexAdd0x;
 exports.writeConfigToFile = writeConfigToFile;

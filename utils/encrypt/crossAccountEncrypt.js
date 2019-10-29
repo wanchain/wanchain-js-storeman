@@ -26,7 +26,7 @@ class crossChainAccount {
   }
 
   encodeAccount(originAccount) {
-    return originAccount;
+    // return originAccount;
     if (!(this.valid && originAccount)) {
       return null;
     }
@@ -43,7 +43,7 @@ class crossChainAccount {
   }
 
   decodeAccount(wAccount) {
-    return {account: wAccount};
+    // return {account: wAccount};
     if (!(this.valid && wAccount)) {
       return null;
     }

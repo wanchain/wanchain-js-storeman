@@ -21,6 +21,11 @@ wanAccout = eosAccount.encodeAccount("eosio.token");
 console.log(wanAccout);
 console.log(eosAccount.decodeAccount(wanAccout));
 
+console.log("eosio: wanchainhtlc");
+wanAccout = eosAccount.encodeAccount("wanchainhtlc");
+console.log(wanAccout);
+console.log(eosAccount.decodeAccount(wanAccout));
+
 //htlc
 console.log("eosio: htlceos");
 wanAccout = eosAccount.encodeAccount("htlceos");

@@ -177,7 +177,8 @@ function writeConfigToFile(filename) {
       }
 
       let url = 'http://' + process.env.RPCIP + ':' + process.env.RPCPORT;
-      let isLeader = process.env.IS_LEADER === 'true' ? true : false;
+      // let isLeader = process.env.IS_LEADER === 'true' ? true : false;
+      let isLeader = global.isLeader ? true : false
       config[net].wanWeb3Url = url;
       config[net].mpcUrl = url;
       config[net].isLeader = isLeader;

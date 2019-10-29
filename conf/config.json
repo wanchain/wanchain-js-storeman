@@ -319,29 +319,29 @@
       },
       "EOS": {
         "CONF": {
-          "nodeUrl": "https://jungle2.cryptolions.io:443",
+          "nodeUrl": "http://192.168.1.58:8888",
           "keyProvider": [],
-          "storemanOri": "0x01000368746c63656f737465737431",
-          "PK": ""
+          "PK": "0x042c672cbf9858cd77e33f7a1660027e549873ce25caffd877f955b5158a50778f7c852bbab6bd76eb83cac51132ccdbb5e6747ef6732abbb2135ed0da1c341619",
+          "storemanOri": "0x01000368746c63656f737465737431"
         },
         "TOKEN": {
           "eosio.token": {
-            "tokenOrigAccount": "0x010003656f73696f2e746f6b656e",
-            "tokenWanAddr": "0xccf13068d0fe183a5de7e30c107f048c8c3f285c",
+            "tokenOrigAccount": "eosio.token",
+            "tokenWanAddr": "0x7ad5da18d3f84509fa3e7aa298cc60faf50f3d1f",
             "ratio": "20000",
             "minDeposit": "10000000000000000000",
             "origHtlc": "0x01000368746c63656f737465737431",
-            "wanHtlc": "0x88c5cceadb56040edd70e7d0d7784b22530a630a",
+            "wanHtlc": "0xf3a65ca9426f79f72379cceb6be9d71ce1864069",
             "withdrawDelayTime": "259200",
             "hashAlgorithms": "1",
             "tokenHash": "0x624fb6b720b6b28c2bb5fbd9bf55248311a7ccf23171626c1ae53f48bd9dd648",
-            "tokenType": "ERC20",
+            "tokenType": "TOKEN",
             "tokenSymbol": "EOS",
             "decimals": "4"
           }
         }
       }
     },
-    "storemanWan": "0x06daa9379cbe241a84a65b217a11b38fe3b4b063"
+    "storemanWan": "0xee628a2d53e9acf54b67ef75c03bdff6ca7d3c7f"
   }
 }
