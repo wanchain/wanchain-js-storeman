@@ -230,34 +230,54 @@ async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
     logger.error("getBlockNumberSync from :", chainType, err);
     return;
   }
+
   if (curBlock > moduleConfig.CONFIRM_BLOCK_NUM) {
     let to = curBlock - moduleConfig.CONFIRM_BLOCK_NUM;
+
     try {
       if (from <= to) {
-        events = await getScEvents(logger, chain, scAddr, topics, from, to);
+        let blkIndex = from;
+        let blkEnd;
+        let range = to - from;
+        let cntPerTime = 100;
+
+        while (blkIndex <= to) {
+          if ((blkIndex + cntPerTime) > to) {
+            blkEnd = to;
+          } else {
+            blkEnd = blkIndex + cntPerTime;
+          }
+
+          logger.info("blockSync range: From ", from, " to ", to, " remain ", range, ", FromBlk:", blkIndex, ", ToBlk:", blkEnd, chainType);
+
+          events = await getScEvents(logger, chain, scAddr, topics, blkIndex, blkEnd);
+
+          logger.info("events: ", chainType, events.length);
+          if (events.length > 0) {
+            await splitEvent(chainType, crossChain, tokenType, events);
+          }
+          modelOps.saveScannedBlockNumber(chainType, blkEnd);
+          logger.info("********************************** saveState **********************************", chainType, crossChain, tokenType);
+
+          events = [];
+          blkIndex += cntPerTime;
+          range -= cntPerTime;
+        }
       }
-      logger.info("events: ", chainType, events.length);
-      if (events.length > 0) {
-        await splitEvent(chainType, crossChain, tokenType, events);
-      }
-      modelOps.saveScannedBlockNumber(chainType, to);
-      logger.info("********************************** saveState **********************************", chainType, crossChain, tokenType);
     } catch (err) {
-      logger.error("getScEvents from :", chainType, err);
+      logger.error("syncChain from :", chainType, err);
       return;
     }
   }
 }
 
 async function syncMain(logger, db) {
-  let ethBlockNumber, wanBlockNumber;
-
   while (1) {
     try {
       for (let crossChain in moduleConfig.crossInfoDict) {
         for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
-          syncChain(crossChain.toLowerCase(), crossChain, tokenType, tokenList[crossChain][tokenType].originalChainHtlcAddr, logger, db);
-          syncChain('wan', crossChain, tokenType, tokenList[crossChain][tokenType].wanchainHtlcAddr, logger, db);
+          await syncChain(crossChain.toLowerCase(), crossChain, tokenType, tokenList[crossChain][tokenType].originalChainHtlcAddr, logger, db);
+          await syncChain('wan', crossChain, tokenType, tokenList[crossChain][tokenType].wanchainHtlcAddr, logger, db);
         }
       }
     } catch (err) {
