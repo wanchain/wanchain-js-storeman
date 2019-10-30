@@ -194,15 +194,15 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
 
   try {
     await Promise.all(multiEvents);
-    syncLogger.debug("********************************** splitEvent done **********************************");
+    syncLogger.debug("********************************** splitEvent done **********************************", chainType, crossChain, tokenType);
   } catch (err) {
     global.syncLogger.error("splitEvent", err);
     return Promise.reject(err);
   }
 }
 
-async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
-  logger.debug("********************************** syncChain **********************************", chainType, crossChain, tokenType);
+async function syncChain(chainType, crossChain, logger) {
+  logger.debug("********************************** syncChain **********************************", chainType, crossChain);
   let blockNumber = 0;
   try {
     blockNumber = await modelOps.getScannedBlockNumberSync(chainType);
@@ -239,33 +239,41 @@ async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
         let blkIndex = from;
         let blkEnd;
         let range = to - from;
-        let cntPerTime = 100;
+        let cntPerTime = 150;
 
-        while (blkIndex <= to) {
+        while (blkIndex < to) {
           if ((blkIndex + cntPerTime) > to) {
             blkEnd = to;
           } else {
             blkEnd = blkIndex + cntPerTime;
           }
 
-          logger.info("blockSync range: From ", from, " to ", to, " remain ", range, ", FromBlk:", blkIndex, ", ToBlk:", blkEnd, chainType);
+          for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
+            logger.debug("blockSync range: From ", from, " to ", to, " remain ", range, ", FromBlk:", blkIndex, ", ToBlk:", blkEnd, chainType, crossChain, tokenType);
+            let scAddr;
+            if (chainType.toLowerCase() === crossChain.toLowerCase()) {
+              scAddr = tokenList[crossChain][tokenType].originalChainHtlcAddr;
+            } else {
+              scAddr = tokenList[crossChain][tokenType].wanchainHtlcAddr;
+            }
 
-          events = await getScEvents(logger, chain, scAddr, topics, blkIndex, blkEnd);
+            events = await getScEvents(logger, chain, scAddr, topics, blkIndex, blkEnd);
 
-          logger.info("events: ", chainType, events.length);
-          if (events.length > 0) {
-            await splitEvent(chainType, crossChain, tokenType, events);
+            logger.info("events: ", chainType, crossChain, tokenType, events.length);
+            if (events.length > 0) {
+              await splitEvent(chainType, crossChain, tokenType, events);
+            }
+            events = [];
           }
           modelOps.saveScannedBlockNumber(chainType, blkEnd);
-          logger.info("********************************** saveState **********************************", chainType, crossChain, tokenType);
+          logger.debug("********************************** saveState **********************************", chainType, crossChain,);
 
-          events = [];
           blkIndex += cntPerTime;
           range -= cntPerTime;
         }
       }
     } catch (err) {
-      logger.error("syncChain from :", chainType, err);
+      logger.error("syncChain from :", chainType, , crossChain, err);
       return;
     }
   }
@@ -275,10 +283,10 @@ async function syncMain(logger, db) {
   while (1) {
     try {
       for (let crossChain in moduleConfig.crossInfoDict) {
-        for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
-          await syncChain(crossChain.toLowerCase(), crossChain, tokenType, tokenList[crossChain][tokenType].originalChainHtlcAddr, logger, db);
-          await syncChain('wan', crossChain, tokenType, tokenList[crossChain][tokenType].wanchainHtlcAddr, logger, db);
-        }
+        await Promise.all([
+          syncChain(crossChain.toLowerCase(), crossChain, logger),
+          syncChain('wan', crossChain, logger)
+        ]);
       }
     } catch (err) {
       logger.error("syncMain failed:", err);
