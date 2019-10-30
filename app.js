@@ -273,7 +273,7 @@ async function syncChain(chainType, crossChain, logger) {
         }
       }
     } catch (err) {
-      logger.error("syncChain from :", chainType, , crossChain, err);
+      logger.error("syncChain from :", chainType, crossChain, err);
       return;
     }
   }
