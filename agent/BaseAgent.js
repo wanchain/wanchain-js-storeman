@@ -1,29 +1,34 @@
 "use strict"
 
-const moduleConfig = require('conf/moduleConfig.js');
-const configJson = require('conf/config.json');
-const config = global.testnet ? configJson.testnet : configJson.main;
-
-let Contract = require("contract/Contract.js");
-
-let MPC = require("mpc/mpc.js");
-
 const {
+  loadConfig,
   getGlobalChain,
   sleep
 } = require('comm/lib');
 
+const moduleConfig = require('conf/moduleConfig.js');
+// const config = loadConfig();
+
+let Contract = require("contract/Contract.js");
+
+let MPC = require("mpc/schnorrMpc.js");
+let SchnorrMPC = require("mpc/schnorrMpc.js");
+
 module.exports = class BaseAgent {
   constructor(crossChain, tokenType, record = null) {
     this.logger = global.monitorLogger;
-    this.config = config;
+    this.config = global.config;
     this.crossChain = crossChain;
     this.tokenType = tokenType;
-    this.crossConf = config.crossTokens[crossChain].CONF;
-    this.crossTokens = config.crossTokens[crossChain].TOKEN;
-    // this.isLeader = config.isLeader;
+    this.crossConf = this.config.crossTokens[crossChain].CONF;
+    this.crossTokens = this.config.crossTokens[crossChain].TOKEN;
+    // this.isLeader = this.config.isLeader;
     this.isLeader = global.isLeader ? true : false
 
+    this.schnorrMpc = moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc;
+    if (this.schnorrMpc) {
+      this.pk = this.crossConf.PK;
+    }
     this.mpcSignature = moduleConfig.mpcSignature;
     this.secureLockIntervalRatio = moduleConfig.secureLockIntervalRatio;
 
@@ -39,11 +44,12 @@ module.exports = class BaseAgent {
     this.withdrawEvent = crossInfoInst.withdrawEvent;
 
     if (this.mpcSignature) {
-      this.mpcSignData = '';
+      this.mpcSignData = {};
     }
 
     this.record = record;
     if (record !== null) {
+      this.hashKey = record.hashX;
       if (record.x !== '0x') {
         this.key = record.x;
       }
@@ -109,11 +115,12 @@ module.exports = class BaseAgent {
   getNonce() {
     return new Promise(async (resolve, reject) => {
       this.logger.debug("getNonce begin!")
-      while (global.mutexNonce) {
+      let chainMutex = this.transChainType + 'Mutex';
+      while (global[chainMutex]) {
         await sleep(3);
       }
-      this.logger.debug("mutexNonce true");
-      global.mutexNonce = true;
+      this.logger.debug(chainMutex, "mutexNonce true");
+      global[chainMutex] = true;
       let nonce = 0;
       let chainNonce = this.transChainType + 'LastNonce';
       let nonceRenew = this.transChainType + 'NonceRenew';
@@ -134,8 +141,8 @@ module.exports = class BaseAgent {
           nonce = global[chainNonce];
         }
 
-        this.logger.debug("mutexNonce false");
-        global.mutexNonce = false;
+        this.logger.debug(chainMutex, "mutexNonce false");
+        global[chainMutex] = false;
 
         if (nonce >= global[chainNonce]) {
           global[chainNonce] = nonce;
@@ -144,8 +151,8 @@ module.exports = class BaseAgent {
         resolve(nonce);
       } catch (err) {
         this.logger.error("getNonce failed", err);
-        this.logger.debug("mutexNonce false");
-        global.mutexNonce = false;
+        this.logger.debug(chainMutex, "mutexNonce false");
+        global[chainMutex] = false;
         reject(err);
       }
     });
@@ -154,52 +161,42 @@ module.exports = class BaseAgent {
   async initAgentTransInfo(action) {
     if (action !== null) {
       let transInfo = await this.getTransInfo(action);
-      this.trans = this.RawTrans(...transInfo);
+      this.trans = new this.RawTrans(...transInfo);
     }
   }
 
-  // createTrans(action) { 
-  //   if (action === 'lock') {
-  //     this.data = this.getLockData();
-  //     this.build = this.buildLockData;
-  //   } else if (action === 'redeem') {
-  //     this.data = this.getRedeemData();
-  //     this.build = this.buildRedeemData;
-  //   } else if (action === 'revoke') {
-  //     this.data = this.getRevokeData();
-  //     this.build = this.buildRevokeData;
-  //   }
+  async createTrans(action) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (action === 'approveZero') {
+          this.data = await this.getApproveData();
+          this.build = this.buildApproveZeroData;
+        } else if (action === 'approve') {
+          this.data = await this.getApproveData();
+          this.build = this.buildApproveData;
+        } else if (action === 'lock') {
+          this.data = await this.getLockData();
+          this.build = this.buildLockData;
+        } else if (action === 'redeem') {
+          this.data = await this.getRedeemData();
+          this.build = this.buildRedeemData;
+        } else if (action === 'revoke') {
+          this.data = await this.getRevokeData();
+          this.build = this.buildRevokeData;
+        }
 
-  //   this.logger.debug("********************************** setData **********************************", this.data, "hashX", this.hashKey);
-  //   this.trans.setData(this.data);
-  //   this.trans.setValue(0);
-  // }
-
-  createTrans(action) {
-    if (action === 'approveZero') {
-      this.data = this.getApproveData();
-      this.build = this.buildApproveZeroData;
-    } else if (action === 'approve') {
-      this.data = this.getApproveData();
-      this.build = this.buildApproveData;
-    } else if (action === 'lock') {
-      this.data = this.getLockData();
-      this.build = this.buildLockData;
-    } else if (action === 'redeem') {
-      this.data = this.getRedeemData();
-      this.build = this.buildRedeemData;
-    } else if (action === 'revoke') {
-      this.data = this.getRevokeData();
-      this.build = this.buildRevokeData;
-    }
-
-    this.logger.debug("********************************** setData **********************************", this.data, "hashX", this.hashKey);
-    this.trans.setData(this.data);
-    if (this.tokenType === 'COIN' && this.crossDirection === 1 && action === 'lock'){
-      this.trans.setValue(this.amount.toString(16));
-    } else {
-      this.trans.setValue(0);
-    }
+        this.logger.debug("********************************** setData **********************************", JSON.stringify(this.data, null, 4), "hashX", this.hashKey);
+        this.trans.setData(this.data);
+        if (this.tokenType === 'COIN' && this.crossDirection === 1 && action === 'lock'){
+          this.trans.setValue(this.amount.toString(16));
+        } else {
+          this.trans.setValue(0);
+        }
+        resolve();
+      } catch (err) {
+        reject("createTrans: " + err);
+      }
+    })
   }
 
   sendTransSync() { 
@@ -220,48 +217,71 @@ module.exports = class BaseAgent {
     let self = this;
     try {
       let rawTx;
-
-      // let password = process.env.KEYSTORE_PWD;
-      let password = 'wanglutech';
-      this.logger.debug("********************************** sendTransaction get signature ********************************** hashX", this.hashKey, this,trans);
-      rawTx = this.trans.signFromKeystore(password);
-      this.logger.debug("********************************** sendTransaction get signature successfully ********************************** hashX", this.hashKey, rawTx);
-
-      this.chain.sendRawTransaction(rawTx, (err, result) => {
-        if (!err) {
-          self.logger.debug("sendRawTransaction result: hashX, result: ", self.hashKey, result);
-          self.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
-          let content = self.build(self.hashKey, result);
-          callback(err, content);
+      if (this.isLeader) {
+        let chainId = await this.chain.getNetworkId();
+        if(this.mpcSignature && !this.schnorrMpc) {
+          let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
+          rawTx = await mpc.signViaMpc();
+          this.logger.debug("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, rawTx);
         } else {
-          self.logger.error("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
-          callback(err, result);
+          this.logger.debug("********************************** sendTransaction get signature ********************************** hashX", this.hashKey, this.trans);
+          rawTx = await this.signTrans();
+          this.logger.debug("********************************** sendTransaction get signature successfully ********************************** hashX", this.hashKey, rawTx);
         }
-      });
 
+        this.chain.sendRawTransaction(rawTx, (err, result) => {
+          if (!err) {
+            self.logger.debug("sendRawTransaction result: hashX, result: ", self.hashKey, result);
+            self.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
+            let content = self.build(self.hashKey, result);
+            callback(err, content);
+          } else {
+            self.logger.error("********************************** sendTransaction failed ********************************** hashX", self.hashKey, err);
+            callback(err, result);
+          }
+        });
+      }
     } catch (err) {
       this.logger.error("********************************** sendTransaction failed ********************************** hashX", this.hashKey, err);
       callback(err, null);
     }
   }
 
+  validateTrans() {
+    this.logger.debug("********************************** validateTrans ********************************** hashX", this.hashKey);
+    return new Promise(async (resolve, reject) => {
+      try {
+        let chainId = await this.chain.getNetworkId();
+        let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
+
+        mpc.addValidMpcTx();
+        resolve();
+      } catch (err) {
+        this.logger.error("********************************** validateTrans failed ********************************** hashX", this.hashKey, err);
+        reject(err);
+      }
+    });
+  }
+
   internalSignViaMpc(signData, typesArray) {
     return new Promise(async (resolve, reject) => {
-      if (this.mpcSignature) {
+      if (this.mpcSignature && this.schnorrMpc) {
         try {
+          this.logger.debug("********************************** internalSignViaMpc ********************************** hashX", this.hashKey, signData, typesArray);
           this.mpcSignData = this.encode(signData, typesArray);
+          let internalSignature;
           if (this.isLeader) {
-            let internalSignature = await this.getInternalSign(this.mpcSignData);
-            this.mpcSignData = this.mpcSignData.push(internalSignature.R, internalSignature.s);
+            internalSignature = await this.getInternalSign(this.mpcSignData);
+            // this.mpcSignData = this.mpcSignData.push(internalSignature.R, internalSignature.s);
           } else {
-            await this.validateInternalSign(this.mpcSignData);
+            internalSignature = await this.validateInternalSign(this.mpcSignData);
           }
-          resolve(this.mpcSignData);
+          resolve(internalSignature);
         } catch (err) {
           reject(err);
         }
       } else {
-        resolve(this.mpcSignData);
+        resolve(signData);
       }
     })
   }
@@ -270,7 +290,7 @@ module.exports = class BaseAgent {
     return new Promise(async (resolve, reject) => {
       try {
         this.logger.debug("********************************** getInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
-        let mpc = new MPC(mpcSignData, this.pk, this.hashKey);
+        let mpc = new SchnorrMPC(mpcSignData, this.pk, this.hashKey);
         // internalSignature is a object, {R:, S:}
         let internalSignature = await mpc.signViaMpc();
         this.logger.debug("********************************** getInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
@@ -286,12 +306,29 @@ module.exports = class BaseAgent {
     return new Promise(async (resolve, reject) => {
       try {
         this.logger.debug("********************************** validateInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
-        let mpc = new MPC(mpcSignData, this.pk, this.hashKey);
+        let mpc = new SchnorrMPC(mpcSignData, this.pk, this.hashKey);
         let internalSignature = await mpc.addValidDataViaMpc();
         this.logger.debug("********************************** validateInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
-        resolve(internalSignature);
+        resolve({
+          R: null,
+          s: null
+        });
       } catch (err) {
         this.logger.error("********************************** validateInternalSign Via Mpc failed ********************************** hashX", this.hashKey, err);
+        reject(err);
+      }
+    });
+  }
+
+  signTrans() {
+    return new Promise((resolve, reject) => {
+      try {
+        // let password = process.env.KEYSTORE_PWD;
+        let password = 'wanglutech';
+        let rawTx = this.trans.signFromKeystore(password);
+        resolve(rawTx);
+      } catch (err) {
+        self.logger.error("********************************** signTrans failed ********************************** hashX", self.hashKey);
         reject(err);
       }
     });
@@ -325,6 +362,10 @@ module.exports = class BaseAgent {
     }
     content.storemanRevokeTxHash.push(result.toLowerCase());
     return content;
+  }
+
+  getDecodeCrossAddress(decodeEvent) {
+    return decodeEvent.args.wanAddr;
   }
 
   getDecodeEventDbData(chainType, crossChain, tokenType, decodeEvent, event, lockedTime) {
@@ -362,7 +403,7 @@ module.exports = class BaseAgent {
           tokenSymbol: this.crossTokens[tokenAddr].tokenSymbol,
           originChain: chainType,
           from: (chainType !== 'WAN') ? args.user : args.wanAddr,
-          crossAddress: (chainType !== 'WAN') ? args.wanAddr : args.ethAddr,
+          crossAddress: this.getDecodeCrossAddress(decodeEvent),
           toHtlcAddr: this.getDecodeEventToHtlcAddr(decodeEvent),
           storeman: storeman,
           value: this.getDecodeEventValue(decodeEvent),

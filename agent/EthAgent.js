@@ -10,8 +10,6 @@ let ethRawTrans = require("trans/EthRawTrans.js");
 const Web3 = require("web3");
 const web3 = new Web3();
 
-global.mutexNonce = false;
-
 module.exports = class EthAgent extends baseAgent{
   constructor(crossChain, tokenType, record = null) {
     super(crossChain, tokenType, record);

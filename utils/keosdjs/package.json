@@ -1,0 +1,8 @@
+{
+  "name": "rpcapi",
+  "version": "0.0.1",
+  "dependencies": {
+    "eosjs": "^16.0.9",
+    "request": "^2.88.0"
+  }
+}

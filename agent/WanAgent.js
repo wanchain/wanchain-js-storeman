@@ -72,8 +72,8 @@ module.exports = class WanAgent extends baseAgent{
         from = this.storemanAddress;
         to = (action === 'approve' || action === 'approveZero') ? this.tokenAddr : this.contractAddr;
 
-        let tempAmount = (this.crossChain === 'EOS') ? eosToFloat(this.amount) : this.amount;
-        amount = web3.toBigNumber(tempAmount);
+        // let tempAmount = (this.crossChain === 'EOS') ? eosToFloat(this.amount) : this.amount;
+        amount = web3.toBigNumber(this.amount);
 
         gas = this.config.wanGasLimit;
         gasPrice = this.getWeiFromGwei(web3.toBigNumber(this.config.wanGasPrice));
@@ -87,25 +87,68 @@ module.exports = class WanAgent extends baseAgent{
     });
   }
 
-  getLockData() {
+  // ETH: eth2wethLock(bytes32 xHash, address wanAddr, uint value)
+  // ERC20: inboundLock(address tokenOrigAddr, bytes32 xHash, address wanAddr, uint value) 
+  // Schnorr: inboundLock(bytes tokenOrigAccount, bytes32 xHash, address wanAddr, uint value, bytes storemanPK, bytes R, bytes s) 
+  async getLockData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
-    this.internalSignViaMpc([encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, web3.toBigNumber(eosToFloat(this.amount))],[]);
-    return this.contract.constructData(this.crossFunc[0], encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, web3.toBigNumber(eosToFloat(this.amount)));
+
+    // web3.toBigNumber(eosToFloat(this.amount))
+    if (this.schnorrMpc) {
+      let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, this.amount, this.pk];
+      let typesArray = ['bytes', 'bytes32', 'address', 'unit', 'bytes'];
+      let internalSignature = await this.internalSignViaMpc(signData, typesArray);
+      if (this.isLeader) {
+        return this.contract.constructData(this.crossFunc[0], signData.concat(internalSignature.R, internalSignature.S));
+      }
+    } else if (this.tokenType === 'COIN') {
+      return this.contract.constructData(this.crossFunc[0], this.hashKey, this.crossAddress, this.amount);
+    } else {
+      return this.contract.constructData(this.crossFunc[0], this.tokenAddr, this.hashKey, this.crossAddress, this.amount);
+    }
   }
 
-  getRedeemData() {
+  // ETH: weth2ethRefund(bytes32 x) 
+  // ERC20: outboundRedeem(address tokenOrigAddr, bytes32 x) 
+  // Schnorr: outboundRedeem(bytes tokenOrigAccount, bytes32 x, bytes R, bytes s) 
+  async getRedeemData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
     this.logger.debug('getRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
-    this.internalSignViaMpc([this.tokenAddr, this.key],[]);
-    return this.contract.constructData(this.crossFunc[1], this.tokenAddr, this.key);
+
+    if (this.schnorrMpc) {
+      let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.key];
+      let typesArray = ['bytes', 'bytes32'];
+      let internalSignature = await this.internalSignViaMpc(signData, typesArray);
+      if (this.isLeader) {
+        return this.contract.constructData(this.crossFunc[0], signData.concat(internalSignature.R, internalSignature.S));
+      }
+    } else if (this.tokenType === 'COIN') {
+      return this.contract.constructData(this.crossFunc[1], this.key);
+    } else {
+      return this.contract.constructData(this.crossFunc[1], this.tokenAddr, this.key);
+    }
   }
 
-  getRevokeData() {
+  // ETH: eth2wethRevoke(bytes32 xHash) 
+  // ERC20: inboundRevoke(address tokenOrigAddr, bytes32 xHash) 
+  // Schnorr: inboundRevoke(bytes tokenOrigAccount, bytes32 xHash, bytes R, bytes s) 
+  async getRevokeData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
     this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
-    this.internalSignViaMpc([encodeAccount(this.crossChain, this.tokenAddr), this.hashKey],[]);
-    return this.contract.constructData(this.crossFunc[2], encodeAccount(this.crossChain, this.tokenAddr), this.hashKey);
+
+    if (this.schnorrMpc) {
+      let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.hashKey];
+      let typesArray = ['bytes', 'bytes32'];
+      let internalSignature = await this.internalSignViaMpc(signData, typesArray);
+      if (this.isLeader) {
+        return this.contract.constructData(this.crossFunc[0], signData.concat(internalSignature.R, internalSignature.S));
+      }
+    } else if (this.tokenType === 'COIN') {
+      return this.contract.constructData(this.crossFunc[2], this.hashKey);
+    } else {
+      return this.contract.constructData(this.crossFunc[2], this.tokenAddr, this.hashKey);
+    }
   }
 
   getDecodeEventTokenAddr(decodeEvent) {
@@ -126,19 +169,29 @@ module.exports = class WanAgent extends baseAgent{
   }
 
   getDecodeEventValue(decodeEvent) {
-    if (this.crossChain === 'EOS') {
-      return floatToEos(decodeEvent.args.value, this.config.crossTokens[this.crossChain].TOKEN[this.getDecodeEventTokenAddr(decodeEvent)].tokenSymbol);
-    } else {
-      return decodeEvent.args.value.toString(10);
-    }
+    return decodeEvent.args.value.toString(10);
+
+    // if (this.crossChain === 'EOS') {
+    //   return floatToEos(decodeEvent.args.value, this.config.crossTokens[this.crossChain].TOKEN[this.getDecodeEventTokenAddr(decodeEvent)].tokenSymbol);
+    // } else {
+    //   return decodeEvent.args.value.toString(10);
+    // }
   }
 
   getDecodeEventToHtlcAddr(decodeEvent) {
     return decodeEvent.address;
   }
 
+  getDecodeCrossAddress(decodeEvent) {
+    if (this.schnorrMpc) {
+      return decodeAccount(this.crossChain, decodeEvent.args.wanAddr);
+    } else {
+      return decodeEvent.args.ethAddr;
+    }
+  }
+
   encode(signData, typesArray) {
-    this.logger.debug("********************************** encode signData **********************************", signData, "hashX:", this.hashX);
+    this.logger.debug("********************************** encode signData **********************************", signData, "hashX:", this.hashKey);
 
     return web3.eth.abi.encodeParameters(typesArray, signData);
   }

@@ -6,12 +6,12 @@ let argv    = optimist
   .argv;
 global.testnet = argv.testnet ? true : false;
 
-let configJson = require('conf/config.json');
-let config = global.testnet?configJson.testnet:configJson.main;
-
 const {
+  loadConfig,
   initConfig
 } = require('comm/lib');
+
+let config = loadConfig();
 
 async function init() {
   let paras = process.argv.splice(2);

@@ -2,11 +2,21 @@ const user = process.env.MONGO_USER;
 const pwd = process.env.MONGO_PWD;
 
 let dbUrl;
+if (!global.dbPort) {
+  global.dbPort = 27017
+}
 if(user) {
   dbUrl = `mongodb://${user}:${pwd}@localhost:27017`;
+  if (global.dbIp) {
+    dbUrl = `mongodb://${user}:${pwd}@${global.dbIp}:${global.dbPort}`;
+  }
 } else {
   dbUrl = `mongodb://localhost:27017`;
   dbUrl = `mongodb://127.0.0.1:27017`;
+  dbUrl = `mongodb://192.168.88.129:27017`;
+  if (global.dbIp) {
+    dbUrl = `mongodb://${global.dbIp}:${global.dbPort}`;
+  }
 }
 
 const testnet = global.testnet;
@@ -132,19 +142,21 @@ const config = {
 };
 
 const test_Config = {
-  crossDbUrl: dbUrl + "/crossChain_test_schnorr",
+  crossDbUrl: dbUrl + "/crossChain_test_schnorr" + global.index,
   email: {
     "region": "us-west-2",
     "sender": "monitor@wanchain.org"
   },
-  mpcSignature: false,
+  mpcSignature: true,
   testnet: testnet,
 
   web3RetryTimes: 30,
   promiseTimeout: 300 * 1000,
 
-  retryTimes: 5,
-  retryWaitTime: 60 * 1000,
+  // retryTimes: 5,
+  // retryWaitTime: 60 * 1000,
+  retryTimes: 60,
+  retryWaitTime: 10,
   confirmTimes: 60,
 
   logServerUrl: '54.149.227.183',
@@ -180,7 +192,8 @@ const test_Config = {
   crossInfoDict: {
     ETH: {
       CONF: {
-        enable: false
+        enable: false,
+        schnorrMpc: false
       },
       COIN: {
         depositFunc: ['eth2wethLock', 'eth2wethRefund', 'eth2wethRevoke'],
@@ -229,7 +242,8 @@ const test_Config = {
         SAFE_BLOCK_NUM: 100,
         CONFIRM_BLOCK_NUM: 2,
         enable: true,
-        nonceless: true
+        nonceless: true,
+        schnorrMpc: true
       },
       TOKEN: {
         depositFunc: ['inboundLock', 'inboundRedeem', 'inboundRevoke'],
@@ -280,7 +294,8 @@ const test_Config = {
         SAFE_BLOCK_NUM: 100,
         CONFIRM_BLOCK_NUM: 2,
         enable: false,
-        nonceless: true
+        nonceless: true,
+        schnorrMpc: false
       },
       COIN: {
         depositFunc: ['eth2wethLock', 'eth2wethRefund', 'eth2wethRevoke'],

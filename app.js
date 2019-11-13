@@ -3,14 +3,24 @@
 const optimist = require('optimist');
 
 let argv = optimist
-  .usage("Usage: $0  -i [index] -pk [PK] -ip [mpcIP] -port [mpcPort] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] [--testnet] [--dev] [--leader] [--init] [--renew]")
+  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [mpcPort] -dbip [dbIp] -dbport [dbPort] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] [--testnet] [--dev] [--leader] [--init] [--renew] [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password]")
   .alias('h', 'help')
   .alias('i', 'index')
+  .alias('mpcip', 'mpcIP')
+  .alias('mpcport', 'mpcPort')
+  .alias('dbip', 'dbIp')
+  .alias('dbport', 'dbPort')
+  .alias('c', 'chainType')
+  .alias('w', 'storemanWanAddr')
+  .alias('o', 'storemanOriAddr')
+  .alias('k', 'keosdUrl')
   .describe('h', 'display the usage')
   .describe('i', 'identify storemanAgent index')
   .describe('pk', 'identify storemanGroup public key')
-  .describe('ip', 'identify mpc ip')
-  .describe('port', 'identify mpc port')
+  .describe('mpcip', 'identify mpc ip')
+  .describe('mpcPort', 'identify mpc port')
+  .describe('dbip', 'identify db ip')
+  .describe('dbport', 'identify db port')
   .describe('c', 'identify chainType')
   .describe('w', 'identify storemanWanAddr')
   .describe('o', 'identify storemanOriAddr')
@@ -19,28 +29,71 @@ let argv = optimist
   .describe('leader', 'identify whether is leader agent, only leader can send the transaction')
   .describe('init', 'identify whether to init after startup')
   .describe('renew', 'identify whether to renew the storemanAgent in cycle')
+  .describe('mpc', 'identify whether to use mpc')
+  .describe('schnorr', 'identify whether to use schnorr mpc or normal/old mpc')
+  .describe('keosd', 'identify whether to use keosd to manager wallet when cross EOS')
+  .describe('keosdUrl', 'identify EOS keosd Url if keosd enable')
+  .describe('wallet', 'identify EOS keosd wallet name if keosd enable')
+  .describe('password', 'identify EOS keosd wallet password if keosd enable, or just password')
   .default('i', 0)
   .string('pk')
-  .string('ip')
+  .string('mpcip')
+  .string('dbip')
   .string('c')
   .string('w')
   .string('o')
-  .boolean('testnet', 'dev', 'leader', 'init', 'renew')
+  .string('keosdUrl', 'wallet', 'password')
+  .boolean('testnet', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr')
   .argv;
 
-if (argv.help) {
+let pass = true;
+
+if (argv.leader) {
+  if ((argv.mpc && (!argv.mpcIP && !argv.mpcPort))
+    || (argv.keosd && (!argv.keosdUrl || !argv.wallet || !argv.password))
+    || (argv.init && (!argv.c || !argv.w || !argv.o))) {
+    pass = false;
+  }
+}
+
+if (argv.help || !pass) {
   optimist.showHelp();
   process.exit(0);
 }
 
+console.log(argv);
+
 global.argv = argv;
 
+if (argv.index) {
+  global.index = argv.index;
+} else {
+  global.index = '';
+}
+
 global.pk = argv.pk;
+global.mpcIP = argv.mpcIP;
+global.mpcPort = argv.mpcPort;
+global.dbIp = argv.dbIp;
+global.dbPort = argv.dbPort;
 global.testnet = argv.testnet ? true : false;
 global.dev = argv.dev ? true : false;
 global.isLeader = argv.leader ? true : false;
 
 const Logger = require('comm/logger.js');
+
+const {
+  loadConfig,
+  initChain,
+  initConfig,
+  initNonce,
+  getGlobalChain,
+  backupIssueFile,
+  writeConfigToFile,
+  sleep
+} = require('comm/lib');
+const moduleConfig = require('conf/moduleConfig.js');
+global.config = loadConfig();
 
 const mongoose = require('mongoose');
 const ModelOps = require('db/modelOps');
@@ -53,24 +106,12 @@ const EosAgent = require("agent/EosAgent.js");
 const WanAgent = require("agent/WanAgent.js");
 const StateAction = require("monitor/monitor.js");
 
-
-const {
-  loadConfig,
-  initChain,
-  initConfig,
-  initNonce,
-  getGlobalChain,
-  backupIssueFile,
-  sleep
-} = require('comm/lib');
-const moduleConfig = require('conf/moduleConfig.js');
-const config = loadConfig();
-
 let handlingList = {};
 
 let tokenList = {};
 
 global.storemanRestart = false;
+global.storemanRenew = false;
 
 global.agentDict = {
   // ETH: {
@@ -87,19 +128,22 @@ global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log
 
 async function init() {
   try {
+    await writeConfigToFile(global.argv)
+    global.config = loadConfig();
+
     initChain('WAN');
     await initNonce('WAN');
  
     global.storemanRestart = true;
-    backupIssueFile(config.issueCollectionPath);
+    backupIssueFile(global.config.issueCollectionPath);
 
     tokenList.supportTokenAddrs = [];
     tokenList.wanchainHtlcAddr = [];
     tokenList.originalChainHtlcAddr = [];
-    tokenList.storemanWan = config.storemanWan;
-    tokenList.storemanAddress = [config.storemanWan];
+    tokenList.storemanWan = global.config.storemanWan;
+    tokenList.storemanAddress = [global.config.storemanWan];
 
-    for (let crossChain in config.crossTokens) {
+    for (let crossChain in global.config.crossTokens) {
       if (!moduleConfig.crossInfoDict[crossChain].CONF.enable) {
         continue;
       }
@@ -107,13 +151,18 @@ async function init() {
       await initNonce(crossChain);
 
       tokenList[crossChain] = {};
-      tokenList[crossChain].storemanOri = config.crossTokens[crossChain].CONF.storemanOri;
-      tokenList.storemanAddress.push(tokenList[crossChain].storemanOri);
+      tokenList[crossChain].storemanOri = global.config.crossTokens[crossChain].CONF.storemanOri;
+      if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
+        tokenList.storemanAddress.push(global.config.crossTokens[crossChain].CONF.PK);
+      } else {
+        tokenList.storemanAddress.push(tokenList[crossChain].storemanOri);
+      }
+
       tokenList[crossChain].supportTokens = {};
 
-      for (let token in config["crossTokens"][crossChain]["TOKEN"]) {
+      for (let token in global.config["crossTokens"][crossChain]["TOKEN"]) {
         tokenList.supportTokenAddrs.push(token);
-        tokenList[crossChain].supportTokens[token] = config["crossTokens"][crossChain]["TOKEN"][token].tokenSymbol;
+        tokenList[crossChain].supportTokens[token] = global.config["crossTokens"][crossChain]["TOKEN"][token].tokenSymbol;
       }
 
       for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
@@ -148,15 +197,18 @@ async function init() {
 }
 
 async function update() {
-  let storemanWan = config.storemanWan;
+  let storemanWan = global.config.storemanWan;
   let storemanOri;
-  for (let crossChain in config.crossTokens) {
+  global.storemanRenew = true;
+  global.configMutex = true;
+
+  for (let crossChain in global.config.crossTokens) {
     try {
-      // if (Object.keys(config["crossTokens"][crossChain].TOKEN).length === 0) {
+      // if (Object.keys(global.config["crossTokens"][crossChain].TOKEN).length === 0) {
       //   continue;
       // }
-      if (config["crossTokens"][crossChain].CONF.storemanOri) {
-        storemanOri = config["crossTokens"][crossChain].CONF.storemanOri;
+      if (global.config["crossTokens"][crossChain].CONF.storemanOri) {
+        storemanOri = global.config["crossTokens"][crossChain].CONF.storemanOri;
         let crossTokens = await initConfig(crossChain, storemanWan, storemanOri);
         if (crossTokens === null) {
           console.log("Couldn't find any tokens that the storeman is in charge of. ", crossChain, storemanWan, storemanOri);
@@ -166,19 +218,14 @@ async function update() {
         console.log("Storeman agent should be initialized with storemanWanAddr storemanOriAddr at the first time!");
       }
     } catch (err) {
-      console.log("Storeman agent update error, plz check the config and try again.", err);
+      console.log("Storeman agent update error, plz check the global.config and try again.", err);
     }
-  } 
-}
-
-function splitData(string) {
-  let index = 64;
-  let arr = [];
-  for (var i = 2; i < string.length;) {
-    arr.push(string.substr(i, index));
-    i = i + index;
   }
-  return arr;
+
+  await init();
+
+  // global.storemanRenew = false;
+  global.configMutex = false;
 }
 
 async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
@@ -281,15 +328,15 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
 
   try {
     await Promise.all(multiEvents);
-    syncLogger.debug("********************************** splitEvent done **********************************");
+    syncLogger.debug("********************************** splitEvent done **********************************", chainType, crossChain, tokenType);
   } catch (err) {
     global.syncLogger.error("splitEvent", err);
     return Promise.reject(err);
   }
 }
 
-async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
-  logger.debug("********************************** syncChain **********************************", chainType, crossChain, tokenType);
+async function syncChain(chainType, crossChain, logger) {
+  logger.debug("********************************** syncChain **********************************", chainType, crossChain);
 
   let blockNumber = 0;
   let chain = getGlobalChain(chainType);
@@ -322,16 +369,52 @@ async function syncChain(chainType, crossChain, tokenType, scAddr, logger, db) {
     let to = curBlock - chain.confirm_block_num;
     try {
       if (from <= to) {
-        events = await getScEvents(logger, chain, scAddr, topics, from, to);
+        let blkIndex = from;
+        let blkEnd;
+        let range = to - from;
+        let cntPerTime = 10000;
+
+        while (blkIndex < to) {
+          if ((blkIndex + cntPerTime) > to) {
+            blkEnd = to;
+          } else {
+            blkEnd = blkIndex + cntPerTime;
+          }
+
+          for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
+            if (tokenType === 'CONF') {
+              continue;
+            }
+            logger.debug("blockSync range: From ", from, " to ", to, " remain ", range, ", FromBlk:", blkIndex, ", ToBlk:", blkEnd, chainType, crossChain, tokenType);
+            let scAddr;
+
+            while (global.configMutex) {
+              await sleep(3);
+            }
+
+            if (chainType.toLowerCase() === crossChain.toLowerCase()) {
+              scAddr = tokenList[crossChain][tokenType].originalChainHtlcAddr;
+            } else {
+              scAddr = tokenList[crossChain][tokenType].wanchainHtlcAddr;
+            }
+
+            events = await getScEvents(logger, chain, scAddr, topics, blkIndex, blkEnd);
+
+            logger.info("events:", chainType, crossChain, tokenType, events.length);
+            if (events.length > 0) {
+              await splitEvent(chainType, crossChain, tokenType, events);
+            }
+            events = [];
+          }
+          modelOps.saveScannedBlockNumber(chainType, blkEnd);
+          logger.info("********************************** saveState **********************************", chainType, crossChain);
+
+          blkIndex += cntPerTime;
+          range -= cntPerTime;
+        }
       }
-      logger.info("events: ", chainType, events.length);
-      if (events.length > 0) {
-        await splitEvent(chainType, crossChain, tokenType, events);
-      }
-      modelOps.saveScannedBlockNumber(chainType, to);
-      logger.info("********************************** saveState **********************************", chainType, crossChain, tokenType);
     } catch (err) {
-      logger.error("getScEvents from :", chainType, err);
+      logger.error("syncChain from :", chainType, crossChain, err);
       return;
     }
   }
@@ -342,15 +425,17 @@ async function syncMain(logger, db) {
   while (1) {
     try {
       for (let crossChain in moduleConfig.crossInfoDict) {
-        for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
-          if (tokenType === 'CONF') {
-            continue;
-          }
+        // for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
+        //   if (tokenType === 'CONF') {
+        //     continue;
+        //   }
           if (moduleConfig.crossInfoDict[crossChain].CONF.enable) {
-            syncChain(crossChain, crossChain, tokenType, tokenList[crossChain][tokenType].originalChainHtlcAddr, logger, db);
-            // syncChain('WAN', crossChain, tokenType, tokenList[crossChain][tokenType].wanchainHtlcAddr, logger, db);
+            await Promise.all([
+              syncChain(crossChain, crossChain, logger),
+              syncChain('WAN', crossChain, logger)
+            ]);
           }
-        }
+        // }
       }
     } catch (err) {
       logger.error("syncMain failed:", err);
@@ -395,6 +480,10 @@ async function handlerMain(logger, db) {
   while (1) {
     logger.info("********************************** handlerMain start **********************************");
 
+    while (global.configMutex) {
+      await sleep(3);
+    }
+
     try {
       let htlcAddrFilter = tokenList.wanchainHtlcAddr.concat(tokenList.originalChainHtlcAddr);
       let option = {
@@ -413,7 +502,7 @@ async function handlerMain(logger, db) {
       }
       if (global.storemanRestart) {
         option.status = {
-          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored1', 'fundLostFinished']
+          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'fundLostFinished']
         }
         global.storemanRestart = false;
       } else {
@@ -465,11 +554,12 @@ let modelOps = new ModelOps(global.syncLogger, db);
 
 async function main() {
   if (global.argv.init && global.argv.c && global.argv.w && global.argv.o) {
-    await initConfig(global.argv.c, global.argv.w, global.argv.o);
+    await initConfig(global.argv.c, global.argv.w, global.argv.o, global.argv.pk);
+    global.config = loadConfig();
   }
 
   global.syncLogger.info("start storeman agent");
-  if (Object.keys(config["crossTokens"]).length === 0) {
+  if (Object.keys(global.config["crossTokens"]).length === 0) {
     global.syncLogger.error("./init.sh storemanWanAddr storemanOriAddr");
     global.syncLogger.error("To start storeman agent at the first time, you need to run init.sh with storemanWanAddr storemanOriAddr as paras!");
     process.exit();
@@ -477,8 +567,8 @@ async function main() {
   await init();
 
   syncMain(global.syncLogger, db);
-  // await updateRecordAfterRestart(global.monitorLogger);
-  // handlerMain(global.monitorLogger, db);
+  await updateRecordAfterRestart(global.monitorLogger);
+  handlerMain(global.monitorLogger, db);
 }
 
 process.on('unhandledRejection', error => {

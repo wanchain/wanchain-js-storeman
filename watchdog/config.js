@@ -1,6 +1,10 @@
 const path = require('path');
-let configJson = require('conf/config.json');
-let storemanConfig = global.testnet?configJson.testnet:configJson.main;
+
+const {
+  loadConfig
+} = require('comm/lib');
+
+let storemanConfig = global.config;
 
 const ethWeb3File = path.join(__dirname, '../conf/config.json');
 
@@ -22,7 +26,7 @@ let ethWeb3IpTestOps = {
 
 const config = {
   testNet: global.testnet,
-  curEthWeb3Ip: storemanConfig.ethWeb3Url,
+  curEthWeb3Ip: storemanConfig.crossTokens['ETH'].CONF.nodeUrl,
   syncInterval: 15 * 1000,
   chainWeb3IpOpsDict: {
     'ETH': global.testnet ? ethWeb3IpTestOps : ethWeb3IpOps

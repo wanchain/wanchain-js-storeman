@@ -1,6 +1,6 @@
 "use strict";
 const {
-  // getChain,
+  loadConfig,
   getGlobalChain,
   sleep
 } = require('comm/lib');
@@ -12,8 +12,7 @@ const sendMail = require('comm/sendMail');
 const fs = require('fs');
 const path = require("path");
 const moduleConfig = require('conf/moduleConfig.js');
-const configJson = require('conf/config.json');
-const config = global.testnet?configJson.testnet:configJson.main;
+// let config = loadConfig();
 
 const retryTimes = moduleConfig.retryTimes;
 const retryWaitTime = moduleConfig.retryWaitTime;
@@ -45,9 +44,12 @@ var stateDict = {
   },
   waitingCross: {
     action: 'sendTrans',
-    paras: ['lock', 'storemanLockEvent', ['waitingCrossLockConfirming', 'waitingX'],
-      ['waitingCross', 'transFailedBeforeHTLC2time']
-    ]
+    // paras: ['lock', 'storemanLockEvent', ['waitingCrossLockConfirming', 'waitingX'],
+    //   ['waitingCross', 'transFailedBeforeHTLC2time']
+    // ]
+    paras: ['redeem', 'storemanRedeemEvent', ['waitingCrossRedeemConfirming', 'redeemFinished'],
+    ['receivedX', 'transFailedBeforeHTLC2time']
+  ]
   },
   waitingCrossLockConfirming: {
     action: 'checkStoremanTransOnline',
@@ -99,6 +101,8 @@ var stateDict = {
 
 module.exports = class stateAction {
   constructor(record, logger, db) {
+    // config = loadConfig();
+
     this.record = record;
     this.crossChain = record.crossChain;
     this.tokenType = record.tokenType;
@@ -166,7 +170,7 @@ module.exports = class stateAction {
       if(this.record.tokenType === 'COIN' || this.record.crossChain === 'EOS') {
         status = nextState;
       } else {
-        status = (this.record.direction === 0) ? nextState : rollState;
+        status = (this.crossDirection === 0) ? nextState : rollState;
       }
       await this.updateState(status);
   	}
@@ -188,9 +192,9 @@ module.exports = class stateAction {
     let month = date.getMonth() + 1;
     let day = date.getDate();
 
-    let issueCollection = config.issueCollectionPath + 'issueCollection' + year + '-' + month + '-' + day + '.txt';
+    let issueCollection = global.config.issueCollectionPath + 'issueCollection' + year + '-' + month + '-' + day + '.txt';
     let content = JSON.stringify(this.record) + '\n';
-    if (mkdirsSync(config.issueCollectionPath)) {
+    if (mkdirsSync(global.config.issueCollectionPath)) {
       fs.appendFile(issueCollection, content, async (err) => {
         if (!err) {
           this.logger.error("TakeIntervention done of hashX", issueCollection, this.record.hashX);
@@ -204,7 +208,7 @@ module.exports = class stateAction {
   }
 
   takeMailIntervention(nextState, rollState) {
-    let receive = config.mailReceiver;
+    let receive = global.config.mailReceiver;
     try {
       let mailPro = sendMail(receive, this.record.status, this.record.toString());
       mailPro.then(async (result) => {
@@ -247,7 +251,7 @@ module.exports = class stateAction {
 
     console.log("aaron debug here crossChain", this.crossChain);
     if (!Array.isArray(actionArray)) {
-      if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.record.direction === 0) && (this.crossChain === 'ETH')) {
+      if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.crossDirection === 0) && (this.crossChain === 'ETH')) {
         if (!await this.checkStoremanQuota()) {
           let content = {
             status: 'transIgnored',
@@ -269,26 +273,29 @@ module.exports = class stateAction {
         await sleep(retryWaitTime);
       }
       for (var action of actionArray) {
-        let transOnChain = ((this.direction === 0) ^ (action === 'redeem')) ? 'WAN' : record.crossChain;
+        let transOnChain = ((this.crossDirection === 0) ^ (action === 'redeem')) ? 'WAN' : this.record.crossChain;
         let newAgent = new global.agentDict[transOnChain](this.crossChain, this.tokenType, this.record);
         this.logger.debug("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
 
-        newAgent.createTrans(action);
-        if (global.isLeader || !(moduleConfig.mpcSignature)) {
-          let content = await newAgent.sendTransSync();
-          this.logger.debug("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
-          this.logger.debug("sendTrans result is ", content);
-          Object.assign(result, content);
-        } else {
+        await newAgent.createTrans(action);
+
+        if (!global.isLeader && moduleConfig.mpcSignature && !moduleConfig.crossInfoDict[this.crossChain].CONF.schnorrMpc) {
           await newAgent.validateTrans();
+        } else {
+          if (global.isLeader) {
+            let content = await newAgent.sendTransSync();
+            this.logger.debug("sendTrans result is ", content);
+            Object.assign(result, content);
+          }
         }
+        this.logger.debug("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
       }
       result.transRetried = 0;
       result.status = nextState[0];
     } catch (err) {
       this.logger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
-      this.logger.error("sendTransaction faild err is", err);
+      this.logger.error("sendTransaction faild,  err is", err);
       if (this.record.transRetried < retryTimes) {
         result.transRetried = this.record.transRetried + 1;
         result.status = rollState[0];
@@ -413,7 +420,7 @@ module.exports = class stateAction {
   async checkAllowance(nextState, rollState) {
     let newAgent = new global.agentDict['WAN'](this.crossChain, this.tokenType, this.record);
     let chain = getGlobalChain(this.crossChain);
-    await chain.getTokenAllowance(newAgent.tokenAddr, config.storemanOri, newAgent.contractAddr, moduleConfig.tokenAbi)
+    await chain.getTokenAllowance(newAgent.tokenAddr, global.config.storemanOri, newAgent.contractAddr, moduleConfig.tokenAbi)
       .then(async (result) => {
         if (result < Math.max(getWeiFromEther(web3.toBigNumber(moduleConfig.tokenAllowanceThreshold)), web3.toBigNumber(this.record.value))) {
           await this.updateState(rollState);
@@ -436,7 +443,7 @@ module.exports = class stateAction {
       storemanRevokeEvent: 'revoke'
     }
 
-    if (this.record.direction === 0) {
+    if (this.crossDirection === 0) {
       if (eventName === 'storemanRedeemEvent') {
         transOnChain = this.crossChain;
       } else {
@@ -548,7 +555,7 @@ module.exports = class stateAction {
   }
 
   async getStoremanQuota() {
-    let storemanGroupAddr = config.storemanWan;
+    let storemanGroupAddr = global.config.storemanWan;
     let storemanQuotaInfo;
     let chain = getGlobalChain('WAN');
 

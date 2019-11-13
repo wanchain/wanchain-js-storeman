@@ -6,7 +6,10 @@ let RawTrans = require("trans/EosRawTrans.js");
 
 const {
   encodeAccount,
-  decodeAccount
+  hexTrip0x,
+  decodeAccount,
+  eosToFloat,
+  floatToEos
 } = require('comm/lib');
 
 module.exports = class EosAgent extends baseAgent{
@@ -32,6 +35,8 @@ module.exports = class EosAgent extends baseAgent{
 
         to = this.contractAddr;
 
+        this.amount = floatToEos(this.amount, this.tokenSymbol);
+
         amount = this.amount;
 
         this.logger.info("transInfo is: crossDirection- %s, transChainType- %s,\n from- %s, to- %s, amount- %s, \n hashX- %s", this.crossDirection, this.transChainType, from, to, amount, this.hashKey);
@@ -43,59 +48,42 @@ module.exports = class EosAgent extends baseAgent{
     });
   }
 
-  async sendTrans(callback) {
-    this.logger.debug("********************************** sendTransaction ********************************** hashX", this.hashKey);
+  signTrans() {
     let self = this;
-    try {
+    return new Promise(async (resolve, reject) => {
+      try {
         let rawTx;
-          this.chain.eos.transaction({
-            actions: this.trans.actions
-          }, {
-            // broadcast: true, 
-            // sign: true,
-            blocksBehind: 3,
-            expireSeconds: 30,
-          }, (err, result) => {
-            if (!err) {
-              self.logger.debug("sendRawTransaction result: hashX, result: ", self.hashKey, result);
-              self.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
-              let content = self.build(self.hashKey, result.transaction_id);
-              callback(err, content);
-            } else {
-              self.logger.error("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
-              callback(err, result);
-            }
-          });
-          return;
-  
-        this.logger.debug(this.trans);
-  
-        this.chain.sendRawTransaction(rawTx, (err, result) => {
-          if (!err) {
-            self.logger.debug("sendRawTransaction result: hashX, result: ", self.hashKey, result);
-            self.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
-            let content = self.build(self.hashKey, result);
-            callback(err, content);
-          } else {
-            self.logger.error("********************************** sendTransaction failed ********************************** hashX", self.hashKey);
-            callback(err, result);
-          }
-        });
-    } catch (err) {
-      this.logger.error("********************************** sendTransaction failed ********************************** hashX", this.hashKey, err);
-      callback(err, null);
-    }
+        // let password = process.env.KEYSTORE_PWD;
+
+        if (1) {
+          let privateKey= ['5JtXWF9PmP7pSRX6wJfxHkaHLqAjRvwXWqTBsNtNorfr2bpjiQ9'];
+          rawTx = await this.trans.signTransDebug(privateKey, self.chain);
+        } else {
+        let wallet = 'aaron';
+        let password = 'PW5Jv45rNbTgfb7ui7ew4Rv81hsQwhuaQpfEtCzGy2YWG6arUk5xy';
+
+        rawTx = await self.trans.signTransFromKeosd(wallet, password, self.chain);
+        }
+        resolve(rawTx);
+      } catch (err) {
+        self.logger.error("********************************** signTrans failed ********************************** hashX", self.hashKey);
+        reject(err);
+      }
+    });
   }
 
-  getLockData() {
+  // outlock(eosio::name storeman, eosio::name user, eosio::asset quantity, std::string xHash, std::string wanAddr, std::string pk, std::string R, std::string s)
+  async getLockData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
 
+    let signData = [hexTrip0x(this.pk), this.storemanAddress, this.amount, hexTrip0x(this.hashKey), this.crossAddress, this.pk];
+    let internalSignature = await this.internalSignViaMpc(signData);
     let actions = [{
-      account: 'htlceos',
+      account: this.contractAddr,
       name: this.crossFunc[0],
       authorization: [{
-        actor: 'htlceos',
+        actor: this.storemanAddress,
         permission: 'active',
       }],
       data: {
@@ -103,51 +91,84 @@ module.exports = class EosAgent extends baseAgent{
         // xHash: this.hashKey,
         // user: this.crossAddress,
         // value: this.amount
-        storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
-        xHash: this.hashKey.split('0x')[1],
-        user: decodeAccount(this.crossChain, this.crossAddress),
-        value: this.amount
+        // storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
+        // storeman: hexTrip0x(this.pk),
+        storeman: this.storemanAddress,
+        user: this.crossAddress,
+        // value: this.amount,
+        quantity: this.amount,
+        xHash: hexTrip0x(this.hashKey),
+        wanAddr: this.crossAddress,
+        pk: this.pk,
+        r: internalSignature.R,
+        s: internalSignature.S
       }
     }];
     return actions;
   }
 
-  getRedeemData() {
+  // inredeem(eosio::name storeman, std::string x, std::string r, std::string s)
+  async getRedeemData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
     this.logger.debug('getRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
 
-    let actions = [{
-      account: 'htlceos',
-      name: this.crossFunc[1],
-      authorization: [{
-        actor: 'htlceos',
-        permission: 'active',
-      }],
-      data: {
-        storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
-        xHash: this.hashKey.split('0x')[1],
-        user: this.record.from,
-        x: this.key.split('0x')[1]
-      }
-    }];
-    return actions;
 
+    if (this.hashKey === '0xe24b6e28e5e8835f03be187197aa68e8dd59c83a9c1b8e5d804e2eea2b926ec7') {
+      this.key = '0xf9e3c53945a4287beec09b55636418c78aafa2df91873414f8224c84acf09d6f';
+    } else if (this.hashKey === '0x44ad684bde62eafab28c205ed889ef6dceaa4273f0d8e4b6394b8ef3c18f3060') {
+      this.key = '0x204b84afd243c144ae2e828b9bf2f1f24153511785daabcbb779eb45f5a16ba9';
+    } else if (this.hashKey === '0xeafd6521494402abfed88e888107e3870f6c42a9bd5c79c550d23ed14630e7c2') {
+      this.key = '0x00dff2025305035d12b17e2f0836b690e79be6bf82f78713c50365b7d06c7f82';
+    } else if (this.hashKey === '0x80933de75748db7820458215190f252f3f2f5ad06edf919fd37c188565eb9a2d') {
+      this.key = '0x57ca9b55867833332843389c8fc557076803ab430c69c1e79ab489c55c75c235';
+    } else if (this.hashKey === '0x5ce9ff5a7e5a5d3a2e7172ecd81e13750e6573105d9cdf8fd32e4fdf86e47211') {
+      this.key = '0xfdbf6dc5c99651f8c494f0a08d2e4c2cd298f868d3c293d775d8acc9c01bcccf';
+    }
+
+    let signData = [hexTrip0x(this.storemanAddress), hexTrip0x(this.key)];
+    let internalSignature = await this.internalSignViaMpc(signData);
+
+    if (this.isLeader) {
+      let actions = [{
+        account: this.contractAddr,
+        name: this.crossFunc[1],
+        authorization: [{
+          actor: this.storemanAddress,
+          permission: 'active',
+        }],
+        data: {
+          // storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
+          // storeman: hexTrip0x(this.pk),
+          storeman: this.storemanAddress,
+          x: hexTrip0x(this.key),
+          r: hexTrip0x(internalSignature.R),
+          s: hexTrip0x(internalSignature.S)
+        }
+      }];
+      return actions;
+    }
   }
 
-  getRevokeData() {
+  // outrevoke(eosio::name storeman, std::string xHash, std::string r, std::string s)
+  async getRevokeData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
     this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
 
+    let signData = [hexTrip0x(this.storemanAddress), hexTrip0x(this.hashKey)];
+    let internalSignature = await this.internalSignViaMpc(signData);
     let actions = [{
-      account: 'htlceos',
+      account: this.contractAddr,
       name: this.crossFunc[2],
       authorization: [{
-        actor: 'htlceos',
+        actor: this.storemanAddress,
         permission: 'active',
       }],
       data: {
-        storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
-        xHash: this.hashKey.split('0x')[1]
+        // storeman: hexTrip0x(this.pk),
+        storeman: this.storemanAddress,
+        xHash: hexTrip0x(this.hashKey),
+        r: internalSignature.R,
+        s: internalSignature.S
       }
     }];
     return actions;
@@ -164,7 +185,8 @@ module.exports = class EosAgent extends baseAgent{
   }
 
   getDecodeEventValue(decodeEvent) {
-    return decodeEvent.args.value;
+    // return decodeEvent.args.value;
+    return eosToFloat(decodeEvent.args.value, this.config.crossTokens[this.crossChain].TOKEN[this.getDecodeEventTokenAddr(decodeEvent)].tokenSymbol);
   }
 
   getDecodeEventToHtlcAddr(decodeEvent) {
@@ -183,7 +205,7 @@ module.exports = class EosAgent extends baseAgent{
     } else {
       data = signData;
     }
-    this.logger.debug("********************************** encode signData **********************************", signData, "hashX:", this.hashX);
+    this.logger.debug("********************************** encode signData **********************************", signData, "hashX:", this.hashKey);
     return new Buffer(data).toString('base64');
   }
 }

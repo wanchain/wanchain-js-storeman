@@ -10,25 +10,49 @@ class EosChain extends baseChain {
     this.chainType = 'EOS';
   }
 
-  getNetworkId() {
-
-  }
-
   getClient(nodeUrl) {
     if (nodeUrl.indexOf("http://") !== -1 || nodeUrl.indexOf("https://") !== -1) {
+      this.nodeUrl = nodeUrl;
       let eosConfig = {
-        // keyProvider: ['5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3'], // 配置私钥字符串
-        
-        // httpEndpoint: 'http://192.168.1.58:8888'
-        // httpEndpoint: 'http://junglehistory.cryptolions.io:18888'
-        keyProvider: [], // 配置私钥字符串
-        httpEndpoint: nodeUrl
+        // keyProvider: [''], // 配置私钥字符串
+        httpEndpoint: nodeUrl,
+        // chainId: "e70aaab8997e1dfce58fbfac80cbbb8fecec7b99cf982a9444273cbc64c41473", 
+        expireInSeconds: 60,
+        verbose: false, 
+        // broadcast: true,
+        // sign: true
       }
-  
       return Eos(eosConfig);
     } else {
       return null;
     }
+  }
+
+  getNetworkId() {
+    let log = this.log;
+    let chainType = this.chainType;
+    let eos = this.client;
+    let self = this;
+
+    return new Promise((resolve, reject)=> {
+      try {
+        if (this.chainId) {
+          resolve(this.chainId);
+          return;
+        }
+        eos.getInfo((err, result) => {
+          if(!err) {
+            log.debug("ChainType:", chainType, "getNetWork result is", result);
+            self.chainId = result.chain_id;
+            resolve(result.chain_id);
+          } else {
+            reject(err);
+          }
+        })
+      } catch (err) {
+        reject(err);
+      };
+    });
   }
 
   eosToFloat(str) 
@@ -257,8 +281,43 @@ class EosChain extends baseChain {
     })
   }
 
-  sendRawTransaction(signedTx, callback) {
-    this.client.pushTransaction(signedTx, callback);
+  async packTrans(actions) {
+    let eos = this.client;
+
+    try {
+      let packed_tx = await eos.transaction({
+        actions: actions
+      }, {
+          broadcast: false,
+          sign: false
+        });
+      console.log("packed_tx is", JSON.stringify(packed_tx, null, 4));
+      return packed_tx.transaction.transaction;
+    } catch (err) {
+      throw new Error(err);
+    }
+  }
+
+  async getRequiredKeys(transaction, available_keys) {
+    let eos = this.client;
+    return eos.getRequiredKeys(transaction, available_keys);
+  }
+
+  async sendRawTransaction(signedTx, callback) {
+    // try {
+    //   let result = await this.client.pushTransaction(signedTx);
+    //   callback(null, result.transaction_id);
+    // } catch (err) {
+    //   callback(err, null);
+    // }
+
+    this.client.pushTransaction(signedTx, (err, result) => {
+      if(!err) {
+        callback(null, result.transaction_id);
+      } else {
+        callback(err, null);
+      }
+    });
   }
 
   getTokenInfo(tokenScAddr) {

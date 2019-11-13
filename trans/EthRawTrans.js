@@ -14,8 +14,8 @@ module.exports = class EthRawTrans {
 			value: value
 		};
 
-		this.txParams.gasPrice = '0x' + this.trans.txParams.gasPrice.toString(16);
-		this.txParams.gasLimit = '0x' + this.trans.txParams.gasLimit.toString(16);
+		this.txParams.gasPrice = '0x' + this.txParams.gasPrice.toString(16);
+		this.txParams.gasLimit = '0x' + this.txParams.gasLimit.toString(16);
 	}
 
 	setData(data){

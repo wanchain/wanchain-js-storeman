@@ -12,22 +12,25 @@ const EosChain = require('chain/eos');
 const crossChainAccount = require('utils/encrypt/crossAccountEncrypt');
 
 function loadConfig() {
-  let configJson = JSON.parse(fs.readFileSync('conf/config.json'));
-  return global.testnet ? configJson.testnet : configJson.main;
+  if (!global.configMutex) {
+    let configJson = JSON.parse(fs.readFileSync('conf/config.json'));
+    global.config = global.testnet ? configJson.testnet : configJson.main;
+  }
+  return global.config;
 }
 
 function getChain(chainType) {
   try{
-    config = loadConfig();
+    loadConfig();
   } catch(err) {
     console.log(err);
   }
   if (chainType === 'ETH') {
-    return new EthChain(global.syncLogger, config.crossTokens[chainType].CONF.nodeUrl);
+    return new EthChain(global.syncLogger, global.config.crossTokens[chainType].CONF.nodeUrl);
   } else if (chainType === 'WAN') {
-    return new WanChain(global.syncLogger, config.wanWeb3Url);
+    return new WanChain(global.syncLogger, global.config.wanWeb3Url);
   } else if (chainType === 'EOS') {
-    return new EosChain(global.syncLogger, config.crossTokens[chainType].CONF.nodeUrl);
+    return new EosChain(global.syncLogger, global.config.crossTokens[chainType].CONF.nodeUrl);
   } else {
     return null;
   }
@@ -46,8 +49,13 @@ function getGlobalChain(chainType) {
 
 async function initNonce(chainType) {
   return new Promise(async (resolve, reject) => {
+    if (global.storemanRenew) {
+      resolve();
+      return;
+    }
+
     try {
-      let config = loadConfig();
+      // let config = global.config;
       global[chainType.toLowerCase() + 'NonceRenew'] = false;
       global[chainType.toLowerCase() + 'NoncePending'] = false;
 
@@ -55,13 +63,13 @@ async function initNonce(chainType) {
       let chainName = chainType.toLowerCase() + "Chain";
       let storemanAddress;
       if (chainType === 'WAN') {
-        storemanAddress = config.storemanWan;
+        storemanAddress = global.config.storemanWan;
       } else {
         if (moduleConfig.crossInfoDict[chainType].CONF.nonceless) {
           resolve();
           return;
         }
-        storemanAddress = config.crossTokens[chainType].CONF.storemanOri;
+        storemanAddress = global.config.crossTokens[chainType].CONF.storemanOri;
       }
 
       let nonce = await global[chainName].getNonceIncludePendingSync(storemanAddress);
@@ -73,64 +81,112 @@ async function initNonce(chainType) {
   });
 }
 
-async function initCrossTokens(chainType, storemanWan, storemanOri) {
+async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk) {
   let wanChain = getGlobalChain('WAN');
   let crossTokens = {};
   let empty = true;
 
   return new Promise(async (resolve, reject) => {
     try {
-      for (let crossChain in moduleConfig.crossInfoDict) {
-        if (crossChain !== chainType) {
-          continue;
-        }
-        if (!moduleConfig.crossInfoDict[crossChain].CONF.enable) {
-          continue;
-        }
+      // for (let chainType in moduleConfig.crossInfoDict) {
+      //   if (chainType !== crossChain) {
+      //     continue;
+      //   }
         crossTokens[crossChain] = {};
-        // console.log(crossChain);
+        if (!moduleConfig.crossInfoDict[crossChain].CONF.enable) {
+          resolve(crossTokens);
+          return;
+          // continue;
+        }
 
-        if (moduleConfig.crossInfoDict[crossChain].COIN) {
-          let oriStoremanGroups = await wanChain.getStoremanGroups(crossChain);
-          for (let storeman of oriStoremanGroups) {
-            if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanOri) {
-              crossTokens[crossChain]['0x'] = {
-                "origHtlc": moduleConfig.crossInfoDict[crossChain].COIN.originalChainHtlcAddr,
-                "wanHtlc": moduleConfig.crossInfoDict[crossChain].COIN.wanchainHtlcAddr,
-                "tokenType": "COIN",
-                "tokenSymbol": crossChain
-              };
-              empty = false;
-              break;
+        if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
+          if (!storemanPk) {
+            resolve(null);
+            return;
+          }
+          // if (moduleConfig.crossInfoDict[crossChain].COIN) {
+          //   let oriStoremanGroups = await wanChain.getStoremanGroups(crossChain);
+          //   for (let storeman of oriStoremanGroups) {
+          //     if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanOri) {
+          //       crossTokens[crossChain]['0x'] = {
+          //         "origHtlc": moduleConfig.crossInfoDict[crossChain].COIN.originalChainHtlcAddr,
+          //         "wanHtlc": moduleConfig.crossInfoDict[crossChain].COIN.wanchainHtlcAddr,
+          //         "tokenType": "COIN",
+          //         "tokenSymbol": crossChain
+          //       };
+          //       empty = false;
+          //       break;
+          //     }
+          //   }
+          // }
+  
+          if (moduleConfig.crossInfoDict[crossChain].TOKEN) {
+            let oriTokens = await wanChain.getRegTokenTokens(crossChain);
+            let oriTokenStoremanGroups = await wanChain.getTokenStoremanGroupsOfMutiTokens(crossChain, oriTokens);
+            // console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
+  
+            for (let storeman of oriTokenStoremanGroups) {
+              if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === '0x01000368746c63656f737465737431') {
+              // if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
+                for (let token of oriTokens) {
+                  if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
+                  // if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
+                    let chain = getGlobalChain('WAN');
+                    let tokenInfo = await chain.getTokenInfo(token.tokenWanAddr);
+                    Object.assign(token, tokenInfo);
+                    chain.bigNumber2String(token, 10);
+                    crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
+                    // crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
+                    empty = false;
+                    // break;
+                  }
+                }
+              }
             }
           }
-        }
+        } else {
+          if (moduleConfig.crossInfoDict[crossChain].COIN) {
+            let oriStoremanGroups = await wanChain.getStoremanGroups(crossChain);
+            for (let storeman of oriStoremanGroups) {
+              if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanOri) {
+                crossTokens[crossChain]['0x'] = {
+                  "origHtlc": moduleConfig.crossInfoDict[crossChain].COIN.originalChainHtlcAddr,
+                  "wanHtlc": moduleConfig.crossInfoDict[crossChain].COIN.wanchainHtlcAddr,
+                  "tokenType": "COIN",
+                  "tokenSymbol": crossChain
+                };
+                empty = false;
+                // break;
+              }
+            }
+          }
 
-        if (moduleConfig.crossInfoDict[crossChain].TOKEN) {
-          let oriTokens = await wanChain.getRegTokenTokens(crossChain);
-          let oriTokenStoremanGroups = await wanChain.getTokenStoremanGroupsOfMutiTokens(crossChain, oriTokens);
-          // console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
-
-          for (let storeman of oriTokenStoremanGroups) {
-            if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
-            // if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
-              for (let token of oriTokens) {
-                if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
-                // if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
-                  let chain = getGlobalChain('WAN');
-                  let tokenInfo = await chain.getTokenInfo(token.tokenWanAddr);
-                  Object.assign(token, tokenInfo);
-                  chain.bigNumber2String(token, 10);
-                  crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
-                  // crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
-                  empty = false;
-                  break;
+          if (moduleConfig.crossInfoDict[crossChain].TOKEN) {
+            let oriTokens = await wanChain.getRegTokenTokens(crossChain);
+            let oriTokenStoremanGroups = await wanChain.getTokenStoremanGroupsOfMutiTokens(crossChain, oriTokens);
+            // console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
+  
+            for (let storeman of oriTokenStoremanGroups) {
+              if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
+                for (let token of oriTokens) {
+                  if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
+                  // if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
+                    let chain = getGlobalChain('WAN');
+                    let tokenInfo = await chain.getTokenInfo(token.tokenWanAddr);
+                    Object.assign(token, tokenInfo);
+                    chain.bigNumber2String(token, 10);
+                    crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
+                    // crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
+                    empty = false;
+                    // break;
+                  }
                 }
               }
             }
           }
         }
-      }
+
+      // }
       if (!empty) {
         resolve(crossTokens);
       } else {
@@ -142,14 +198,14 @@ async function initCrossTokens(chainType, storemanWan, storemanOri) {
   });
 }
 
-async function initConfig(chainType, storemanWan, storemanOri) {
+async function initConfig(crossChain, storemanWan, storemanOri, storemanPk) {
   let storemanWanAddr = storemanWan.toLowerCase();
-  let storemanOriAddr = encodeAccount(chainType, storemanOri.toLowerCase());
+  let storemanOriAddr = encodeAccount(crossChain, storemanOri.toLowerCase());
   console.log("aaron debug here, storemanOriAddr", storemanOri, storemanOriAddr)
 
   return new Promise(async (resolve, reject) => {
     try {
-      let crossTokens = await initCrossTokens(chainType, storemanWanAddr, storemanOriAddr);
+      let crossTokens = await initCrossTokens(crossChain, storemanWanAddr, storemanOriAddr, storemanPk);
       if (crossTokens != null) {
         fs.readFile(configPath, (err, data) => {
           if (err) {
@@ -166,8 +222,11 @@ async function initConfig(chainType, storemanWan, storemanOri) {
             net = "main";
           }
           config[net].storemanWan = storemanWanAddr;
-          config[net].crossTokens[chainType].CONF.storemanOri = storemanOriAddr;
-          config[net].crossTokens[chainType].TOKEN = crossTokens[chainType];
+          config[net].crossTokens[crossChain].CONF.storemanOri = storemanOri;
+          config[net].crossTokens[crossChain].TOKEN = crossTokens[crossChain];
+          if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
+            config[net].crossTokens[crossChain].CONF.PK = global.pk;
+          }
 
           var str = JSON.stringify(config, null, 2);
           fs.writeFile(configPath, str, (err) => {
@@ -186,8 +245,6 @@ async function initConfig(chainType, storemanWan, storemanOri) {
     }
   });
 }
-
-
 
 function backupIssueFile(issueCollectionPath) {
   let date = new Date();
@@ -268,9 +325,14 @@ function sleep(time) {
 
 function writeConfigToFile(argv) {
   return new Promise(async (resolve, reject) => {
+    if (global.storemanRenew) {
+      resolve();
+      return;
+    }
+
     fs.readFile(configPath, (err, data) => {
       if (err) {
-        log.error("writeConfigToFile readFile ", err);
+        console.log("writeConfigToFile readFile ", err);
         resolve(false);
       }
 
@@ -284,25 +346,30 @@ function writeConfigToFile(argv) {
         net = "main";
       }
 
-      if (argv.leader) {
+      // let url = 'http://' + process.env.RPCIP + ':' + process.env.RPCPORT;
+      // // let isLeader = process.env.IS_LEADER === 'true' ? true : false;
+      // let isLeader = global.isLeader ? true : false
+      // config[net].wanWeb3Url = url;
+      // config[net].mpcUrl = url;
+      // config[net].isLeader = isLeader;
 
-      } else {
-
+      let url;
+      if (argv.mpcIP) {
+        url = 'http://' + argv.mpcIP + ':' + argv.mpcPort;
+        config[net].mpcUrl = url;
+        global.mpcUrl = url;
       }
-      let url = 'http://' + process.env.RPCIP + ':' + process.env.RPCPORT;
-      // let isLeader = process.env.IS_LEADER === 'true' ? true : false;
-      let isLeader = global.isLeader ? true : false
-      config[net].wanWeb3Url = url;
-      config[net].mpcUrl = url;
+
+      let isLeader = argv.isLeader ? true : false
       config[net].isLeader = isLeader;
 
       var str = JSON.stringify(config, null, 2);
-      fs.writeFile(filename, str, (err) => {
+      fs.writeFile(configPath, str, (err) => {
         if (err) {
-          log.error("writeConfigToFile writeFile ", err);
+          console.log("writeConfigToFile writeFile ", err);
           resolve(false);
         } else {
-          log.info("Update done! mpcUrl %s", url);
+          console.log("writeConfigToFile writeFile done!");
           resolve(true);
         }
       })
