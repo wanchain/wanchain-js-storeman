@@ -222,7 +222,7 @@ async function update() {
         }
         crossTokens = await initConfig(crossChain, storemanWan, storemanOri, storemanPk);
         if (crossTokens === null) {
-          global.syncLogger.debug("Couldn't find any tokens that the storeman is in charge of. ", crossChain, storemanWan, storemanOri, storemanPk);
+          global.syncLogger.debug("Storeman agent renew config: couldn't find any tokens that the storeman is in charge of. ", crossChain, storemanWan, storemanOri, storemanPk);
         }
         console.log(crossTokens);
       } else {
@@ -237,7 +237,7 @@ async function update() {
 
   // global.storemanRenew = false;
   global.configMutex = false;
-  console.log("Storeman agent renew config end. ");
+  global.syncLogger.debug("Storeman agent renew config end. ");
 }
 
 async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
@@ -580,7 +580,7 @@ async function main() {
 
   if (global.argv.renew) {
     var renewJob = new CronJob({
-      cronTime: '0 0 */' + period + ' * * *',
+      cronTime: '0 0 */' + global.argv.period + ' * * *',
       onTick: update,
       start: false,
       timeZone: 'Asia/Shanghai'
@@ -595,7 +595,7 @@ async function main() {
 
 process.on('unhandledRejection', error => {
   // Will print "unhandledRejection err is not defined"
-  console.log('unhandledRejection', error.message);
+  global.syncLogger.error('unhandledRejection', error.message);
 });
 
 

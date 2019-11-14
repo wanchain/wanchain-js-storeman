@@ -14,7 +14,7 @@ class crossChainAccount {
       this.format = accountFormat ? accountFormat : chain.accountFormat;
       this.prefix = accountPrefix ? accountPrefix : chain.accountPrefix;
     } else {
-      console.error("invalid original chain");
+      // console.error("invalid original chain");
       return;
     }
     // format

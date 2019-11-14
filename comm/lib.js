@@ -218,7 +218,7 @@ async function initConfig(crossChain, storemanWan, storemanOri, storemanPk) {
           config[net].crossTokens[crossChain].CONF.storemanOri = storemanOri;
           config[net].crossTokens[crossChain].TOKEN = crossTokens[crossChain];
           if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
-            config[net].crossTokens[crossChain].CONF.storemanPk = global.storemanPk;
+            config[net].crossTokens[crossChain].CONF.storemanPk = storemanPk;
           }
 
           var str = JSON.stringify(config, null, 2);
