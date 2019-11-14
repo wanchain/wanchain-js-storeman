@@ -77,7 +77,7 @@ module.exports = class EosAgent extends baseAgent{
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
 
-    let signData = [hexTrip0x(this.pk), this.storemanAddress, this.amount, hexTrip0x(this.hashKey), this.crossAddress, this.pk];
+    let signData = [hexTrip0x(this.storemanPk), this.storemanAddress, this.amount, hexTrip0x(this.hashKey), this.crossAddress, this.storemanPk];
     let internalSignature = await this.internalSignViaMpc(signData);
     let actions = [{
       account: this.contractAddr,
@@ -92,14 +92,14 @@ module.exports = class EosAgent extends baseAgent{
         // user: this.crossAddress,
         // value: this.amount
         // storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
-        // storeman: hexTrip0x(this.pk),
+        // storeman: hexTrip0x(this.storemanPk),
         storeman: this.storemanAddress,
         user: this.crossAddress,
         // value: this.amount,
         quantity: this.amount,
         xHash: hexTrip0x(this.hashKey),
         wanAddr: this.crossAddress,
-        pk: this.pk,
+        pk: this.storemanPk,
         r: internalSignature.R,
         s: internalSignature.S
       }
@@ -138,7 +138,7 @@ module.exports = class EosAgent extends baseAgent{
         }],
         data: {
           // storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
-          // storeman: hexTrip0x(this.pk),
+          // storeman: hexTrip0x(this.storemanPk),
           storeman: this.storemanAddress,
           x: hexTrip0x(this.key),
           r: hexTrip0x(internalSignature.R),
@@ -164,7 +164,7 @@ module.exports = class EosAgent extends baseAgent{
         permission: 'active',
       }],
       data: {
-        // storeman: hexTrip0x(this.pk),
+        // storeman: hexTrip0x(this.storemanPk),
         storeman: this.storemanAddress,
         xHash: hexTrip0x(this.hashKey),
         r: internalSignature.R,

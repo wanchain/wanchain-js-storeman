@@ -19,7 +19,7 @@ module.exports = class WanAgent extends baseAgent{
     super(crossChain, tokenType, record);
 
     this.RawTrans = RawTrans;
-    this.storemanAddress = this.config.storemanWan;
+    this.storemanAddress = this.crossConf.storemanWan;
 
     console.log("aaron debug here, WAN agent", crossChain, this.storemanAddress);
   }
@@ -96,7 +96,7 @@ module.exports = class WanAgent extends baseAgent{
 
     // web3.toBigNumber(eosToFloat(this.amount))
     if (this.schnorrMpc) {
-      let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, this.amount, this.pk];
+      let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, this.amount, this.storemanPk];
       let typesArray = ['bytes', 'bytes32', 'address', 'unit', 'bytes'];
       let internalSignature = await this.internalSignViaMpc(signData, typesArray);
       if (this.isLeader) {

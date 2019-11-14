@@ -28,7 +28,8 @@ class crossChainAccount {
   encodeAccount(originAccount) {
     // return originAccount;
     if (!(this.valid && originAccount)) {
-      return null;
+      // return null;
+      return originAccount;
     }
     if (this.prefix) {
       originAccount = originAccount.replace(new RegExp(this.prefix, 'i'), "");
@@ -45,7 +46,8 @@ class crossChainAccount {
   decodeAccount(wAccount) {
     // return {account: wAccount};
     if (!(this.valid && wAccount)) {
-      return null;
+      // return null;
+      return {account: wAccount};
     }
     wAccount = wAccount.replace(/0x/i, "");
     if (wAccount.length <= 6) { // header at least contain version(1byte) + chain(2bytes)

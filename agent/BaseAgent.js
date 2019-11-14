@@ -27,7 +27,7 @@ module.exports = class BaseAgent {
 
     this.schnorrMpc = moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc;
     if (this.schnorrMpc) {
-      this.pk = this.crossConf.PK;
+      this.storemanPk = this.crossConf.storemanPk;
     }
     this.mpcSignature = moduleConfig.mpcSignature;
     this.secureLockIntervalRatio = moduleConfig.secureLockIntervalRatio;
@@ -114,45 +114,46 @@ module.exports = class BaseAgent {
 
   getNonce() {
     return new Promise(async (resolve, reject) => {
-      this.logger.debug("getNonce begin!")
-      let chainMutex = this.transChainType + 'Mutex';
-      while (global[chainMutex]) {
-        await sleep(3);
-      }
-      this.logger.debug(chainMutex, "mutexNonce true");
-      global[chainMutex] = true;
       let nonce = 0;
       let chainNonce = this.transChainType + 'LastNonce';
       let nonceRenew = this.transChainType + 'NonceRenew';
       let noncePending = this.transChainType + 'NoncePending';
       let storemanAddress = this.storemanAddress;
+      this.logger.debug("getNonce begin!", storemanAddress)
+      let chainMutex = this.transChainType + 'Mutex';
+      while (global[chainMutex][storemanAddress]) {
+        await sleep(3);
+      }
+      this.logger.debug(chainMutex, storemanAddress, "mutexNonce true");
+      global[chainMutex][storemanAddress] = true;
+
       console.log("aaron debug here getNonce", storemanAddress);
 
       try {
-        if (global[nonceRenew]) {
+        if (global[nonceRenew][storemanAddress]) {
           nonce = await this.chain.getNonceSync(storemanAddress);
           nonce = parseInt(nonce, 16);
-          global[nonceRenew] = false;
-        } else if (global[noncePending]) {
+          global[nonceRenew][storemanAddress] = false;
+        } else if (global[noncePending][storemanAddress]) {
           nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
           nonce = parseInt(nonce, 16);
-          global[noncePending] = false;
+          global[noncePending][storemanAddress] = false;
         } else {
-          nonce = global[chainNonce];
+          nonce = global[chainNonce][storemanAddress];
         }
 
-        this.logger.debug(chainMutex, "mutexNonce false");
-        global[chainMutex] = false;
+        this.logger.debug(chainMutex, storemanAddress, "mutexNonce false");
+        global[chainMutex][storemanAddress] = false;
 
-        if (nonce >= global[chainNonce]) {
-          global[chainNonce] = nonce;
-          global[chainNonce]++;
+        if (nonce >= global[chainNonce][storemanAddress]) {
+          global[chainNonce][storemanAddress] = nonce;
+          global[chainNonce][storemanAddress]++;
         }
         resolve(nonce);
       } catch (err) {
-        this.logger.error("getNonce failed", err);
-        this.logger.debug(chainMutex, "mutexNonce false");
-        global[chainMutex] = false;
+        this.logger.error("getNonce failed", storemanAddress, err);
+        this.logger.debug(chainMutex, storemanAddress, "mutexNonce false");
+        global[chainMutex][storemanAddress] = false;
         reject(err);
       }
     });
@@ -205,7 +206,7 @@ module.exports = class BaseAgent {
         if (!err && result !== null) {
           resolve(result);
         } else {
-          global[this.transChainType + 'NoncePending'] = true;
+          global[this.transChainType + 'NoncePending'][this.storemanAddress] = true;
           reject(err);
         }
       });
@@ -290,7 +291,7 @@ module.exports = class BaseAgent {
     return new Promise(async (resolve, reject) => {
       try {
         this.logger.debug("********************************** getInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
-        let mpc = new SchnorrMPC(mpcSignData, this.pk, this.hashKey);
+        let mpc = new SchnorrMPC(mpcSignData, this.storemanPk, this.hashKey);
         // internalSignature is a object, {R:, S:}
         let internalSignature = await mpc.signViaMpc();
         this.logger.debug("********************************** getInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
@@ -306,7 +307,7 @@ module.exports = class BaseAgent {
     return new Promise(async (resolve, reject) => {
       try {
         this.logger.debug("********************************** validateInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
-        let mpc = new SchnorrMPC(mpcSignData, this.pk, this.hashKey);
+        let mpc = new SchnorrMPC(mpcSignData, this.storemanPk, this.hashKey);
         let internalSignature = await mpc.addValidDataViaMpc();
         this.logger.debug("********************************** validateInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
         resolve({
@@ -386,7 +387,7 @@ module.exports = class BaseAgent {
         (eventName === this.withdrawEvent[2] && chainType === 'WAN'))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
 
-        if([this.crossConf.storemanOri, this.crossConf.PK, this.config.storemanWan].indexOf(storeman) === -1) {
+        if([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(storeman) === -1) {
           return null;
         }
       }

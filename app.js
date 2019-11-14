@@ -1,9 +1,10 @@
 "use strict"
 
 const optimist = require('optimist');
+const CronJob = require("cron").CronJob;
 
 let argv = optimist
-  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [mpcPort] -dbip [dbIp] -dbport [dbPort] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] [--testnet] [--dev] [--leader] [--init] [--renew] [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password]")
+  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [mpcPort] -dbip [dbIp] -dbport [dbPort] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] [--testnet] [--dev] [--leader] [--init] [--renew] -period [period] [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password]")
   .alias('h', 'help')
   .alias('i', 'index')
   .alias('mpcip', 'mpcIP')
@@ -36,12 +37,14 @@ let argv = optimist
   .describe('wallet', 'identify EOS keosd wallet name if keosd enable')
   .describe('password', 'identify EOS keosd wallet password if keosd enable, or just password')
   .default('i', 0)
+  .default('period', '2')
   .string('pk')
   .string('mpcip')
   .string('dbip')
   .string('c')
   .string('w')
   .string('o')
+  .string('period')
   .string('keosdUrl', 'wallet', 'password')
   .boolean('testnet', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr')
   .argv;
@@ -71,7 +74,7 @@ if (argv.index) {
   global.index = '';
 }
 
-global.pk = argv.pk;
+global.storemanPk = argv.pk;
 global.mpcIP = argv.mpcIP;
 global.mpcPort = argv.mpcPort;
 global.dbIp = argv.dbIp;
@@ -132,7 +135,6 @@ async function init() {
     global.config = loadConfig();
 
     initChain('WAN');
-    await initNonce('WAN');
  
     global.storemanRestart = true;
     backupIssueFile(global.config.issueCollectionPath);
@@ -140,20 +142,29 @@ async function init() {
     tokenList.supportTokenAddrs = [];
     tokenList.wanchainHtlcAddr = [];
     tokenList.originalChainHtlcAddr = [];
-    tokenList.storemanWan = global.config.storemanWan;
-    tokenList.storemanAddress = [global.config.storemanWan];
+    tokenList.storemanAddress = [];
 
     for (let crossChain in global.config.crossTokens) {
       if (!moduleConfig.crossInfoDict[crossChain].CONF.enable) {
         continue;
       }
+
       initChain(crossChain);
-      await initNonce(crossChain);
 
       tokenList[crossChain] = {};
       tokenList[crossChain].storemanOri = global.config.crossTokens[crossChain].CONF.storemanOri;
+      tokenList[crossChain].storemanWan = global.config.crossTokens[crossChain].CONF.storemanWan;
+
+      if (!moduleConfig.crossInfoDict[crossChain].CONF.nonceless) {
+        await initNonce(crossChain, tokenList[crossChain].storemanOri);
+        syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", crossChain, tokenList[crossChain].storemanOri, global[crossChain.toLowerCase() + 'LastNonce'][tokenList[crossChain].storemanOri]);
+      }
+      await initNonce('WAN', tokenList[crossChain].storemanWan);
+      syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", 'WAN', tokenList[crossChain].storemanWan,  global['wanLastNonce'][tokenList[crossChain].storemanWan]);
+
+      tokenList.storemanAddress.push(tokenList[crossChain].storemanWan);
       if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
-        tokenList.storemanAddress.push(global.config.crossTokens[crossChain].CONF.PK);
+        tokenList.storemanAddress.push(global.config.crossTokens[crossChain].CONF.storemanPk);
       } else {
         tokenList.storemanAddress.push(tokenList[crossChain].storemanOri);
       }
@@ -183,13 +194,6 @@ async function init() {
       }
     }
     monitorLogger.info(tokenList);
-
-    for (let crossChain in moduleConfig.crossInfoDict) {
-      if (moduleConfig.crossInfoDict[crossChain].CONF.enable && !moduleConfig.crossInfoDict[crossChain].CONF.nonceless) {
-        syncLogger.debug("Nonce of chain:", crossChain, global[crossChain.toLowerCase() + 'LastNonce']);
-      }
-    }
-    syncLogger.debug("Nonce of chain:", 'WAN', global['wanLastNonce']);
   } catch (err) {
     console.log("init error ", err);
     process.exit();
@@ -197,10 +201,12 @@ async function init() {
 }
 
 async function update() {
-  let storemanWan = global.config.storemanWan;
+  let storemanWan;
   let storemanOri;
   global.storemanRenew = true;
   global.configMutex = true;
+
+  global.syncLogger.debug("Storeman agent renew config begin");
 
   for (let crossChain in global.config.crossTokens) {
     try {
@@ -209,16 +215,21 @@ async function update() {
       // }
       if (global.config["crossTokens"][crossChain].CONF.storemanOri) {
         storemanOri = global.config["crossTokens"][crossChain].CONF.storemanOri;
-        let crossTokens = await initConfig(crossChain, storemanWan, storemanOri);
+        storemanWan = global.config["crossTokens"][crossChain].CONF.storemanWan;
+        let crossTokens, storemanPk;
+        if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
+          storemanPk = global.config["crossTokens"][crossChain].CONF.storemanPk;
+        }
+        crossTokens = await initConfig(crossChain, storemanWan, storemanOri, storemanPk);
         if (crossTokens === null) {
-          console.log("Couldn't find any tokens that the storeman is in charge of. ", crossChain, storemanWan, storemanOri);
+          global.syncLogger.debug("Couldn't find any tokens that the storeman is in charge of. ", crossChain, storemanWan, storemanOri, storemanPk);
         }
         console.log(crossTokens);
       } else {
-        console.log("Storeman agent should be initialized with storemanWanAddr storemanOriAddr at the first time!");
+        global.syncLogger.debug("Storeman agent should be initialized with storemanWanAddr storemanOriAddr at the first time!");
       }
     } catch (err) {
-      console.log("Storeman agent update error, plz check the global.config and try again.", err);
+      global.syncLogger.debug("Storeman agent update error, plz check the global.config and try again.", err);
     }
   }
 
@@ -226,6 +237,7 @@ async function update() {
 
   // global.storemanRenew = false;
   global.configMutex = false;
+  console.log("Storeman agent renew config end. ");
 }
 
 async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
@@ -566,9 +578,19 @@ async function main() {
   }
   await init();
 
-  syncMain(global.syncLogger, db);
-  await updateRecordAfterRestart(global.monitorLogger);
-  handlerMain(global.monitorLogger, db);
+  if (global.argv.renew) {
+    var renewJob = new CronJob({
+      cronTime: '0 0 */' + period + ' * * *',
+      onTick: update,
+      start: false,
+      timeZone: 'Asia/Shanghai'
+    });
+    renewJob.start();
+  }
+
+  // syncMain(global.syncLogger, db);
+  // await updateRecordAfterRestart(global.monitorLogger);
+  // handlerMain(global.monitorLogger, db);
 }
 
 process.on('unhandledRejection', error => {

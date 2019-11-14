@@ -19,6 +19,7 @@
   "homepage": "https://github.com/wanchain/wanchain-js-storeman#readme",
   "dependencies": {
     "aws-sdk": "^2.307.0",
+    "cron": "^1.7.2",
     "eosjs": "^16.0.9",
     "keythereum": "^1.0.4",
     "mongoose": "^5.2.12",

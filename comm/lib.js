@@ -47,7 +47,7 @@ function getGlobalChain(chainType) {
   return global[chainName];
 }
 
-async function initNonce(chainType) {
+async function initNonce(chainType, address) {
   return new Promise(async (resolve, reject) => {
     if (global.storemanRenew) {
       resolve();
@@ -55,25 +55,17 @@ async function initNonce(chainType) {
     }
 
     try {
-      // let config = global.config;
-      global[chainType.toLowerCase() + 'NonceRenew'] = false;
-      global[chainType.toLowerCase() + 'NoncePending'] = false;
-
-      let chainNonce = chainType.toLowerCase() + 'LastNonce';
       let chainName = chainType.toLowerCase() + "Chain";
-      let storemanAddress;
-      if (chainType === 'WAN') {
-        storemanAddress = global.config.storemanWan;
-      } else {
-        if (moduleConfig.crossInfoDict[chainType].CONF.nonceless) {
-          resolve();
-          return;
-        }
-        storemanAddress = global.config.crossTokens[chainType].CONF.storemanOri;
-      }
+      global[chainType.toLowerCase() + 'NonceRenew'] = {};
+      global[chainType.toLowerCase() + 'NoncePending'] = {};
+      global[chainType.toLowerCase() + 'Mutex'] = {};
+      global[chainType.toLowerCase() + 'LastNonce'] = {};
 
-      let nonce = await global[chainName].getNonceIncludePendingSync(storemanAddress);
-      global[chainNonce] = parseInt(nonce, 16);
+      global[chainType.toLowerCase() + 'NonceRenew'][address] = false;
+      global[chainType.toLowerCase() + 'NoncePending'][address] = false;
+
+      let nonce = await global[chainName].getNonceIncludePendingSync(address);
+      global[chainType.toLowerCase() + 'LastNonce'][address] = parseInt(nonce, 16);
       resolve();
     } catch (err) {
       reject(err);
@@ -167,15 +159,15 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
             // console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
   
             for (let storeman of oriTokenStoremanGroups) {
-              if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
+              if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanOri) {
                 for (let token of oriTokens) {
-                  if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
+                  if (token.tokenOrigAddr === storeman.tokenOrigAddr) {
                   // if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
                     let chain = getGlobalChain('WAN');
                     let tokenInfo = await chain.getTokenInfo(token.tokenWanAddr);
                     Object.assign(token, tokenInfo);
                     chain.bigNumber2String(token, 10);
-                    crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
+                    crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAddr)] = token;
                     // crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
                     empty = false;
                     // break;
@@ -221,11 +213,12 @@ async function initConfig(crossChain, storemanWan, storemanOri, storemanPk) {
           } else {
             net = "main";
           }
-          config[net].storemanWan = storemanWanAddr;
+
+          config[net].crossTokens[crossChain].CONF.storemanWan = storemanWanAddr;
           config[net].crossTokens[crossChain].CONF.storemanOri = storemanOri;
           config[net].crossTokens[crossChain].TOKEN = crossTokens[crossChain];
           if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
-            config[net].crossTokens[crossChain].CONF.PK = global.pk;
+            config[net].crossTokens[crossChain].CONF.storemanPk = global.storemanPk;
           }
 
           var str = JSON.stringify(config, null, 2);

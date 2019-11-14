@@ -478,7 +478,8 @@ module.exports = class stateAction {
             transConfirmed: 0
           }
 
-          global[transOnChain + 'NonceRenew'] = true;
+          let storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanWan;
+          global[transOnChain + 'NonceRenew'][storemanAddr] = true;
 
           await this.updateRecord(content);
           return;
@@ -555,7 +556,8 @@ module.exports = class stateAction {
   }
 
   async getStoremanQuota() {
-    let storemanGroupAddr = global.config.storemanWan;
+    // let storemanGroupAddr = global.config.storemanWan;
+    let storemanGroupAddr = global.config.crossTokens[this.crossChain].CONF.storemanWan;
     let storemanQuotaInfo;
     let chain = getGlobalChain('WAN');
 
