@@ -55,13 +55,20 @@ class EosChain extends baseChain {
     });
   }
 
-  eosToFloat(str) 
-  { 
-    const floatRegex = /[^\d.-]/g
-    return parseFloat(str.replace(floatRegex, '')); 
+  // eosToFloat(str) 
+  // { 
+  //   const floatRegex = /[^\d.-]/g
+  //   return parseFloat(str.replace(floatRegex, '')); 
+  // }
+
+  encodeToken(account, quantity) {
+    let symbol = quantity.split(' ')[1];
+    // let decimals = quantity.split(' ')[0].split('.')[1] ? quantity.split(' ')[0].split('.')[1].length : 0;
+    return account + ':' + symbol;
   }
 
   actionDecode(actions) {
+    let self = this;
     let chainType = this.chainType;
     const trx = [];
     actions.map(action => {
@@ -83,11 +90,11 @@ class EosChain extends baseChain {
               args: {
                 user: from,
                 toHtlcAddr: to,
-                storemanGroup: '0x' + memo.split(':')[3],
+                storeman: '0x' + memo.split(':')[3],
                 value: quantity,
                 xHash: '0x' + memo.split(':')[1],
                 wanAddr: '0x' + memo.split(':')[2],
-                tokenOrigAccount: account
+                tokenOrigAccount: self.encodeToken(account, quantity)
               }
             };
           } else {
@@ -243,6 +250,9 @@ class EosChain extends baseChain {
           receipt = await self.getTransactionReceiptSync(txHash);
           curBlockNum = await self.getBlockNumberSync();
           receiptBlockNumber = receipt.block_num;
+        }
+        if (receipt.trx.receipt.status === 'executed') {
+          receipt.status = '0x1';
         }
         resolve(receipt);
       } catch (err) {

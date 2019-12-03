@@ -67,12 +67,12 @@ class WanChain extends baseChain {
           }
           let storemanGroup = [];
           for (let i of parsedLogs) {
-            if (i.event === 'SmgRegister') {
+            if (i && i.event === 'SmgRegister') {
               storemanGroup.push(i.args);
             }
           }
           for (let i of parsedLogs) {
-            if (i.event === 'SmgApplyUnRegister') {
+            if (i && i.event === 'SmgApplyUnRegister') {
               for (let index = 0; index < storemanGroup.length; index++) {
                 if ((storemanGroup[index].tokenOrigAddr === i.args.tokenOrigAddr && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
                   storemanGroup.splice(index, 1);
@@ -148,12 +148,12 @@ class WanChain extends baseChain {
             }
 
             for (let i of parsedLogs) {
-              if (i.event === 'StoremanGroupRegistrationLogger' && i.args.tokenOrigAddr === tokenAddr) {
+              if (i && i.event === 'StoremanGroupRegistrationLogger' && i.args.tokenOrigAddr === tokenAddr) {
                 storemanGroup.push(i.args);
               }
             }
             for (let i of parsedLogs) {
-              if (i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args.tokenOrigAddr === tokenAddr) {
+              if (i && i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args.tokenOrigAddr === tokenAddr) {
                 for (let index = 0; index < storemanGroup.length; index++) {
                   if ((storemanGroup[index].tokenOrigAddr === i.args.tokenOrigAddr && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
                     storemanGroup.splice(index, 1);
@@ -197,18 +197,31 @@ class WanChain extends baseChain {
           let regEvents = [];
           let regTokenRecord = {};
           for (let i of parsedLogs) {
-            if (i.event === 'TokenAddedLogger') {
-              if (regTokenRecord.hasOwnProperty(i.args.tokenOrigAddr) && (regTokenRecord[i.args.tokenOrigAddr] < i.blockNumber)) {
+            if (i && i.event === 'TokenAddedLogger') {
+              if (regTokenRecord.hasOwnProperty(i.args.tokenOrigAccount) && (regTokenRecord[i.args.tokenOrigAccount] < i.blockNumber)) {
                 for (let index = 0; index < regEvents.length; index++) {
-                  if (regEvents[index].tokenOrigAddr === i.args.tokenOrigAddr) {
+                  if (regEvents[index].tokenOrigAccount === i.args.tokenOrigAccount) {
                     regEvents.splice(index, 1);
                     break;
                   }
                 }
               }
-              regTokenRecord[i.args.tokenOrigAddr] = i.blockNumber;
+              regTokenRecord[i.args.tokenOrigAccount] = i.blockNumber;
               regEvents.push(i.args);
             }
+
+            // if (i && i.event === 'TokenAddedLogger') {
+            //   if (regTokenRecord.hasOwnProperty(i.args.tokenOrigAddr) && (regTokenRecord[i.args.tokenOrigAddr] < i.blockNumber)) {
+            //     for (let index = 0; index < regEvents.length; index++) {
+            //       if (regEvents[index].tokenOrigAddr === i.args.tokenOrigAddr) {
+            //         regEvents.splice(index, 1);
+            //         break;
+            //       }
+            //     }
+            //   }
+            //   regTokenRecord[i.args.tokenOrigAddr] = i.blockNumber;
+            //   regEvents.push(i.args);
+            // }
           }
           for (let i of regEvents) {
             self.bigNumber2String(i, 10);

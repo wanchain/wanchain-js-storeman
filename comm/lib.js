@@ -6,6 +6,9 @@ const fs = require('fs');
 const Eos = require('eosjs');
 // const Web3 = require("web3");
 // const net = require('net');
+const BigNumber = require('bignumber.js');
+const crypto = require('crypto');
+
 const EthChain = require('chain/eth');
 const WanChain = require('chain/wan');
 const EosChain = require('chain/eos');
@@ -38,12 +41,12 @@ function getChain(chainType) {
 
 function initChain(chainType) {
   let chainName = chainType.toLowerCase() + "Chain";
-  global[chainName] = getChain(chainType);
+  global[chainName] = getChain(chainType.toUpperCase());
 }
 
 function getGlobalChain(chainType) {
   let chainName = chainType.toLowerCase() + "Chain";
-  global[chainName] = getChain(chainType);
+  global[chainName] = getChain(chainType.toUpperCase());
   return global[chainName];
 }
 
@@ -63,6 +66,7 @@ async function initNonce(chainType, address) {
 
       global[chainType.toLowerCase() + 'NonceRenew'][address] = false;
       global[chainType.toLowerCase() + 'NoncePending'][address] = false;
+      global[chainType.toLowerCase() + 'Mutex'][address] = false;
 
       let nonce = await global[chainName].getNonceIncludePendingSync(address);
       global[chainType.toLowerCase() + 'LastNonce'][address] = parseInt(nonce, 16);
@@ -118,7 +122,7 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
             // console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
   
             for (let storeman of oriTokenStoremanGroups) {
-              if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === '0x01000368746c63656f737465737431') {
+              if (storeman.storemanGroup === storemanPk) {
               // if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
                 for (let token of oriTokens) {
                   if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
@@ -288,10 +292,9 @@ function eosToFloat(str)
   return parseFloat(str.replace(floatRegex, '')); 
 }
 
-function floatToEos(amount, symbol) {
+function floatToEos(amount, symbol, decimals = 4) {
   let DecimalPad = Eos.modules.format.DecimalPad;
-  let precision = 4;
-  return `${DecimalPad(amount, precision)} ${symbol}`
+  return `${DecimalPad(amount, parseInt(decimals))} ${symbol}`
 }
 
 function hexTrip0x(hexs) {
@@ -306,6 +309,36 @@ function hexAdd0x(hexs) {
       return '0x' + hexs;
   }
   return hexs;
+}
+
+function toBigNumber (n) {
+  n = n || 0;
+
+  if (typeof n === 'string' && (n.indexOf('0x') === 0 || n.indexOf('-0x') === 0)) {
+      return new BigNumber(n.replace('0x', ''), 16);
+  }
+
+  return new BigNumber(n.toString(10), 10);
+}
+
+function tokenToWeiHex(token, decimals = 18) {
+  let wei = toBigNumber(token).times('1e' + decimals).trunc();
+  return '0x' + wei.toString(16);
+}
+
+function tokenToWei(token, decimals = 18) {
+  let wei = toBigNumber(token).times('1e' + decimals).trunc();
+  return wei.toString(10);
+}
+
+function weiToToken(tokenWei, decimals = 18) {
+  return toBigNumber(tokenWei).dividedBy('1e' + decimals).toString(10);
+}
+
+function sha256(params) {
+  let kBuf = new Buffer(params.slice(2), 'hex');
+  let hash = crypto.createHash("sha256").update(kBuf);
+  return '0x' + hash.digest("hex");
 }
 
 function sleep(time) {
@@ -385,4 +418,8 @@ exports.eosToFloat = eosToFloat;
 exports.floatToEos = floatToEos;
 exports.hexTrip0x = hexTrip0x;
 exports.hexAdd0x = hexAdd0x;
+exports.tokenToWeiHex = tokenToWeiHex;
+exports.tokenToWei = tokenToWei;
+exports.weiToToken = weiToToken;
+exports.sha256 = sha256;
 exports.writeConfigToFile = writeConfigToFile;

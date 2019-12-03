@@ -18,6 +18,10 @@ module.exports = class WanAgent extends baseAgent{
   constructor(crossChain, tokenType, record = null) {
     super(crossChain, tokenType, record);
 
+    if (record !== null) {
+      this.amount = web3.toBigNumber(record.value);
+    }
+
     this.RawTrans = RawTrans;
     this.storemanAddress = this.crossConf.storemanWan;
 
@@ -25,7 +29,7 @@ module.exports = class WanAgent extends baseAgent{
   }
 
   getChainType() {
-    return 'WAN';
+    return 'WAN'.toLowerCase();
   }
 
   getContractInfo() {
@@ -35,6 +39,7 @@ module.exports = class WanAgent extends baseAgent{
   }
 
   getLockedTime() {
+    return 3600;
     return new Promise((resolve, reject) => {
       try {
         let getLockedTime = this.chain.getSolVar(this.contract.abi, this.contractAddr, 'lockedTime');
@@ -89,7 +94,7 @@ module.exports = class WanAgent extends baseAgent{
 
   // ETH: eth2wethLock(bytes32 xHash, address wanAddr, uint value)
   // ERC20: inboundLock(address tokenOrigAddr, bytes32 xHash, address wanAddr, uint value) 
-  // Schnorr: inboundLock(bytes tokenOrigAccount, bytes32 xHash, address wanAddr, uint value, bytes storemanPK, bytes R, bytes s) 
+  // Schnorr: inSmgLock(bytes tokenOrigAccount, bytes32 xHash, address wanAddr, uint value, bytes storemanGroupPK, bytes r, bytes32 s)
   async getLockData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
@@ -97,10 +102,11 @@ module.exports = class WanAgent extends baseAgent{
     // web3.toBigNumber(eosToFloat(this.amount))
     if (this.schnorrMpc) {
       let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, this.amount, this.storemanPk];
-      let typesArray = ['bytes', 'bytes32', 'address', 'unit', 'bytes'];
+      let typesArray = ['bytes', 'bytes32', 'address', 'uint', 'bytes'];
       let internalSignature = await this.internalSignViaMpc(signData, typesArray);
+      let params = signData.concat(internalSignature.R, internalSignature.S);
       if (this.isLeader) {
-        return this.contract.constructData(this.crossFunc[0], signData.concat(internalSignature.R, internalSignature.S));
+        return this.contract.constructData(this.crossFunc[0], ...params);
       }
     } else if (this.tokenType === 'COIN') {
       return this.contract.constructData(this.crossFunc[0], this.hashKey, this.crossAddress, this.amount);
@@ -111,7 +117,7 @@ module.exports = class WanAgent extends baseAgent{
 
   // ETH: weth2ethRefund(bytes32 x) 
   // ERC20: outboundRedeem(address tokenOrigAddr, bytes32 x) 
-  // Schnorr: outboundRedeem(bytes tokenOrigAccount, bytes32 x, bytes R, bytes s) 
+  // Schnorr: outSmgRedeem(bytes tokenOrigAccount, bytes32 x, bytes r, bytes32 s)
   async getRedeemData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
     this.logger.debug('getRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
@@ -120,8 +126,9 @@ module.exports = class WanAgent extends baseAgent{
       let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.key];
       let typesArray = ['bytes', 'bytes32'];
       let internalSignature = await this.internalSignViaMpc(signData, typesArray);
+      let params = signData.concat(internalSignature.R, internalSignature.S);
       if (this.isLeader) {
-        return this.contract.constructData(this.crossFunc[0], signData.concat(internalSignature.R, internalSignature.S));
+        return this.contract.constructData(this.crossFunc[1], ...params);
       }
     } else if (this.tokenType === 'COIN') {
       return this.contract.constructData(this.crossFunc[1], this.key);
@@ -132,17 +139,18 @@ module.exports = class WanAgent extends baseAgent{
 
   // ETH: eth2wethRevoke(bytes32 xHash) 
   // ERC20: inboundRevoke(address tokenOrigAddr, bytes32 xHash) 
-  // Schnorr: inboundRevoke(bytes tokenOrigAccount, bytes32 xHash, bytes R, bytes s) 
+  // Schnorr: inSmgRevoke(bytes tokenOrigAccount, bytes32 xHash) 
   async getRevokeData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
     this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
 
     if (this.schnorrMpc) {
       let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.hashKey];
-      let typesArray = ['bytes', 'bytes32'];
-      let internalSignature = await this.internalSignViaMpc(signData, typesArray);
+      // let typesArray = ['bytes', 'bytes32'];
+      // let internalSignature = await this.internalSignViaMpc(signData, typesArray);
       if (this.isLeader) {
-        return this.contract.constructData(this.crossFunc[0], signData.concat(internalSignature.R, internalSignature.S));
+        // return this.contract.constructData(this.crossFunc[0], signData.concat(internalSignature.R, internalSignature.S));
+        return this.contract.constructData(this.crossFunc[2], ...signData);
       }
     } else if (this.tokenType === 'COIN') {
       return this.contract.constructData(this.crossFunc[2], this.hashKey);
@@ -161,7 +169,9 @@ module.exports = class WanAgent extends baseAgent{
   }
 
   getDecodeEventStoremanGroup(decodeEvent) {
-    if (this.tokenType === 'COIN') {
+    if (this.schnorrMpc) {
+      return decodeEvent.args.storemanGroupPK;
+    } else if (this.tokenType === 'COIN') {
       return decodeEvent.args.storeman;
     } else {
       return decodeEvent.args.storemanGroup;
@@ -184,7 +194,7 @@ module.exports = class WanAgent extends baseAgent{
 
   getDecodeCrossAddress(decodeEvent) {
     if (this.schnorrMpc) {
-      return decodeAccount(this.crossChain, decodeEvent.args.wanAddr);
+      return decodeAccount(this.crossChain, decodeEvent.args.userOrigAccount);
     } else {
       return decodeEvent.args.ethAddr;
     }
@@ -193,6 +203,13 @@ module.exports = class WanAgent extends baseAgent{
   encode(signData, typesArray) {
     this.logger.debug("********************************** encode signData **********************************", signData, "hashX:", this.hashKey);
 
-    return web3.eth.abi.encodeParameters(typesArray, signData);
+    let coder = require("web3/lib/solidity/coder");
+    let encodeResult = coder.encodeParams(typesArray, signData);
+    if (encodeResult.indexOf('0x') === 0) {
+      return encodeResult;
+    } else {
+      return '0x' + encodeResult;
+    }
+    // return coder.encodeParams(typesArray, signData);
   }
 }

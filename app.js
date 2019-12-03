@@ -115,6 +115,7 @@ let tokenList = {};
 
 global.storemanRestart = false;
 global.storemanRenew = false;
+let firstSyncDone = false;
 
 global.agentDict = {
   // ETH: {
@@ -307,12 +308,13 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
         } else {
           decodeEvent = event;
         }
-        console.log("aaron debug here decodeEvent", decodeEvent.args);
+
         let content;
         if (decodeEvent === null) {
           resolve();
           return;
         } else {
+          console.log("aaron debug here decodeEvent", decodeEvent.args);
           content = crossAgent.getDecodeEventDbData(chainType, crossChain, tokenType, decodeEvent, event, lockedTime);
         }
 
@@ -449,6 +451,7 @@ async function syncMain(logger, db) {
           }
         // }
       }
+      firstSyncDone = true;
     } catch (err) {
       logger.error("syncMain failed:", err);
     }
@@ -492,7 +495,7 @@ async function handlerMain(logger, db) {
   while (1) {
     logger.info("********************************** handlerMain start **********************************");
 
-    while (global.configMutex) {
+    while (global.configMutex || !firstSyncDone) {
       await sleep(3);
     }
 
@@ -554,11 +557,11 @@ let db = mongoose.createConnection(moduleConfig.crossDbUrl, {
 });
 db.on('connected', function(err) {
   if (err) {
-    global.syncLogger.error('Unable to connect to database(' + dbUrl + ')：' + err);
+    global.syncLogger.error('Unable to connect to database(' + moduleConfig.crossDbUrl.split('/')[3] + ')：' + err);
     global.syncLogger.error('Aborting');
     process.exit();
   } else {
-    global.syncLogger.info('Connecting to database is successful!');
+    global.syncLogger.info('Connecting to database ' + moduleConfig.crossDbUrl.split('/')[3] + ' is successful!');
   }
 });
 
@@ -588,9 +591,10 @@ async function main() {
     renewJob.start();
   }
 
-  // syncMain(global.syncLogger, db);
-  // await updateRecordAfterRestart(global.monitorLogger);
-  // handlerMain(global.monitorLogger, db);
+
+  syncMain(global.syncLogger, db);
+  await updateRecordAfterRestart(global.monitorLogger);
+  handlerMain(global.monitorLogger, db);
 }
 
 process.on('unhandledRejection', error => {

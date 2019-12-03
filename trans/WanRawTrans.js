@@ -16,6 +16,9 @@ module.exports = class WanRawTrans extends EthRawTrans {
 			Txtype: this.txType,
 			value: value
 		};
+
+		this.txParams.gasPrice = '0x' + this.txParams.gasPrice.toString(16);
+		this.txParams.gasLimit = '0x' + this.txParams.gasLimit.toString(16);
 	}
 
 	sign(privateKey){

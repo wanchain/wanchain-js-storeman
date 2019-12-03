@@ -44,12 +44,9 @@ var stateDict = {
   },
   waitingCross: {
     action: 'sendTrans',
-    // paras: ['lock', 'storemanLockEvent', ['waitingCrossLockConfirming', 'waitingX'],
-    //   ['waitingCross', 'transFailedBeforeHTLC2time']
-    // ]
-    paras: ['redeem', 'storemanRedeemEvent', ['waitingCrossRedeemConfirming', 'redeemFinished'],
-    ['receivedX', 'transFailedBeforeHTLC2time']
-  ]
+    paras: ['lock', 'storemanLockEvent', ['waitingCrossLockConfirming', 'waitingX'],
+      ['waitingCross', 'transFailedBeforeHTLC2time']
+    ]
   },
   waitingCrossLockConfirming: {
     action: 'checkStoremanTransOnline',
@@ -251,6 +248,16 @@ module.exports = class stateAction {
 
     console.log("aaron debug here crossChain", this.crossChain);
     if (!Array.isArray(actionArray)) {
+      // schnorr-mpc, follow storeman agent don't need do revoke action
+      if ((['revoke'].indexOf(actionArray) === 0) && !global.isLeader && moduleConfig.crossInfoDict[this.crossChain].CONF.schnorrMpc && moduleConfig.mpcSignature && (this.crossDirection === 0) ) {
+        let content = {
+          status: nextState[0],
+          transConfirmed: 0
+        }
+        await this.updateRecord(content);
+        return;
+      }
+
       if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.crossDirection === 0) && (this.crossChain === 'ETH')) {
         if (!await this.checkStoremanQuota()) {
           let content = {

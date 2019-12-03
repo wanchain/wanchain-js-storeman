@@ -8,9 +8,9 @@ function use() {
         echo "========================"
 }
 
-if [[ $# == 3 ]] || [[ $# == 4 ]]
+if [[ $# == 4 ]] || [[ $# == 5 ]]
 	then
-		NODE_PATH=. node debug initConfig.js $1 $2 $3 $4
+		NODE_PATH=. node debug initConfig.js $1 $2 $3 $4 $5
 else
     use
     exit

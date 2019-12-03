@@ -14,4 +14,4 @@
 #     exit
 # fi
 
-NODE_PATH=. node debug app.js $@
+NODE_PATH=. node app.js $@

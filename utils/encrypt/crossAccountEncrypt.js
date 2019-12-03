@@ -9,7 +9,7 @@ class crossChainAccount {
     let chain = crossChainAccount.chainMap.get(originChain);
     if (chain) {
       this.version = (Array(1).fill('0').join("") + chain.version.toString(16)).slice(-2);
-      this.chain = (Array(3).fill('0').join("") + chain.id.toString(16)).slice(-4);
+      this.chain = (Array(7).fill('0').join("") + chain.id.toString(16)).slice(-8);
     
       this.format = accountFormat ? accountFormat : chain.accountFormat;
       this.prefix = accountPrefix ? accountPrefix : chain.accountPrefix;
@@ -55,13 +55,13 @@ class crossChainAccount {
       return null;
     }
     let version = parseInt(wAccount.slice(0, 2), 16);
-    let chainValue = parseInt(wAccount.slice(2, 6), 16);
+    let chainValue = parseInt(wAccount.slice(2, 10), 16);
     let chain = crossChainAccount.chainMapReverse.get(chainValue);
     if ((!chain) || (chain.version != version)) {
       console.error("invalid chain or version");
       return null;
     }
-    let account = wAccount.slice(6);
+    let account = wAccount.slice(10);
     if (this.format === "ascii") {
       account = Buffer.from(account, 'hex').toString('ascii');
     } else if (this.format === "hex") {

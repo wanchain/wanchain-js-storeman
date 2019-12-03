@@ -26,9 +26,12 @@ const eventSchema = new Schema({
   tokenSymbol: {
     type: String,
   },
+  decimals: {
+    type: Number,
+  },
   tokenAddr: {
     type: String,
-    lowercase: true
+    // lowercase: true
   },
   originChain: {
     type: String

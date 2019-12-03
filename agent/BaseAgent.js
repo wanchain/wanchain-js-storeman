@@ -3,6 +3,7 @@
 const {
   loadConfig,
   getGlobalChain,
+  sha256,
   sleep
 } = require('comm/lib');
 
@@ -64,6 +65,7 @@ module.exports = class BaseAgent {
 
       this.tokenAddr = record.tokenAddr;
       this.tokenSymbol = record.tokenSymbol;
+      this.decimals = this.crossTokens[this.tokenAddr].decimals;
     }
   }
 
@@ -75,7 +77,7 @@ module.exports = class BaseAgent {
   }
 
   getChainType() {
-    return this.crossChain;
+    return this.crossChain.toLowerCase();
   }
 
   // getContract() {
@@ -114,22 +116,23 @@ module.exports = class BaseAgent {
 
   getNonce() {
     return new Promise(async (resolve, reject) => {
-      let nonce = 0;
-      let chainNonce = this.transChainType + 'LastNonce';
-      let nonceRenew = this.transChainType + 'NonceRenew';
-      let noncePending = this.transChainType + 'NoncePending';
-      let storemanAddress = this.storemanAddress;
-      this.logger.debug("getNonce begin!", storemanAddress)
-      let chainMutex = this.transChainType + 'Mutex';
-      while (global[chainMutex][storemanAddress]) {
-        await sleep(3);
-      }
-      this.logger.debug(chainMutex, storemanAddress, "mutexNonce true");
-      global[chainMutex][storemanAddress] = true;
-
-      console.log("aaron debug here getNonce", storemanAddress);
-
       try {
+        let nonce = 0;
+        let chainNonce = this.transChainType + 'LastNonce';
+        let nonceRenew = this.transChainType + 'NonceRenew';
+        let noncePending = this.transChainType + 'NoncePending';
+        let storemanAddress = this.storemanAddress;
+        this.logger.debug("getNonce begin!", storemanAddress)
+        let chainMutex = this.transChainType + 'Mutex';
+        while (global[chainMutex][storemanAddress]) {
+          await sleep(3);
+        }
+        this.logger.debug(chainMutex, storemanAddress, "mutexNonce true");
+        global[chainMutex][storemanAddress] = true;
+
+        console.log("aaron debug here getNonce", storemanAddress);
+
+
         if (global[nonceRenew][storemanAddress]) {
           nonce = await this.chain.getNonceSync(storemanAddress);
           nonce = parseInt(nonce, 16);
@@ -325,11 +328,12 @@ module.exports = class BaseAgent {
     return new Promise((resolve, reject) => {
       try {
         // let password = process.env.KEYSTORE_PWD;
-        let password = 'wanglutech';
+        // let password = 'wanglutech';
+        let password = 'wanglu';
         let rawTx = this.trans.signFromKeystore(password);
         resolve(rawTx);
       } catch (err) {
-        self.logger.error("********************************** signTrans failed ********************************** hashX", self.hashKey);
+        this.logger.error("********************************** signTrans failed ********************************** hashX", this.hashKey);
         reject(err);
       }
     });
@@ -369,9 +373,18 @@ module.exports = class BaseAgent {
     return decodeEvent.args.wanAddr;
   }
 
+  getDecodeCrossHashX(args) {
+    if (!args.xHash && args.x) {
+      args.xHash = sha256(args.x);
+      return args;
+    } else {
+      return args;
+    }
+  }
+
   getDecodeEventDbData(chainType, crossChain, tokenType, decodeEvent, event, lockedTime) {
     let content = {};
-    let args = decodeEvent.args;
+    let args = this.getDecodeCrossHashX(decodeEvent.args);
     let eventName = decodeEvent.event;
 
     if (!args.xHash) {
@@ -384,7 +397,9 @@ module.exports = class BaseAgent {
     console.log("aaron debug event", eventName,chainType, this.crossInfoInst.withdrawAction, this.crossInfoInst.depositAction);
     try {
       if (!((eventName === this.depositEvent[2] && chainType !== 'WAN') ||
-        (eventName === this.withdrawEvent[2] && chainType === 'WAN'))) {
+        (eventName === this.withdrawEvent[2] && chainType === 'WAN') ||
+        (eventName === this.withdrawEvent[1] && chainType === 'EOS' && crossChain === 'EOS') ||
+        (eventName === this.withdrawEvent[1] && chainType === 'WAN' && crossChain === 'EOS'))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
 
         if([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(storeman) === -1) {
@@ -402,6 +417,7 @@ module.exports = class BaseAgent {
           tokenType: tokenType,
           tokenAddr: tokenAddr,
           tokenSymbol: this.crossTokens[tokenAddr].tokenSymbol,
+          decimals: this.crossTokens[tokenAddr].decimals,
           originChain: chainType,
           from: (chainType !== 'WAN') ? args.user : args.wanAddr,
           crossAddress: this.getDecodeCrossAddress(decodeEvent),
