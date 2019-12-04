@@ -36,8 +36,8 @@ let argv = optimist
   .describe('keosd', 'identify whether to use keosd to manager wallet when cross EOS')
   .describe('keosdUrl', 'identify EOS keosd Url if keosd enable')
   .describe('wallet', 'identify EOS keosd wallet name if keosd enable')
-  .describe('password', 'identify password path')
-  .describe('keystore', 'identify keystore path')
+  .describe('password', 'identify password path(file)')
+  .describe('keystore', 'identify keystore path(dir)')
   .default('i', 0)
   .default('period', '2')
   .string('pk')
@@ -56,7 +56,7 @@ let pass = true;
 
 if (argv.leader) {
   if ((argv.mpc && (!argv.mpcIP && !argv.mpcPort))
-    || (argv.password && argv.keystore)
+    || (!argv.password || !argv.keystore)
     || (argv.keosd && (!argv.keosdUrl || !argv.wallet || !argv.password))
     || (argv.init && (!argv.c || !argv.w || !argv.o))) {
     pass = false;
