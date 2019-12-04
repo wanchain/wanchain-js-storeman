@@ -1,4 +1,3 @@
-const moduleConfig = require('conf/moduleConfig.js');
 const configPath = 'conf/config.json';
 // let config = loadConfig();
 const fs = require('fs');
@@ -13,6 +12,11 @@ const EthChain = require('chain/eth');
 const WanChain = require('chain/wan');
 const EosChain = require('chain/eos');
 const crossChainAccount = require('utils/encrypt/crossAccountEncrypt');
+
+function loadJsonFile(path) {
+  let json = JSON.parse(fs.readFileSync(path));
+  return json;
+}
 
 function loadConfig() {
   if (!global.configMutex) {
@@ -81,6 +85,7 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
   let wanChain = getGlobalChain('WAN');
   let crossTokens = {};
   let empty = true;
+  const moduleConfig = require('conf/moduleConfig.js');
 
   return new Promise(async (resolve, reject) => {
     try {
@@ -197,6 +202,7 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
 async function initConfig(crossChain, storemanWan, storemanOri, storemanPk) {
   let storemanWanAddr = storemanWan.toLowerCase();
   let storemanOriAddr = encodeAccount(crossChain, storemanOri.toLowerCase());
+  const moduleConfig = require('conf/moduleConfig.js');
   console.log("aaron debug here, storemanOriAddr", storemanOri, storemanOriAddr)
 
   return new Promise(async (resolve, reject) => {
@@ -404,6 +410,7 @@ function writeConfigToFile(argv) {
 };
 
 exports.sleep = sleep;
+exports.loadJsonFile = loadJsonFile;
 exports.loadConfig = loadConfig;
 exports.initChain = initChain;
 exports.getGlobalChain = getGlobalChain;

@@ -1,6 +1,11 @@
 const user = process.env.MONGO_USER;
 const pwd = process.env.MONGO_PWD;
 
+if (global.argv.dbuser) {
+  user = global.argv.dbuser;
+  pwd = global.secret['MONGO_PWD'];
+}
+
 let dbUrl;
 if (!global.dbPort) {
   global.dbPort = 27017

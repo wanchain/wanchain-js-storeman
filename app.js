@@ -4,7 +4,7 @@ const optimist = require('optimist');
 const CronJob = require("cron").CronJob;
 
 let argv = optimist
-  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [mpcPort] -dbip [dbIp] -dbport [dbPort] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] [--testnet] [--dev] [--leader] [--init] [--renew] -period [period] [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password]")
+  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [mpcPort] -dbip [dbIp] -dbport [dbPort] -dbuser [dbUser] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] [--testnet] [--dev] [--leader] [--init] [--renew] -period [period] [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password] --keystore [keystore] ")
   .alias('h', 'help')
   .alias('i', 'index')
   .alias('mpcip', 'mpcIP')
@@ -22,6 +22,7 @@ let argv = optimist
   .describe('mpcPort', 'identify mpc port')
   .describe('dbip', 'identify db ip')
   .describe('dbport', 'identify db port')
+  .describe('dbuser', 'identify db user')
   .describe('c', 'identify chainType')
   .describe('w', 'identify storemanWanAddr')
   .describe('o', 'identify storemanOriAddr')
@@ -35,7 +36,8 @@ let argv = optimist
   .describe('keosd', 'identify whether to use keosd to manager wallet when cross EOS')
   .describe('keosdUrl', 'identify EOS keosd Url if keosd enable')
   .describe('wallet', 'identify EOS keosd wallet name if keosd enable')
-  .describe('password', 'identify EOS keosd wallet password if keosd enable, or just password')
+  .describe('password', 'identify password path')
+  .describe('keystore', 'identify keystore path')
   .default('i', 0)
   .default('period', '2')
   .string('pk')
@@ -45,14 +47,16 @@ let argv = optimist
   .string('w')
   .string('o')
   .string('period')
-  .string('keosdUrl', 'wallet', 'password')
-  .boolean('testnet', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr')
+  .string('keosdUrl', 'wallet')
+  .string('password', 'keystore')
+  .boolean('testnet', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr', 'keosd')
   .argv;
 
 let pass = true;
 
 if (argv.leader) {
   if ((argv.mpc && (!argv.mpcIP && !argv.mpcPort))
+    || (argv.password && argv.keystore)
     || (argv.keosd && (!argv.keosdUrl || !argv.wallet || !argv.password))
     || (argv.init && (!argv.c || !argv.w || !argv.o))) {
     pass = false;
@@ -82,10 +86,12 @@ global.dbPort = argv.dbPort;
 global.testnet = argv.testnet ? true : false;
 global.dev = argv.dev ? true : false;
 global.isLeader = argv.leader ? true : false;
+global.keosd = argv.keosd ? true : false;
 
 const Logger = require('comm/logger.js');
 
 const {
+  loadJsonFile,
   loadConfig,
   initChain,
   initConfig,
@@ -95,6 +101,18 @@ const {
   writeConfigToFile,
   sleep
 } = require('comm/lib');
+
+try {
+  if (global.isLeader) {
+    if (global.argv.password) {
+      global.secret = loadJsonFile(global.argv.password);
+    }
+    global.keystore = global.argv.keystore;
+  }
+} catch (err) {
+  // process.exit(0);
+}
+
 const moduleConfig = require('conf/moduleConfig.js');
 global.config = loadConfig();
 

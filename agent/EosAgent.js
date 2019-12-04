@@ -58,14 +58,21 @@ module.exports = class EosAgent extends baseAgent{
         let rawTx;
         // let password = process.env.KEYSTORE_PWD;
 
-        if (1) {
-          let privateKey= ['5JtXWF9PmP7pSRX6wJfxHkaHLqAjRvwXWqTBsNtNorfr2bpjiQ9'];
-          rawTx = await this.trans.signTransDebug(privateKey, self.chain);
+        if (!global.keosd) {
+          if (global.secret['EOS_KEY']) {
+            let privateKey= [global.secret['EOS_KEY']];
+            rawTx = await this.trans.signTransDebug(privateKey, self.chain);
+          } else {
+            reject("Missing EOS private key!")
+          }
         } else {
-        let wallet = 'aaron';
-        let password = 'PW5Jv45rNbTgfb7ui7ew4Rv81hsQwhuaQpfEtCzGy2YWG6arUk5xy';
-
-        rawTx = await self.trans.signTransFromKeosd(wallet, password, self.chain);
+          if (global.wallet) {
+            let wallet = global.wallet;
+            let password = this.getChainPassword();
+            rawTx = await self.trans.signTransFromKeosd(wallet, password, self.chain);
+          } else {
+            reject('Missing wallet name!');
+          }
         }
         resolve(rawTx);
       } catch (err) {

@@ -76,6 +76,10 @@ module.exports = class BaseAgent {
     this.hashKey = hashKey;
   }
 
+  getChainPassword() {
+    return global.secret[this.transChainType.toUpperCase() + '_PWD'];
+  }
+
   getChainType() {
     return this.crossChain.toLowerCase();
   }
@@ -327,9 +331,7 @@ module.exports = class BaseAgent {
   signTrans() {
     return new Promise((resolve, reject) => {
       try {
-        // let password = process.env.KEYSTORE_PWD;
-        // let password = 'wanglutech';
-        let password = 'wanglu';
+        let password = this.getChainPassword();
         let rawTx = this.trans.signFromKeystore(password);
         resolve(rawTx);
       } catch (err) {

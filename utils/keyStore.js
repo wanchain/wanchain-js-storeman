@@ -2,7 +2,8 @@ const fs = require('fs');
 const keythereum = require("keythereum");
 let wanUtil = require('wanchain-util');
 
-const keyStorePath = process.env.HOME + "/keystore/";
+// const keyStorePath = process.env.HOME + "/keystore/";
+const keyStorePath = global.keystore;
 
 const keyStore = {
   getWAddress(address) {
