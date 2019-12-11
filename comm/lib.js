@@ -1,8 +1,7 @@
 const configPath = 'conf/config.json';
 // let config = loadConfig();
 const fs = require('fs');
-
-const Eos = require('eosjs');
+const { Decimal } = require("decimal.js");
 // const Web3 = require("web3");
 // const net = require('net');
 const BigNumber = require('bignumber.js');
@@ -299,9 +298,10 @@ function eosToFloat(str)
 }
 
 function floatToEos(amount, symbol, decimals = 4) {
-  let DecimalPad = Eos.modules.format.DecimalPad;
-  return `${DecimalPad(amount, parseInt(decimals))} ${symbol}`
+  let precision = parseInt(decimals);
+  return `${new Decimal(amount).toFixed(precision)} ${symbol}`
 }
+
 
 function hexTrip0x(hexs) {
   if (0 == hexs.indexOf('0x')) {

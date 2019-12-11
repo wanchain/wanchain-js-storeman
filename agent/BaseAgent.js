@@ -38,6 +38,7 @@ module.exports = class BaseAgent {
     this.getContractInfo();
 
     this.transChainType = this.getChainType();
+    this.transChainNonceless = moduleConfig.crossInfoDict[this.transChainType.toUpperCase()] ? moduleConfig.crossInfoDict[this.transChainType.toUpperCase()].CONF.nonceless : false;
     this.chain = getGlobalChain(this.transChainType);
     this.storemanAddress = this.crossConf.storemanOri;
 
@@ -213,7 +214,9 @@ module.exports = class BaseAgent {
         if (!err && result !== null) {
           resolve(result);
         } else {
-          global[this.transChainType + 'NoncePending'][this.storemanAddress] = true;
+          if (!this.transChainNonceless) {
+            global[this.transChainType + 'NoncePending'][this.storemanAddress] = true;
+          }
           reject(err);
         }
       });

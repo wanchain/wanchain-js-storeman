@@ -87,6 +87,8 @@ global.testnet = argv.testnet ? true : false;
 global.dev = argv.dev ? true : false;
 global.isLeader = argv.leader ? true : false;
 global.keosd = argv.keosd ? true : false;
+global.wallet = argv.wallet;
+global.configMutex = false;
 
 const Logger = require('comm/logger.js');
 
@@ -514,7 +516,9 @@ async function handlerMain(logger, db) {
     logger.info("********************************** handlerMain start **********************************");
 
     while (global.configMutex || !firstSyncDone) {
-      await sleep(3);
+      // await sleep(3);
+      await sleep(moduleConfig.INTERVAL_TIME);
+      continue;
     }
 
     try {

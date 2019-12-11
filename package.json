@@ -20,9 +20,11 @@
   "dependencies": {
     "aws-sdk": "^2.307.0",
     "cron": "^1.7.2",
-    "eosjs": "^16.0.9",
+    "decimal.js": "^10.2.0",
+    "eosjs": "^20.0.2",
     "keythereum": "^1.0.4",
     "mongoose": "^5.2.12",
+    "node-fetch": "^2.6.0",
     "optimist": "^0.6.1",
     "request": "^2.88.0",
     "solc": "^0.4.24",

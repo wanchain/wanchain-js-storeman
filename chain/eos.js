@@ -2,7 +2,9 @@
 
 const baseChain = require("chain/base.js");
 
-const Eos = require('eosjs');
+const { Api, JsonRpc, RpcError } = require('eosjs');
+const fetch = require('node-fetch');
+const { TextEncoder, TextDecoder } = require('util');
 
 class EosChain extends baseChain {
   constructor(log, nodeUrl) {
@@ -13,19 +15,25 @@ class EosChain extends baseChain {
   getClient(nodeUrl) {
     if (nodeUrl.indexOf("http://") !== -1 || nodeUrl.indexOf("https://") !== -1) {
       this.nodeUrl = nodeUrl;
-      let eosConfig = {
-        // keyProvider: [''], // 配置私钥字符串
-        httpEndpoint: nodeUrl,
-        // chainId: "e70aaab8997e1dfce58fbfac80cbbb8fecec7b99cf982a9444273cbc64c41473", 
-        expireInSeconds: 60,
-        verbose: false, 
-        // broadcast: true,
-        // sign: true
-      }
-      return Eos(eosConfig);
+      const rpc = new JsonRpc(nodeUrl, { fetch });
+      const api = new Api({ rpc, authorityProvider: rpc, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
+
+      return api;
     } else {
       return null;
     }
+  }
+
+  async get_info() {
+    let eos = this.client;
+    return new Promise(async (resolve, reject) => {
+      try {
+        let result = await eos.rpc.get_info();
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    })
   }
 
   getNetworkId() {
@@ -34,32 +42,21 @@ class EosChain extends baseChain {
     let eos = this.client;
     let self = this;
 
-    return new Promise((resolve, reject)=> {
+    return new Promise(async (resolve, reject)=> {
       try {
-        if (this.chainId) {
-          resolve(this.chainId);
+        if (self.chainId) {
+          resolve(self.chainId);
           return;
         }
-        eos.getInfo((err, result) => {
-          if(!err) {
-            log.debug("ChainType:", chainType, "getNetWork result is", result);
-            self.chainId = result.chain_id;
-            resolve(result.chain_id);
-          } else {
-            reject(err);
-          }
-        })
+        let chain_id = await eos.rpc.get_info();
+        log.debug("ChainType:", chainType, "getNetWork result is", chain_id);
+        self.chainId = chain_id;
+        resolve(chain_id);
       } catch (err) {
         reject(err);
       };
     });
   }
-
-  // eosToFloat(str) 
-  // { 
-  //   const floatRegex = /[^\d.-]/g
-  //   return parseFloat(str.replace(floatRegex, '')); 
-  // }
 
   encodeToken(account, quantity) {
     let symbol = quantity.split(' ')[1];
@@ -136,23 +133,22 @@ class EosChain extends baseChain {
     return new Promise(async function (resolve, reject) {
       let filter = action => action.block_num >= fromBlk && action.block_num <= toBlk && (['transfer', 'inredeem', 'inrevoke', 'outlock', 'outredeem', 'outrevoke'].includes(action.action_trace.act.name));
 
-      let filterGet = function (filter) {
-        eos.getActions(accountName, (err, result) => {
-          if (err) {
-            if (times >= retryTimes) {
-              log.error("ChainType:", chainType, "getScEventSync", err);
-              reject(err);
-            } else {
-              log.debug("ChainType:", chainType, "getScEventSync retry", times);
-              times++;
-              filterGet(filter);
-            }
+      let filterGet = async function (filter) {
+        try {
+          let result = await eos.rpc.history_get_actions(accountName);
+          let actions = result.actions.filter(filter);
+          const trx = self.actionDecode(actions);
+          resolve(trx);
+        } catch (err) {
+          if (times >= retryTimes) {
+            log.error("ChainType:", chainType, "getScEventSync", err);
+            reject(err);
           } else {
-            let actions = result.actions.filter(filter);
-            const trx = self.actionDecode(actions);
-            resolve(trx);
+            log.debug("ChainType:", chainType, "getScEventSync retry", times);
+            times++;
+            filterGet(filter);
           }
-        });
+        }
       }
       try {
         filterGet(filter);
@@ -168,17 +164,15 @@ class EosChain extends baseChain {
     let eos = this.client;
     let self = this;
     let log = this.log;
-    return new Promise((resolve, reject) => {
-
-      eos.getInfo({}, (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          let blockNumber = result.head_block_num;
-          log.debug("ChainType:", chainType, 'getBlockNumberSync successfully with result: ', self.chainType, blockNumber);
-          resolve(blockNumber);
-        }
-      })
+    return new Promise(async (resolve, reject) => {
+      try {
+        let result = await eos.rpc.get_info();
+        let blockNumber = result.head_block_num;
+        log.debug("ChainType:", chainType, 'getBlockNumberSync successfully with result: ', self.chainType, blockNumber);
+        resolve(blockNumber);
+      } catch (err) {
+        reject(err);
+      };
     })
   }
 
@@ -187,41 +181,39 @@ class EosChain extends baseChain {
     let eos = this.client;
     let self = this;
     let log = this.log;
-    return new Promise((resolve, reject) => {
-      eos.getInfo({}, (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          let blockNumber = result.last_irreversible_block_num;
-          log.debug("ChainType:", chainType, 'getIrreversibleBlockNumberSync successfully with result: ', self.chainType, blockNumber);
-          resolve(blockNumber);
-        }
-      })
+    return new Promise(async (resolve, reject) => {
+      try {
+        let result = await eos.rpc.get_info();
+        let blockNumber = result.last_irreversible_block_num;
+        log.debug("ChainType:", chainType, 'getIrreversibleBlockNumberSync successfully with result: ', self.chainType, blockNumber);
+        resolve(blockNumber);
+      } catch (err) {
+        reject(err);
+      };
     })
   }
 
-  getBlockByNumber(blockNumber, callback) {
-    this.client.getBlock(blockNumber, (err, result) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        let date = new Date(result.timestamp + 'Z'); // "Z" is a zero time offset
-        result.timestamp = date.getTime()/1000;
-        callback(null, result);
-      }
-    });
+  async getBlockByNumber(blockNumber, callback) {
+    let eos = this.client;
+    try {
+      let result = await eos.rpc.get_block(blockNumber);
+      let date = new Date(result.timestamp + 'Z'); // "Z" is a zero time offset
+      result.timestamp = date.getTime()/1000;
+      callback(null, result);
+    } catch (err) {
+      callback(err, null);
+    }
   }
 
-  getTransactionReceiptSync(id) {
+  getTransactionReceiptSync(txHash) {
     let eos = this.client;
-    return new Promise(function(resolve, reject) {
-      eos.getTransaction(id, function(err, result) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      });
+    return new Promise(async (resolve, reject) => {
+      try {
+        let result = await eos.rpc.history_get_transaction(txHash);
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
     })
   }
   
@@ -262,76 +254,101 @@ class EosChain extends baseChain {
     })
   }
 
-  getSignatureSync(from, to, quantity, memo = '') {
-    let eos = this.client;
-    return new Promise((resolve, reject) => {
-      eos.transfer(from, to, quantity, memo, { broadcast: false }, function(err, result) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result.transaction.signatures[0]);
-        }
-      });
-    })
-  }
-
-  sign(from, to, quantity, memo = '') {
-    let eos = this.client;
-    let self = this;
-    return new Promise(async (resolve, reject) => {
-      try{
-        // let tr = await eos.transfer(from, to, quantity, memo, { broadcast: false, sign: false });
-        // let sig = await self.getSignature(from, to, quantity, memo);
-        // tr.transaction.signatures.push(sig);
-        let tr = await eos.transfer(from, to, quantity, memo, { broadcast: false});
-        resolve(tr);
-      } catch(err) {
-        reject(err);
-      }
-    })
-  }
-
   async packTrans(actions) {
     let eos = this.client;
 
     try {
-      let packed_tx = await eos.transaction({
+      let trans = {
         actions: actions
-      }, {
-          broadcast: false,
-          sign: false
-        });
+      }
+      let packed_tx = await eos.transact(trans, {
+        blocksBehind: 3,
+        expireSeconds: 30,
+        broadcast: false,
+        sign: false
+      });
+
       console.log("packed_tx is", JSON.stringify(packed_tx, null, 4));
-      return packed_tx.transaction.transaction;
+      return packed_tx;
     } catch (err) {
       throw new Error(err);
     }
   }
 
+  async serializeActions(actions) {
+    let eos = this.client;
+    return new Promise(async (resolve, reject) => {
+      try {
+        let result = await eos.serializeActions(actions);
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    })
+  }
+
+  async serializeTransaction(trans) {
+    let eos = this.client;
+    return new Promise(async (resolve, reject) => {
+      try {
+        let result = await eos.serializeTransaction(trans);
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    })
+  }
+
+  async get_rawabi_and_abi(account) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let eos = this.client;
+
+        let rawAbi = (await eos.abiProvider.getRawAbi(account)).abi;
+        let abi = (await eos.abiProvider.get_abi(account)).abi;
+        console.log("==================get_rawabi_and_abi==================");
+        console.log(rawAbi);
+        console.log(abi);
+
+        let result = {
+          accountName: account,
+          rawAbi: rawAbi,
+          abi: abi
+        }
+        resolve(result);
+      } catch (err) {
+        console.log(err);
+        reject(err);
+      }
+    })
+  }
+
   async getRequiredKeys(transaction, available_keys) {
     let eos = this.client;
-    return eos.getRequiredKeys(transaction, available_keys);
+    return new Promise(async (resolve, reject) => {
+      try {
+        let result = await eos.rpc.getRequiredKeys({transaction: transaction, availableKeys: available_keys});
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    })
   }
 
   async sendRawTransaction(signedTx, callback) {
-    // try {
-    //   let result = await this.client.pushTransaction(signedTx);
-    //   callback(null, result.transaction_id);
-    // } catch (err) {
-    //   callback(err, null);
-    // }
-
-    this.client.pushTransaction(signedTx, (err, result) => {
-      if(!err) {
-        callback(null, result.transaction_id);
-      } else {
-        callback(err, null);
-      }
-    });
-  }
-
-  getTokenInfo(tokenScAddr) {
-
+    let log = this.log;
+    try {
+      let nodeUrl = "http://jungle2.cryptolions.io:80";
+      const rpc = new JsonRpc(nodeUrl, { fetch });
+      const api = new Api({ rpc, authorityProvider: rpc, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
+      let eos = this.client;
+      eos = api;
+      let result = await eos.pushSignedTransaction(signedTx);
+      log.debug("sendRawTransaction result is", result)
+      callback(null, result.transaction_id);
+    } catch (err) {
+      callback(err, null);
+    }
   }
 
 }

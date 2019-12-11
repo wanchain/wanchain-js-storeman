@@ -135,7 +135,7 @@
   },
   "testnet": {
     "wanWeb3Url": "http://34.208.200.181:36891",
-    "mpcUrl": "http://192.168.1.179:18530",
+    "mpcUrl": "http://192.168.1.179:18537",
     "isLeader": false,
     "wanGasPrice": 180,
     "wanGasLimit": 4700000,
@@ -157,7 +157,7 @@
       },
       "EOS": {
         "CONF": {
-          "nodeUrl": "http://192.168.1.58:8888",
+          "nodeUrl": "https://jungle.eossweden.org",
           "keyProvider": [],
           "storemanOri": "aarontestnet",
           "storemanWan": "0x6a8299deccd420d5b6970d611afb25cc8e910220",
