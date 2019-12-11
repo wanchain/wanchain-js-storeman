@@ -172,7 +172,7 @@
             "name": "0x454f53",
             "symbol": "0x454f53",
             "decimal": "4",
-            "tokenWanAddr": "0xc70d9ed345b40299f071f5cd0bd60c725d63e2c2",
+            "tokenWanAddr": "0xf80091f82c33307bc48c96316dba70b394acabeb",
             "tokenType": "TOKEN",
             "tokenSymbol": "EOS",
             "decimals": "4"
@@ -185,7 +185,7 @@
             "name": "0x4e53",
             "symbol": "0x4e53",
             "decimal": "0",
-            "tokenWanAddr": "0xfc69da1cd8fa9afc25add1bf07201f55488af78f",
+            "tokenWanAddr": "0x09207cd732151901908cc656df6ab83bff1295e2",
             "tokenType": "TOKEN",
             "tokenSymbol": "NS",
             "decimals": "0"
@@ -198,7 +198,7 @@
             "name": "0x4557414e",
             "symbol": "0x4557414e",
             "decimal": "3",
-            "tokenWanAddr": "0x3224a4322f7d0c495c154df3e0f5804d85178cc8",
+            "tokenWanAddr": "0xae28205157617214b3347f8042c0626b46a137cc",
             "tokenType": "TOKEN",
             "tokenSymbol": "EWAN",
             "decimals": "3"
