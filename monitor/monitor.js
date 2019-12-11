@@ -486,7 +486,7 @@ module.exports = class stateAction {
           }
 
           let storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanWan;
-          global[transOnChain + 'NonceRenew'][storemanAddr] = true;
+          global[transOnChain.toLowerCase() + 'NonceRenew'][storemanAddr] = true;
 
           await this.updateRecord(content);
           return;
