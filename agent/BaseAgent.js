@@ -240,17 +240,23 @@ module.exports = class BaseAgent {
           this.logger.debug("********************************** sendTransaction get signature successfully ********************************** hashX", this.hashKey, rawTx);
         }
 
-        this.chain.sendRawTransaction(rawTx, (err, result) => {
-          if (!err) {
-            self.logger.debug("sendRawTransaction result: hashX, result: ", self.hashKey, result);
-            self.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
-            let content = self.build(self.hashKey, result);
-            callback(err, content);
-          } else {
-            self.logger.error("********************************** sendTransaction failed ********************************** hashX", self.hashKey, err);
-            callback(err, result);
-          }
-        });
+        let result = await this.chain.sendRawTransactionSync(rawTx);
+        self.logger.debug("sendRawTransactionSync result: hashX, result: ", self.hashKey, result);
+        self.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
+        let content = self.build(self.hashKey, result);
+        callback(null, content);
+
+        // this.chain.sendRawTransaction(rawTx, (err, result) => {
+        //   if (!err) {
+        //     self.logger.debug("sendRawTransaction result: hashX, result: ", self.hashKey, result);
+        //     self.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
+        //     let content = self.build(self.hashKey, result);
+        //     callback(err, content);
+        //   } else {
+        //     self.logger.error("********************************** sendTransaction failed ********************************** hashX", self.hashKey, err);
+        //     callback(err, result);
+        //   }
+        // });
       }
     } catch (err) {
       this.logger.error("********************************** sendTransaction failed ********************************** hashX", this.hashKey, err);

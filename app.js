@@ -282,19 +282,27 @@ async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
     }
     let arr = events.slice(i, end);
     let multiEvents = [...arr].map((event) => {
-      return new Promise((resolve, reject) => {
+      return new Promise(async (resolve, reject) => {
         if(event === null) {
           logger.debug("event is null")
           resolve();
         }
-        chain.getBlockByNumber(event.blockNumber, function(err, block) {
-          if (err) {
-            reject(err);
-          } else {
-            event.timestamp = block.timestamp;
-            resolve();
-          }
-        });
+        try {
+          let block = await chain.getBlockByNumberSync(event.blockNumber);
+          event.timestamp = block.timestamp;
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+
+        // chain.getBlockByNumber(event.blockNumber, function(err, block) {
+        //   if (err) {
+        //     reject(err);
+        //   } else {
+        //     event.timestamp = block.timestamp;
+        //     resolve();
+        //   }
+        // });
       });
     });
 
@@ -351,7 +359,8 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
               return;
             }
           }
-          modelOps.saveScannedEvent(...content);
+          await modelOps.syncSave(...content);
+          // modelOps.saveScannedEvent(...content);
         }
         resolve();
       } catch (err) {
@@ -375,7 +384,7 @@ async function syncChain(chainType, crossChain, logger) {
   let blockNumber = 0;
   let chain = getGlobalChain(chainType);
   try {
-    blockNumber = await modelOps.getScannedBlockNumberSync(chainType);
+    blockNumber = await modelOps.getScannedBlockNumberSync(crossChain, chainType);
     if (blockNumber > chain.safe_block_num) {
       blockNumber -= chain.safe_block_num;
     } else {
@@ -406,7 +415,7 @@ async function syncChain(chainType, crossChain, logger) {
         let blkIndex = from;
         let blkEnd;
         let range = to - from;
-        let cntPerTime = 10000;
+        let cntPerTime = 1000;
 
         while (blkIndex < to) {
           if ((blkIndex + cntPerTime) > to) {
@@ -440,7 +449,7 @@ async function syncChain(chainType, crossChain, logger) {
             }
             events = [];
           }
-          modelOps.saveScannedBlockNumber(chainType, blkEnd);
+          await modelOps.syncSaveScannedBlockNumber(crossChain, chainType, blkEnd);
           logger.info("********************************** saveState **********************************", chainType, crossChain);
 
           blkIndex += cntPerTime;
@@ -621,7 +630,7 @@ async function main() {
 
 process.on('unhandledRejection', error => {
   // Will print "unhandledRejection err is not defined"
-  global.syncLogger.error('unhandledRejection', error.message);
+  global.syncLogger.error('unhandledRejection', error.message, error);
 });
 
 

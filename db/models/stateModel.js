@@ -2,15 +2,20 @@ const mongoose = require('mongoose'),
   Schema = mongoose.Schema;
 
 const stateSchema = new Schema({
-  chainType: {
+  crossChain: {
     type: String,
     lowercase: true,
     required: true,
     unique: true
   },
-  scannedBlockNumber: {
+  wanScannedBlockNumber: {
     type: Number,
-    required: true,
+    // required: true,
+    default: '0'
+  },
+  oriScannedBlockNumber: {
+    type: Number,
+    // required: true,
     default: '0'
   }
 }, {

@@ -1,5 +1,6 @@
 const baseChain = require("chain/base.js");
 const moduleConfig = require('conf/moduleConfig.js');
+const TimeoutPromise = require('utils/timeoutPromise.js')
 let Contract = require("contract/Contract.js");
 
 class WanChain extends baseChain {
@@ -15,8 +16,9 @@ class WanChain extends baseChain {
   }
 
   getStoremanQuota(crossChain, tokenType, address) {
+    let chainType = this.chainType;
     let getStoremanGroup = this.getTokenScManagerFuncInterface(crossChain, tokenType, 'getStoremanGroup');
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       getStoremanGroup(address, function(err, result) {
         if (err) {
           return reject(err);
@@ -24,7 +26,7 @@ class WanChain extends baseChain {
           return resolve(result);
         }
       });
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getStoremanQuota timeout');
   }
 
   getQuotaLedgerFunc(crossChain, tokenType, contractFunc) {
@@ -34,8 +36,9 @@ class WanChain extends baseChain {
   }
 
   getTokenStoremanQuota(crossChain, tokenType, tokenOrigAddr, smgAddress) {
+    let chainType = this.chainType;
     let func = this.getQuotaLedgerFunc(crossChain, tokenType, 'queryStoremanGroupQuota');
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       func(tokenOrigAddr, smgAddress, function(err, result) {
         if (err) {
           return reject(err);
@@ -43,17 +46,18 @@ class WanChain extends baseChain {
           return resolve(result);
         }
       });
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenStoremanQuota timeout');
   }
 
   getStoremanGroups(crossChain) {
     let log = this.log;
+    let chainType = this.chainType;
     let self = this;
     let abi = moduleConfig.crossInfoDict[crossChain].COIN.smgAdminAbi;
     let contractAddr = moduleConfig.crossInfoDict[crossChain].COIN.smgAdminAddr;
     let topic = [];
 
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       try {
       self.getScEvent(contractAddr, topic, 0, 'latest', async (err, logs) => {
         if (err) {
@@ -83,7 +87,7 @@ class WanChain extends baseChain {
           }
           resolve(storemanGroup);
         }
-      })
+      }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getStoremanGroups timeout')
       } catch (err) {
         reject(err);
       }
@@ -93,11 +97,12 @@ class WanChain extends baseChain {
 
   async getTokenStoremanGroupsOfMutiTokens(crossChain, tokens) {
     let log = this.log;
+    let chainType = this.chainType;
     let self = this;
     let tokenStoremanGroups = [];
 
     let multiTokens = tokens.map((token) => {
-      return new Promise(async (resolve, reject) => {
+      return new TimeoutPromise(async (resolve, reject) => {
         let storeman;
         try {
           storeman = await self.getTokenStoremanGroups(crossChain, token.tokenOrigAddr);
@@ -106,7 +111,7 @@ class WanChain extends baseChain {
         }
         tokenStoremanGroups = tokenStoremanGroups.concat(storeman);
         resolve();
-      });
+      }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenStoremanGroupsOfMutiTokens timeout');
     })
     try {
       await Promise.all(multiTokens);
@@ -119,6 +124,7 @@ class WanChain extends baseChain {
 
   async getTokenStoremanGroups(crossChain, tokenAddr) {
     let log = this.log;
+    let chainType = this.chainType;
     let self = this;
     let abi = moduleConfig.crossInfoDict[crossChain].TOKEN.smgAdminAbi;
     // let topic = [null, this.encodeTopic('address', tokenAddr)];
@@ -133,7 +139,7 @@ class WanChain extends baseChain {
 
     let storemanGroup = [];
     let getMultiStoremanEvent = addrs.map((contractAddr) => {
-      return new Promise((resolve, reject) => {
+      return new TimeoutPromise((resolve, reject) => {
         self.getScEvent(contractAddr, topic, 0, 'latest', async (err, logs) => {
           if (err) {
             log.error(err);
@@ -148,14 +154,30 @@ class WanChain extends baseChain {
             }
 
             for (let i of parsedLogs) {
-              if (i && i.event === 'StoremanGroupRegistrationLogger' && i.args.tokenOrigAddr === tokenAddr) {
+              let tokenOrigParam;
+              if (i && i.args.hasOwnProperty('tokenOrigAccount')) {
+                tokenOrigParam = 'tokenOrigAccount';
+              } else if (i && i.args.hasOwnProperty('tokenOrigAddr')) {
+                tokenOrigParam = 'tokenOrigAddr';
+              } else {
+                continue;
+              }
+              if (i && i.event === 'StoremanGroupRegistrationLogger' && i.args[tokenOrigParam] === tokenAddr) {
                 storemanGroup.push(i.args);
               }
             }
             for (let i of parsedLogs) {
-              if (i && i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args.tokenOrigAddr === tokenAddr) {
+              let tokenOrigParam;
+              if (i && i.args.hasOwnProperty('tokenOrigAccount')) {
+                tokenOrigParam = 'tokenOrigAccount';
+              } else if (i && i.args.hasOwnProperty('tokenOrigAddr')) {
+                tokenOrigParam = 'tokenOrigAddr';
+              } else {
+                continue;
+              }
+              if (i && i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args[tokenOrigParam] === tokenAddr) {
                 for (let index = 0; index < storemanGroup.length; index++) {
-                  if ((storemanGroup[index].tokenOrigAddr === i.args.tokenOrigAddr && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
+                  if ((storemanGroup[index][tokenOrigParam] === i.args[tokenOrigParam] && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
                     storemanGroup.splice(index, 1);
                     break;
                   }
@@ -165,7 +187,7 @@ class WanChain extends baseChain {
             resolve(storemanGroup);
           }
         })
-      });
+      }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenStoremanGroups timeout');
     })
 
     try {
@@ -179,11 +201,12 @@ class WanChain extends baseChain {
 
   getRegTokenTokens(crossChain) {
     let log = this.log;
+    let chainType = this.chainType;
     let self = this;
     let abi = moduleConfig.crossInfoDict[crossChain].TOKEN.tokenManagerAbi;
     let contractAddr = moduleConfig.crossInfoDict[crossChain].TOKEN.tokenManagerAddr;
 
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       self.getScEvent(contractAddr, [], 0, 'latest', async (err, logs) => {
         if (err) {
           log.error(err);
@@ -196,40 +219,67 @@ class WanChain extends baseChain {
           }
           let regEvents = [];
           let regTokenRecord = {};
+
+          let regLogs = [];
+          // let updateRegLogs = [];
+          let unRegLog = [];
+
           for (let i of parsedLogs) {
-            if (i && i.event === 'TokenAddedLogger') {
-              if (regTokenRecord.hasOwnProperty(i.args.tokenOrigAccount) && (regTokenRecord[i.args.tokenOrigAccount] < i.blockNumber)) {
-                for (let index = 0; index < regEvents.length; index++) {
-                  if (regEvents[index].tokenOrigAccount === i.args.tokenOrigAccount) {
-                    regEvents.splice(index, 1);
-                    break;
-                  }
+            if (i && (i.event === 'TokenAddedLogger' || i.event === 'TokenUpdatedLogger')) {
+              regLogs.push(i);
+            }
+            if (i && i.event === 'TokenRemovedLogger') {
+              unRegLog.push(i);
+            }
+          }
+
+          for (let i of regLogs) {
+            let tokenOrigParam;
+            if (i.args.hasOwnProperty('tokenOrigAccount')) {
+              tokenOrigParam = 'tokenOrigAccount';
+            } else if (i.args.hasOwnProperty('tokenOrigAddr')) {
+              tokenOrigParam = 'tokenOrigAddr';
+            } else {
+              continue;
+            }
+            if (regTokenRecord.hasOwnProperty(i.args[tokenOrigParam]) && (regTokenRecord[i.args[tokenOrigParam]] < i.blockNumber)) {
+              for (let index = 0; index < regEvents.length; index++) {
+                if (regEvents[index][tokenOrigParam] === i.args[tokenOrigParam]) {
+                  regEvents.splice(index, 1);
+                  break;
                 }
               }
-              regTokenRecord[i.args.tokenOrigAccount] = i.blockNumber;
-              regEvents.push(i.args);
             }
+            regTokenRecord[i.args[tokenOrigParam]] = i.blockNumber;
+            regEvents.push(i.args);
+          }
 
-            // if (i && i.event === 'TokenAddedLogger') {
-            //   if (regTokenRecord.hasOwnProperty(i.args.tokenOrigAddr) && (regTokenRecord[i.args.tokenOrigAddr] < i.blockNumber)) {
-            //     for (let index = 0; index < regEvents.length; index++) {
-            //       if (regEvents[index].tokenOrigAddr === i.args.tokenOrigAddr) {
-            //         regEvents.splice(index, 1);
-            //         break;
-            //       }
-            //     }
-            //   }
-            //   regTokenRecord[i.args.tokenOrigAddr] = i.blockNumber;
-            //   regEvents.push(i.args);
-            // }
+          for (let i of unRegLog) {
+            let tokenOrigParam;
+            if (i.args.hasOwnProperty('tokenOrigAccount')) {
+              tokenOrigParam = 'tokenOrigAccount';
+            } else if (i.args.hasOwnProperty('tokenOrigAddr')) {
+              tokenOrigParam = 'tokenOrigAddr';
+            } else {
+              continue;
+            }
+            if (regTokenRecord.hasOwnProperty(i.args[tokenOrigParam]) && (regTokenRecord[i.args[tokenOrigParam]] < i.blockNumber)) {
+              for (let index = 0; index < regEvents.length; index++) {
+                if (regEvents[index][tokenOrigParam] === i.args[tokenOrigParam]) {
+                  regEvents.splice(index, 1);
+                  break;
+                }
+              }
+            }
           }
-          for (let i of regEvents) {
-            self.bigNumber2String(i, 10);
-          }
+
+          // for (let i of regEvents) {
+          //   self.bigNumber2String(i, 10);
+          // }
           resolve(regEvents);
         }
       });
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getRegTokenTokens timeout');
   }
 }
 

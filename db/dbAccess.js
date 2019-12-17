@@ -1,4 +1,5 @@
-
+const TimeoutPromise = require('utils/timeoutPromise.js')
+const moduleConfig = require('conf/moduleConfig.js');
 class DbAccess {
   constructor(log) {
     this.log = log;
@@ -50,18 +51,35 @@ class DbAccess {
 
   syncUpdateDocument(model, filter, content) {
     let log = this.log;
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       model.findOneAndUpdate(filter, content, {
         upsert: true
       }, (err, doc) => {
-        if (!err) {
-          resolve();
+        if (err) {
+          log.error("syncUpdateDocument will retry", (err.hasOwnProperty("message")) ? err.message : err);
+          model.findOneAndUpdate(filter, content, {
+            upsert: true
+          }, (err, doc) => {
+            if (err) {
+              log.error("syncUpdateDocument retry failed",err);
+              reject(err);
+            } else {
+              log.debug("syncUpdateDocument retry succeeded ");
+              resolve();
+            }
+          });
         } else {
-          log.error("syncUpdateDocument failed",err);
-          reject(err);
+          resolve();
         }
+
+        // if (!err) {
+        //   resolve();
+        // } else {
+        //   log.error("syncUpdateDocument failed",err);
+        //   reject(err);
+        // }
       });
-    });
+    }, moduleConfig.promiseTimeout, "syncUpdateDocument timeout");
   }
 
   findDocumentOne(model, filter, callback) {
@@ -100,7 +118,7 @@ class DbAccess {
 
   syncFindDocument(model, filter) {
     let log = this.log;
-    return new Promise(function(resolve, reject) {
+    return new TimeoutPromise(function(resolve, reject) {
       model.find(filter, function(err, result) {
         if (!err) {
           for (let i = 0; i < result.length; i++) {
@@ -114,7 +132,7 @@ class DbAccess {
           reject(err);
         }
       });
-    });
+    }, moduleConfig.promiseTimeout, "syncFindDocument timeout");
   }
 
 }

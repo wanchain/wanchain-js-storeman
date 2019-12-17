@@ -62,7 +62,7 @@ class baseChain {
     let log = this.log;
     let chainType = this.chainType;
 
-    return new Promise((resolve, reject)=> {
+    return new TimeoutPromise((resolve, reject)=> {
       try {
         this.client.version.getNetwork((err, result) => {
           if(!err) {
@@ -75,7 +75,7 @@ class baseChain {
       } catch (err) {
         reject(err);
       };
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getNetworkId timeout');
   }
 
   getScEvent(address, topics, fromBlk, toBlk, callback) {
@@ -95,45 +95,40 @@ class baseChain {
     let baseChain = this;
     let chainType = this.chainType;
     let times = 0;
-    
-    try {
-      return new TimeoutPromise(function(resolve, reject) {
-        let filterValue = {
-          fromBlock: fromBlk,
-          toBlock: toBlk,
-          topics: topics,
-          address: address
-        };
-        let filter = baseChain.client.eth.filter(filterValue);
-        let filterGet = function(filter) {
-          filter.get(function(err, events) {
-            if (err) {
-              if (times >= retryTimes) {
-                baseChain.log.error("ChainType:", chainType, "getScEventSync", err);
-                reject(err);
-              } else {
-                baseChain.log.debug("ChainType:", chainType, "getScEventSync retry", times);
-                // baseChain.log.error("getScEventSync retry", times, err);
-                times++;
-                filterGet(filter);
-              }
-            } else {
-              resolve(events);
-            }
-          });
-        }
-        try{
-          filterGet(filter);
-        } catch(err) {
-          baseChain.log.error("ChainType:", chainType, "getScEventSync", err);
-          reject(err);
-        }
-  
-      }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getScEventSync timeout');
-    } catch (err) {
-      console.log("aaron debug here, err",moduleConfig.promiseTimeout);
-    }
 
+    return new TimeoutPromise(function (resolve, reject) {
+      let filterValue = {
+        fromBlock: fromBlk,
+        toBlock: toBlk,
+        topics: topics,
+        address: address
+      };
+      let filter = baseChain.client.eth.filter(filterValue);
+      let filterGet = function (filter) {
+        filter.get(function (err, events) {
+          if (err) {
+            if (times >= retryTimes) {
+              baseChain.log.error("ChainType:", chainType, "getScEventSync", err);
+              reject(err);
+            } else {
+              baseChain.log.debug("ChainType:", chainType, "getScEventSync retry", times);
+              // baseChain.log.error("getScEventSync retry", times, err);
+              times++;
+              filterGet(filter);
+            }
+          } else {
+            resolve(events);
+          }
+        });
+      }
+      try {
+        filterGet(filter);
+      } catch (err) {
+        baseChain.log.error("ChainType:", chainType, "getScEventSync", err);
+        reject(err);
+      }
+
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getScEventSync timeout');
   }
 
   getGasPrice(callback) {
@@ -160,7 +155,7 @@ class baseChain {
     let chainType = this.chainType;
     let gasPrice = null;
 
-    return new Promise(function (resolve, reject) {
+    return new TimeoutPromise(function (resolve, reject) {
       try {
         client.eth.getGasPrice(function(err, result) {
           if (err) {
@@ -174,7 +169,7 @@ class baseChain {
       } catch (err) {
         reject(err);
       }
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getGasPriceSync timeout');
   }
 
   getNonce(address, callback) {
@@ -201,7 +196,7 @@ class baseChain {
     let chainType = this.chainType;
     let nonce = null;
 
-    return new Promise(function (resolve, reject) {
+    return new TimeoutPromise(function (resolve, reject) {
       try {
         client.eth.getTransactionCount(address, function(err, result) {
           if (err) {
@@ -215,7 +210,7 @@ class baseChain {
       } catch (err) {
         reject(err);
       }
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getNonceSync timeout');
   }
 
   getNonceIncludePending(address, optional, callback) {
@@ -243,7 +238,7 @@ class baseChain {
     let chainType = this.chainType;
     let nonce = null;
 
-    return new Promise(function (resolve, reject) {
+    return new TimeoutPromise(function (resolve, reject) {
       try {
         client.eth.getTransactionCount(address, 'pending', function(err, result) {
           if (err) {
@@ -257,7 +252,7 @@ class baseChain {
       } catch (err) {
         reject(err);
       }
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getNonceIncludePendingSync timeout');
   }
 
   getBlockNumber(callback) {
@@ -285,7 +280,7 @@ class baseChain {
     let client = this.client;
     let chainType = this.chainType;
 
-    return new Promise(function (resolve, reject) {
+    return new TimeoutPromise(function (resolve, reject) {
       try {
         client.eth.getBlockNumber(function(err, blockNumber) {
           if (err) {
@@ -298,7 +293,7 @@ class baseChain {
       } catch (err) {
         reject(err);
       }
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getBlockNumberSync timeout');
   }
 
   sendRawTransaction(signedTx, callback) {
@@ -310,14 +305,14 @@ class baseChain {
     let log = this.log;
     let client = this.client;
     let chainType = this.chainType;
-    return new Promise(function (resolve, reject) {
+    return new TimeoutPromise(function (resolve, reject) {
       try {
         client.eth.sendRawTransaction(signedTx, function(err, txHash) {
           if (err) {
             log.error("ChainType:", chainType, "sendRawTransactionSync error: ", err);
             reject(err);
           } else{
-            log.debug("ChainType:", chainType, 'sendRawTransaction successfully with signedTx: ', signedTx);
+            log.debug("ChainType:", chainType, 'sendRawTransactionSync successfully with signedTx: ', signedTx);
             resolve(txHash);
           }
         });
@@ -325,7 +320,7 @@ class baseChain {
         log.error("ChainType:", chainType, "sendRawTransactionSync error: ", err);
         reject(err);
       }
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' sendRawTransactionSync timeout');
   }
 
   getTxInfo(txHash, callback) {
@@ -334,6 +329,27 @@ class baseChain {
 
   getBlockByNumber(blockNumber, callback) {
     this.client.eth.getBlock(blockNumber, callback);
+  }
+
+  getBlockByNumberSync(blockNumber) {
+    // let log = this.log;
+    let client = this.client;
+    let chainType = this.chainType;
+
+    return new TimeoutPromise(function (resolve, reject) {
+      try {
+        client.eth.getBlock(blockNumber, function(err, result) {
+          if (err) {
+            reject(err);
+          } else {
+            // log.debug("ChainType:", chainType, 'getBlockByNumberSync successfully with result: ', result);
+            resolve(result);
+          }
+        });
+      } catch (err) {
+        reject(err);
+      }
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getBlockByNumberSync timeout');
   }
 
   getBlockByHash(blockHash, callback) {
@@ -383,7 +399,7 @@ class baseChain {
     let curBlockNum = 0;
     let sleepTime = 30;
 
-    return new Promise(async (resolve, reject) => {
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         receipt = await self.getTransactionReceiptSync(txHash);
         if (receipt === null) {
@@ -406,7 +422,7 @@ class baseChain {
         log.error(err);
         resolve(null);
       }
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTransactionConfirmSync timeout')
   }
 
   getTransactionReceipt(txHash, callback) {
@@ -415,8 +431,9 @@ class baseChain {
 
   getTransactionReceiptSync(txHash) {
     let client = this.client;
+    let chainType = this.chainType;
 
-    return new Promise(function(resolve, reject) {
+    return new TimeoutPromise(function(resolve, reject) {
       client.eth.getTransactionReceipt(txHash, function(err, result) {
         if (err) {
           reject(err);
@@ -424,7 +441,7 @@ class baseChain {
           resolve(result);
         }
       });
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTransactionReceiptSync timeout')
   }
 
   getSolInferface(abi, contractAddr, contractFunc) {
@@ -462,7 +479,7 @@ class baseChain {
 
   getTokenAllowance(tokenScAddr, owner, spender, abi) {
     let chainType = this.chainType;
-    return new Promise((resolve, reject) =>{
+    return new TimeoutPromise((resolve, reject) =>{
     let log = this.log;
     try {
       let allowance = this.getSolInferface(abi, tokenScAddr, 'allowance');
@@ -479,12 +496,13 @@ class baseChain {
     } catch (err) {
       log.debug("ChainType:", chainType, 'getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
     }      
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenAllowance timeout');
   }
 
   getTokenInfo(tokenScAddr) {
     let log = this.log;
     let self = this;
+    let chainType = this.chainType;
     let tokenAbi = moduleConfig.tokenAbi;
     let symbol = 'symbol';
     let decimals = 'decimals';
@@ -492,20 +510,21 @@ class baseChain {
     let token = {};
     token.tokenType = "TOKEN";
 
-    if (moduleConfig.informalToken.hasOwnProperty(tokenScAddr)) {
-      let informalToken = moduleConfig.informalToken[tokenScAddr];
-      if (informalToken.hasOwnProperty('implementation')) {
-        let implTokenScAddr = self.getSolVar(informalToken.abi, tokenScAddr, informalToken.implementation)();
-        tokenScAddr = implTokenScAddr;
-      } else {
-        tokenAbi = informalToken.abi;
-        symbol = informalToken.symbol;
-        decimals = informalToken.decimals;
-      }
-    }
-
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       try {
+
+        if (moduleConfig.informalToken.hasOwnProperty(tokenScAddr)) {
+          let informalToken = moduleConfig.informalToken[tokenScAddr];
+          if (informalToken.hasOwnProperty('implementation')) {
+            let implTokenScAddr = self.getSolVar(informalToken.abi, tokenScAddr, informalToken.implementation)();
+            tokenScAddr = implTokenScAddr;
+          } else {
+            tokenAbi = informalToken.abi;
+            symbol = informalToken.symbol;
+            decimals = informalToken.decimals;
+          }
+        }
+
         token.tokenSymbol = self.getSolVar(tokenAbi, tokenScAddr, symbol)();
         token.decimals = self.getSolVar(tokenAbi, tokenScAddr, decimals)().toString(10);
         resolve(token);
@@ -525,7 +544,7 @@ class baseChain {
           reject(err);
         }
       }
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenAllowance timeout');
   }
 
 }

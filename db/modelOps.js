@@ -25,33 +25,74 @@ class ModelOps {
     }
   }
 
-  saveScannedBlockNumber(chainType, number) {
+  saveScannedBlockNumber(crossChain, chainType, number) {
+    let content;
+    if (crossChain === chainType) {
+      content = {
+        crossChain: crossChain, oriScannedBlockNumber: number
+      }
+    } else {
+      content = {
+        crossChain: crossChain, wanScannedBlockNumber: number
+      }
+    }
     this.dbAccess.updateDocument(this.stateModel, {
-      chainType: chainType
-    }, { chainType: chainType, scannedBlockNumber: number });
+      crossChain: crossChain
+    }, content);
   }
 
-  getScannedBlockNumber(chainType, callback) {
+  syncSaveScannedBlockNumber(crossChain, chainType, number) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let content;
+        if (crossChain === chainType) {
+          content = {
+            crossChain: crossChain, oriScannedBlockNumber: number
+          }
+        } else {
+          content = {
+            crossChain: crossChain, wanScannedBlockNumber: number
+          }
+        }
+        await this.dbAccess.syncUpdateDocument(this.stateModel, {
+          crossChain: crossChain
+        }, content);
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  getScannedBlockNumber(crossChain, chainType, callback) {
     this.dbAccess.findDocumentOne(this.stateModel, {
-      chainType: chainType
+      crossChain: crossChain
     }, function(err, result) {
       let number = 0;
       if (!err && result !== null) {
-        number = result.scannedBlockNumber;
+        if (crossChain === chainType) {
+          number = result.oriScannedBlockNumber;
+        } else {
+          number = result.wanScannedBlockNumber;
+        }
       }
       callback(err, number);
     });
   }
 
-  async getScannedBlockNumberSync(chainType) {
+  async getScannedBlockNumberSync(crossChain, chainType) {
     try {
       let result = await this.dbAccess.syncFindDocument(this.stateModel, {
-        chainType: chainType
+        crossChain: crossChain
       });
       this.logger.debug("Synchronously getScannedBlockNumber (" + result + ")");
       let blockNumber;
       if (result.length !== 0) {
-        blockNumber = result[0].scannedBlockNumber;
+        if (crossChain === chainType) {
+          blockNumber = result[0].oriScannedBlockNumber;
+        } else {
+          blockNumber = result[0].wanScannedBlockNumber;
+        }
       } else {
         blockNumber = 0;
       }

@@ -20,7 +20,6 @@ module.exports = class EosAgent extends baseAgent{
 
     this.RawTrans = RawTrans;
 
-    console.log("aaron debug here, EOS agent", this.storemanAddress);
     this.crossFunc = (this.crossDirection === 0) ? this.crossInfoInst.depositAction : this.crossInfoInst.withdrawAction;
     this.depositEvent = this.crossInfoInst.depositAction;
     this.withdrawEvent = this.crossInfoInst.withdrawAction;

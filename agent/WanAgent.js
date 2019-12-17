@@ -24,8 +24,6 @@ module.exports = class WanAgent extends baseAgent{
 
     this.RawTrans = RawTrans;
     this.storemanAddress = this.crossConf.storemanWan;
-
-    console.log("aaron debug here, WAN agent", crossChain, this.storemanAddress);
   }
 
   getChainType() {
@@ -160,11 +158,16 @@ module.exports = class WanAgent extends baseAgent{
   }
 
   getDecodeEventTokenAddr(decodeEvent) {
-    // return decodeAccount(this.crossChain, decodeEvent.args.tokenOrigAccount);
     if (this.tokenType === 'COIN') {
       return '0x';
     } else {
-      return decodeAccount(this.crossChain, decodeEvent.args.tokenOrigAccount);
+      let tokenOrigParam;
+      if (decodeEvent.args.hasOwnProperty('tokenOrigAccount')) {
+        tokenOrigParam = 'tokenOrigAccount';
+      } else if (decodeEvent.args.hasOwnProperty('tokenOrigAddr')) {
+        tokenOrigParam = 'tokenOrigAddr';
+      }
+      return decodeAccount(this.crossChain, decodeEvent.args[tokenOrigParam]);
     }
   }
 

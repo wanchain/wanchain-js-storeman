@@ -1,5 +1,7 @@
 "use strict"
 
+const moduleConfig = require('conf/moduleConfig.js');
+const TimeoutPromise = require('utils/timeoutPromise.js')
 const baseChain = require("chain/base.js");
 
 const { Api, JsonRpc, RpcError } = require('eosjs');
@@ -26,14 +28,14 @@ class EosChain extends baseChain {
 
   async get_info() {
     let eos = this.client;
-    return new Promise(async (resolve, reject) => {
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         let result = await eos.rpc.get_info();
         resolve(result);
       } catch (err) {
         reject(err);
       }
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' get_info timeout')
   }
 
   getNetworkId() {
@@ -42,7 +44,7 @@ class EosChain extends baseChain {
     let eos = this.client;
     let self = this;
 
-    return new Promise(async (resolve, reject)=> {
+    return new TimeoutPromise(async (resolve, reject)=> {
       try {
         if (self.chainId) {
           resolve(self.chainId);
@@ -55,7 +57,7 @@ class EosChain extends baseChain {
       } catch (err) {
         reject(err);
       };
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getNetworkId timeout');
   }
 
   encodeToken(account, quantity) {
@@ -130,7 +132,7 @@ class EosChain extends baseChain {
     let log = this.log;
     let eos = this.client;
     let self = this;
-    return new Promise(async function (resolve, reject) {
+    return new TimeoutPromise(async function (resolve, reject) {
       let filter = action => action.block_num >= fromBlk && action.block_num <= toBlk && (['transfer', 'inredeem', 'inrevoke', 'outlock', 'outredeem', 'outrevoke'].includes(action.action_trace.act.name));
 
       let filterGet = async function (filter) {
@@ -156,7 +158,7 @@ class EosChain extends baseChain {
         log.error("ChainType:", chainType, "getScEventSync", err);
         reject(err);
       }
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getScEventSync timeout');
   }
 
   getBlockNumberSync() {
@@ -164,7 +166,7 @@ class EosChain extends baseChain {
     let eos = this.client;
     let self = this;
     let log = this.log;
-    return new Promise(async (resolve, reject) => {
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         let result = await eos.rpc.get_info();
         let blockNumber = result.head_block_num;
@@ -173,7 +175,7 @@ class EosChain extends baseChain {
       } catch (err) {
         reject(err);
       };
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getBlockNumberSync timeout')
   }
 
   getIrreversibleBlockNumberSync() {
@@ -181,7 +183,7 @@ class EosChain extends baseChain {
     let eos = this.client;
     let self = this;
     let log = this.log;
-    return new Promise(async (resolve, reject) => {
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         let result = await eos.rpc.get_info();
         let blockNumber = result.last_irreversible_block_num;
@@ -190,7 +192,7 @@ class EosChain extends baseChain {
       } catch (err) {
         reject(err);
       };
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getIrreversibleBlockNumberSync timeout')
   }
 
   async getBlockByNumber(blockNumber, callback) {
@@ -205,16 +207,34 @@ class EosChain extends baseChain {
     }
   }
 
-  getTransactionReceiptSync(txHash) {
+  getBlockByNumberSync(blockNumber) {
     let eos = this.client;
-    return new Promise(async (resolve, reject) => {
+    let chainType = this.chainType;
+
+    return new TimeoutPromise(async function (resolve, reject) {
+      try {
+        let result = await eos.rpc.get_block(blockNumber);
+        let date = new Date(result.timestamp + 'Z'); // "Z" is a zero time offset
+        result.timestamp = date.getTime()/1000;
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getBlockByNumberSync timeout');
+  }
+
+  getTransactionReceiptSync(txHash) {
+    let chainType = this.chainType;
+    let eos = this.client;
+    
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         let result = await eos.rpc.history_get_transaction(txHash);
         resolve(result);
       } catch (err) {
         reject(err);
       }
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTransactionReceiptSync timeout')
   }
   
   getTransactionConfirmSync(txHash, waitBlocks) {
@@ -225,7 +245,7 @@ class EosChain extends baseChain {
     let curBlockNum = 0;
     let sleepTime = 30;
 
-    return new Promise(async (resolve, reject) => {
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         receipt = await self.getTransactionReceiptSync(txHash);
         if (receipt === null) {
@@ -251,56 +271,65 @@ class EosChain extends baseChain {
         log.error(err);
         resolve(null);
       }
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTransactionConfirmSync timeout')
   }
 
   async packTrans(actions) {
+    let chainType = this.chainType;
     let eos = this.client;
 
-    try {
-      let trans = {
-        actions: actions
+    return new TimeoutPromise(async (resolve, reject) => {
+      try {
+        let trans = {
+          actions: actions
+        }
+        let packed_tx = await eos.transact(trans, {
+          blocksBehind: 3,
+          expireSeconds: 30,
+          broadcast: false,
+          sign: false
+        });
+  
+        console.log("packed_tx is", JSON.stringify(packed_tx, null, 4));
+        resolve (packed_tx);
+      } catch (err) {
+        reject(new Error(err));
       }
-      let packed_tx = await eos.transact(trans, {
-        blocksBehind: 3,
-        expireSeconds: 30,
-        broadcast: false,
-        sign: false
-      });
-
-      console.log("packed_tx is", JSON.stringify(packed_tx, null, 4));
-      return packed_tx;
-    } catch (err) {
-      throw new Error(err);
-    }
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' packTrans timeout')   
   }
 
   async serializeActions(actions) {
+    let chainType = this.chainType;
     let eos = this.client;
-    return new Promise(async (resolve, reject) => {
+
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         let result = await eos.serializeActions(actions);
         resolve(result);
       } catch (err) {
         reject(err);
       }
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' serializeActions timeout')
   }
 
   async serializeTransaction(trans) {
+    let chainType = this.chainType;
     let eos = this.client;
-    return new Promise(async (resolve, reject) => {
+
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         let result = await eos.serializeTransaction(trans);
         resolve(result);
       } catch (err) {
         reject(err);
       }
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' serializeTransaction timeout')
   }
 
   async get_rawabi_and_abi(account) {
-    return new Promise(async (resolve, reject) => {
+    let chainType = this.chainType;
+
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         let eos = this.client;
 
@@ -320,19 +349,20 @@ class EosChain extends baseChain {
         console.log(err);
         reject(err);
       }
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' get_rawabi_and_abi timeout')
   }
 
   async getRequiredKeys(transaction, available_keys) {
+    let chainType = this.chainType;
     let eos = this.client;
-    return new Promise(async (resolve, reject) => {
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         let result = await eos.rpc.getRequiredKeys({transaction: transaction, availableKeys: available_keys});
         resolve(result);
       } catch (err) {
         reject(err);
       }
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getRequiredKeys timeout')
   }
 
   async sendRawTransaction(signedTx, callback) {
@@ -349,6 +379,25 @@ class EosChain extends baseChain {
     } catch (err) {
       callback(err, null);
     }
+  }
+
+  async sendRawTransactionSync(signedTx) {
+    let log = this.log;
+    let chainType = this.chainType;
+    return new TimeoutPromise(async (resolve, reject) => {
+      try {
+        let nodeUrl = "http://jungle2.cryptolions.io:80";
+        const rpc = new JsonRpc(nodeUrl, { fetch });
+        const api = new Api({ rpc, authorityProvider: rpc, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
+        let eos = this.client;
+        eos = api;
+        let result = await eos.pushSignedTransaction(signedTx);
+        log.debug("sendRawTransaction result is", result)
+        resolve(result.transaction_id);
+      } catch (err) {
+        reject(err);
+      }
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' sendRawTransactionSync timeout')
   }
 
 }
