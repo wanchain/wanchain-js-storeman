@@ -82,6 +82,7 @@ module.exports = class EosAgent extends baseAgent{
   }
 
   // outlock(eosio::name storeman, eosio::name user, eosio::asset quantity, std::string xHash, std::string wanAddr, std::string pk, std::string R, std::string s)
+  // outlock(eosio::name storeman, eosio::name user, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)
   async getLockData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
@@ -106,10 +107,9 @@ module.exports = class EosAgent extends baseAgent{
           // storeman: hexTrip0x(this.storemanPk),
           storeman: this.storemanAddress,
           user: this.crossAddress,
-          // value: this.amount,
+          account: this.tokenAddr.split(':')[0],
           quantity: this.amount,
           xHash: hexTrip0x(this.hashKey),
-          wanAddr: hexTrip0x('0xc70d9ed345b40299f071f5cd0bd60c725d63e2c2'),
           pk: hexTrip0x(this.storemanPk),
           r: hexTrip0x(internalSignature.R),
           s: hexTrip0x(internalSignature.S)
@@ -166,8 +166,8 @@ module.exports = class EosAgent extends baseAgent{
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
     this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
 
-    let signData = [hexTrip0x(this.storemanAddress), hexTrip0x(this.hashKey)];
-    let internalSignature = await this.internalSignViaMpc(signData);
+    // let signData = [hexTrip0x(this.storemanAddress), hexTrip0x(this.hashKey)];
+    // let internalSignature = await this.internalSignViaMpc(signData);
 
     if (this.isLeader) {
       let actions = [{
@@ -178,11 +178,10 @@ module.exports = class EosAgent extends baseAgent{
           permission: 'active',
         }],
         data: {
-          // storeman: hexTrip0x(this.storemanPk),
-          storeman: hexTrip0x(this.storemanAddress),
+          // storeman: hexTrip0x(this.storemanAddress),
           xHash: hexTrip0x(this.hashKey),
-          r: hexTrip0x(internalSignature.R),
-          s: hexTrip0x(internalSignature.S)
+          // r: hexTrip0x(internalSignature.R),
+          // s: hexTrip0x(internalSignature.S)
         }
       }];
       return actions;

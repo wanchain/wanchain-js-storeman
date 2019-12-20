@@ -82,7 +82,7 @@ class EosChain extends baseChain {
           event: name
         }
         if (name === 'transfer') {
-          if (action.action_trace.act.data.memo.split(':').length === 4 && action.action_trace.act.data.memo.split(':')[0] === 'inlock') {
+          if (action.action_trace.act.data.memo.split(':').length === 5 && action.action_trace.act.data.memo.split(':')[0] === 'inlock') {
             const { from, to, quantity, memo } = action.action_trace.act.data;
             obj = {
               ...obj,
