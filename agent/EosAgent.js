@@ -87,7 +87,7 @@ module.exports = class EosAgent extends baseAgent{
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
 
-    let signData = [this.storemanAddress, this.crossAddress, this.amount, hexTrip0x(this.hashKey), hexTrip0x('0xc70d9ed345b40299f071f5cd0bd60c725d63e2c2')];
+    let signData = [this.storemanAddress, this.crossAddress, this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.hashKey)];
     let internalSignature = await this.internalSignViaMpc(signData);
 
     if (this.isLeader) {
