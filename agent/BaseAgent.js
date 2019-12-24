@@ -405,12 +405,12 @@ module.exports = class BaseAgent {
     let hashX = args.xHash;
     let storeman;
 
-    console.log("aaron debug event", eventName,chainType, this.crossInfoInst.withdrawAction, this.crossInfoInst.depositAction);
     try {
       if (!((eventName === this.depositEvent[2] && chainType !== 'WAN') ||
         (eventName === this.withdrawEvent[2] && chainType === 'WAN') ||
         (eventName === this.withdrawEvent[1] && chainType === 'EOS' && crossChain === 'EOS') ||
-        (eventName === this.withdrawEvent[1] && chainType === 'WAN' && crossChain === 'EOS'))) {
+        (eventName === this.withdrawEvent[1] && chainType === 'WAN' && crossChain === 'EOS') ||
+        (eventName === this.withdrawEvent[2] && chainType === 'EOS' && crossChain === 'EOS'))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
 
         if([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(storeman) === -1) {
