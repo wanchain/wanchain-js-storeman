@@ -189,9 +189,9 @@ const test_Config = {
   startSyncBlockNum: {
     // ETH: 3164963,
     ETH: 5256623,
-    EOS: 65000000,
+    EOS: 67129000,
     // WAN: 2017000
-    WAN: 4857823
+    WAN: 5571000
   },
 
   crossInfoDict: {
