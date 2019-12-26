@@ -1,5 +1,6 @@
 "use strict";
 const {
+  encodeAccount,
   loadConfig,
   getGlobalChain,
   sleep
@@ -563,7 +564,7 @@ module.exports = class stateAction {
 
   async getStoremanQuota() {
     // let storemanGroupAddr = global.config.storemanWan;
-    let storemanGroupAddr = global.config.crossTokens[this.crossChain].CONF.storemanWan;
+    let storemanGroupAddr = moduleConfig.crossInfoDict[this.crossChain].CONF.schnorrMpc ? global.config.crossTokens[this.crossChain].CONF.storemanPk : global.config.crossTokens[this.crossChain].CONF.storemanWan;
     let storemanQuotaInfo;
     let chain = getGlobalChain('WAN');
 
@@ -571,7 +572,7 @@ module.exports = class stateAction {
       if(this.tokenType === 'COIN') {
         storemanQuotaInfo = await chain.getStoremanQuota(this.crossChain, this.tokenType, storemanGroupAddr);
       } else {
-        storemanQuotaInfo = await chain.getTokenStoremanQuota(this.crossChain, this.tokenType, this.record.tokenAddr, storemanGroupAddr);
+        storemanQuotaInfo = await chain.getTokenStoremanQuota(this.crossChain, this.tokenType, encodeAccount(this.crossChain, this.record.tokenAddr), storemanGroupAddr);
       }
       this.logger.debug("getStoremanQuota result is", storemanQuotaInfo, this.hashX);
 
