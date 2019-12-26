@@ -99,10 +99,10 @@ module.exports = class WanAgent extends baseAgent{
 
     // web3.toBigNumber(eosToFloat(this.amount))
     if (this.schnorrMpc) {
-      let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, this.amount, this.storemanPk];
-      let typesArray = ['bytes', 'bytes32', 'address', 'uint', 'bytes'];
+      let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.hashKey, this.crossAddress, this.amount];
+      let typesArray = ['bytes', 'bytes32', 'address', 'uint'];
       let internalSignature = await this.internalSignViaMpc(signData, typesArray);
-      let params = signData.concat(internalSignature.R, internalSignature.S);
+      let params = signData.concat(this.storemanPk, internalSignature.R, internalSignature.S);
       if (this.isLeader) {
         return this.contract.constructData(this.crossFunc[0], ...params);
       }
@@ -115,14 +115,14 @@ module.exports = class WanAgent extends baseAgent{
 
   // ETH: weth2ethRefund(bytes32 x) 
   // ERC20: outboundRedeem(address tokenOrigAddr, bytes32 x) 
-  // Schnorr: outSmgRedeem(bytes tokenOrigAccount, bytes32 x, bytes r, bytes32 s)
+  // Schnorr: outSmgRedeem(bytes32 x, bytes r, bytes32 s)
   async getRedeemData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
     this.logger.debug('getRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
 
     if (this.schnorrMpc) {
-      let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.key];
-      let typesArray = ['bytes', 'bytes32'];
+      let signData = [this.key];
+      let typesArray = ['bytes32'];
       let internalSignature = await this.internalSignViaMpc(signData, typesArray);
       let params = signData.concat(internalSignature.R, internalSignature.S);
       if (this.isLeader) {
@@ -137,14 +137,14 @@ module.exports = class WanAgent extends baseAgent{
 
   // ETH: eth2wethRevoke(bytes32 xHash) 
   // ERC20: inboundRevoke(address tokenOrigAddr, bytes32 xHash) 
-  // Schnorr: inSmgRevoke(bytes tokenOrigAccount, bytes32 xHash) 
+  // Schnorr: inSmgRevoke(bytes32 xHash)
   async getRevokeData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
     this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
 
     if (this.schnorrMpc) {
-      let signData = [encodeAccount(this.crossChain, this.tokenAddr), this.hashKey];
-      // let typesArray = ['bytes', 'bytes32'];
+      let signData = [this.hashKey];
+      // let typesArray = ['bytes32'];
       // let internalSignature = await this.internalSignViaMpc(signData, typesArray);
       if (this.isLeader) {
         // return this.contract.constructData(this.crossFunc[0], signData.concat(internalSignature.R, internalSignature.S));
