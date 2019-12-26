@@ -161,7 +161,6 @@ module.exports = class stateAction {
   }
 
   async initState(nextState, rollState) {
-    console.log("ahahah", this.record.hashX);
   	if (this.record.walletLockEvent.length !== 0) {
       let status;
       if(this.record.tokenType === 'COIN' || this.record.crossChain === 'EOS') {
@@ -258,7 +257,7 @@ module.exports = class stateAction {
         return;
       }
 
-      if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.crossDirection === 0) && (this.crossChain === 'ETH')) {
+      if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.crossDirection === 0)) {
         if (!await this.checkStoremanQuota()) {
           let content = {
             status: 'transIgnored',
