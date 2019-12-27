@@ -584,7 +584,9 @@ async function handlerMain(logger, db) {
 }
 
 let db = mongoose.createConnection(moduleConfig.crossDbUrl, {
-  useNewUrlParser: true
+  useNewUrlParser: true,
+  replicaSet: "s0",
+  readPreference: "secondaryPreferred" //readPreference must be either primary/primaryPreferred/secondary/secondaryPreferred/nearest
 });
 db.on('connected', function(err) {
   if (err) {
