@@ -109,6 +109,9 @@ try {
     if (global.argv.password) {
       global.secret = loadJsonFile(global.argv.password);
     }
+    if (global.keosd) {
+      global.keosdUrl = global.argv.keosdUrl;
+    }
     global.keystore = global.argv.keystore;
   }
 } catch (err) {
@@ -594,7 +597,7 @@ if (!global.dev) {
     readPreference: "secondaryPreferred" //readPreference must be either primary/primaryPreferred/secondary/secondaryPreferred/nearest
   }
   Object.assign(dbOption, awsDBOption);
-  dbUrl = dbUrl + "?authSource=admin"
+  dbUrl = dbUrl + "?authSource=admin";
 }
 let db = mongoose.createConnection(dbUrl, dbOption);
 
