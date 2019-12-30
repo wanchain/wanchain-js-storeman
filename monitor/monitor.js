@@ -301,7 +301,7 @@ module.exports = class stateAction {
       result.transRetried = 0;
       result.status = nextState[0];
     } catch (err) {
-      this.logger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX);
+      this.logger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX, ", will retry, this record already transRetried:", this.record.transRetried, ", max retryTimes:", retryTimes );
       this.logger.error("sendTransaction faild,  err is", err);
       if (this.record.transRetried < retryTimes) {
         result.transRetried = this.record.transRetried + 1;
@@ -322,7 +322,7 @@ module.exports = class stateAction {
     let state = this.state;
     this.logger.debug("********************************** checkHashTimeout ********************************** hashX:", this.hashX, record.status);
 
-    if (state === "interventionPending" || state === "fundLosted" ) {
+    if (state === "interventionPending" || state === "fundLosted" || state === "transFailedBeforeHTLC2time") {
       return false;
     }
 
