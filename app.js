@@ -583,11 +583,21 @@ async function handlerMain(logger, db) {
   }
 }
 
-let db = mongoose.createConnection(moduleConfig.crossDbUrl, {
-  useNewUrlParser: true,
-  replicaSet: "s0",
-  readPreference: "secondaryPreferred" //readPreference must be either primary/primaryPreferred/secondary/secondaryPreferred/nearest
-});
+let dbOption = {
+  useNewUrlParser: true
+}
+let dbUrl = moduleConfig.crossDbUrl + global.index;
+if (!global.dev) {
+  const awsDBOption = {
+    // used for mongo replicaSet
+    replicaSet: "s0",
+    readPreference: "secondaryPreferred" //readPreference must be either primary/primaryPreferred/secondary/secondaryPreferred/nearest
+  }
+  Object.assign(dbOption, awsDBOption);
+  dbUrl = dbUrl + "?authSource=admin"
+}
+let db = mongoose.createConnection(dbUrl, dbOption);
+
 db.on('connected', function(err) {
   if (err) {
     global.syncLogger.error('Unable to connect to database(' + moduleConfig.crossDbUrl.split('/')[3] + ')：' + err);

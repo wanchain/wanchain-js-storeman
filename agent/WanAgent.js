@@ -37,15 +37,25 @@ module.exports = class WanAgent extends baseAgent{
   }
 
   getLockedTime() {
-    return 3600;
     return new Promise((resolve, reject) => {
       try {
-        let getLockedTime = this.chain.getSolVar(this.contract.abi, this.contractAddr, 'lockedTime');
+        let getLockedTime;
+        if (this.schnorrMpc) {
+          getLockedTime = this.chain.getSolInferface(this.contract.abi, this.contractAddr, 'getEconomics');
+        } else {
+          getLockedTime = this.chain.getSolVar(this.contract.abi, this.contractAddr, 'lockedTime');
+        }
 
         getLockedTime((err, result) => {
           if (!err) {
             this.logger.debug("getLockedTime successfully");
-            resolve(Number(result));
+            let lockedTime;
+            if (this.schnorrMpc) {
+              lockedTime = result[3];
+            } else {
+              lockedTime = result;
+            }
+            resolve(Number(lockedTime));
           } else {
             this.logger.error("getLockedTime error:", err);
             reject(err);
