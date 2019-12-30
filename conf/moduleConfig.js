@@ -40,7 +40,7 @@ const config = {
   web3RetryTimes: 30,
   promiseTimeout: 30 * 1000,
 
-  retryTimes: 60,
+  retryTimes: 10,
   retryWaitTime: 120 * 1000,
   confirmTimes: 60,
 
@@ -162,8 +162,8 @@ const test_Config = {
 
   // retryTimes: 5,
   // retryWaitTime: 60 * 1000,
-  retryTimes: 60,
-  retryWaitTime: 10,
+  retryTimes: 20,
+  retryWaitTime: 20 * 1000,
   confirmTimes: 60,
 
   logServerUrl: '54.149.227.183',

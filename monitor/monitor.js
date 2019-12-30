@@ -529,7 +529,7 @@ module.exports = class stateAction {
           }
         } else {
           if (txHashArray.indexOf(txHash) === (txHashArray.length - 1)) {
-            if (this.record.transRetried < retryTimes) {
+            if (this.record.transConfirmed < confirmTimes) {
               content = {
                 transConfirmed: transConfirmed + 1
               }
