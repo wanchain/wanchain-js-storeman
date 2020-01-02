@@ -14,8 +14,10 @@ if(user) {
   dbUrl = `mongodb://${user}:${pwd}@localhost:27017`;
   if (global.dbIp) {
     dbUrl = `mongodb://${user}:${pwd}@${global.dbIp}:${global.dbPort}`;
-    dbUrl = `mongodb://${user}:${pwd}@10.1.101.97:27017,10.1.102.46:27017,10.1.103.107:27017`
-	  console.log(dbUrl);
+    if (!global.dev) {
+      dbUrl = `mongodb://${user}:${pwd}@10.1.101.97:27017,10.1.102.46:27017,10.1.103.107:27017`
+      console.log(dbUrl);
+    }
   }
 } else {
   dbUrl = `mongodb://localhost:27017`;
