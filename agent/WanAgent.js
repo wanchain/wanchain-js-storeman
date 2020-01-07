@@ -115,6 +115,8 @@ module.exports = class WanAgent extends baseAgent{
       let params = signData.concat(this.storemanPk, internalSignature.R, internalSignature.S);
       if (this.isLeader) {
         return this.contract.constructData(this.crossFunc[0], ...params);
+      } else {
+        return null;
       }
     } else if (this.tokenType === 'COIN') {
       return this.contract.constructData(this.crossFunc[0], this.hashKey, this.crossAddress, this.amount);
@@ -125,18 +127,21 @@ module.exports = class WanAgent extends baseAgent{
 
   // ETH: weth2ethRefund(bytes32 x) 
   // ERC20: outboundRedeem(address tokenOrigAddr, bytes32 x) 
-  // Schnorr: outSmgRedeem(bytes32 x, bytes r, bytes32 s)
+  // Schnorr: outSmgRedeem(bytes32 x)
   async getRedeemData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
     this.logger.debug('getRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
 
     if (this.schnorrMpc) {
       let signData = [this.key];
-      let typesArray = ['bytes32'];
-      let internalSignature = await this.internalSignViaMpc(signData, typesArray);
-      let params = signData.concat(internalSignature.R, internalSignature.S);
+      // let typesArray = ['bytes32'];
+      // let internalSignature = await this.internalSignViaMpc(signData, typesArray);
+      // let params = signData.concat(internalSignature.R, internalSignature.S);
       if (this.isLeader) {
-        return this.contract.constructData(this.crossFunc[1], ...params);
+        // return this.contract.constructData(this.crossFunc[1], ...params);
+        return this.contract.constructData(this.crossFunc[1], ...signData);
+      } else {
+        return null;
       }
     } else if (this.tokenType === 'COIN') {
       return this.contract.constructData(this.crossFunc[1], this.key);
@@ -159,6 +164,8 @@ module.exports = class WanAgent extends baseAgent{
       if (this.isLeader) {
         // return this.contract.constructData(this.crossFunc[0], signData.concat(internalSignature.R, internalSignature.S));
         return this.contract.constructData(this.crossFunc[2], ...signData);
+      } else {
+        return null;
       }
     } else if (this.tokenType === 'COIN') {
       return this.contract.constructData(this.crossFunc[2], this.hashKey);

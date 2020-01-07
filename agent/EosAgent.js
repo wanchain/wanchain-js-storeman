@@ -116,6 +116,8 @@ module.exports = class EosAgent extends baseAgent{
         }
       }];
       return actions;
+    } else {
+      return null;
     }
   }
 
@@ -158,6 +160,8 @@ module.exports = class EosAgent extends baseAgent{
         }
       }];
       return actions;
+    } else {
+      return null;
     }
   }
 
@@ -185,6 +189,8 @@ module.exports = class EosAgent extends baseAgent{
         }
       }];
       return actions;
+    } else {
+      return null;
     }
   }
 
