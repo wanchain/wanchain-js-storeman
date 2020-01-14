@@ -455,7 +455,7 @@ function writeConfigToFile(argv) {
         global.mpcUrl = url;
       }
 
-      let isLeader = argv.isLeader ? true : false
+      let isLeader = argv.leader ? true : false
       config[net].isLeader = isLeader;
 
       var str = JSON.stringify(config, null, 2);

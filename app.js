@@ -60,9 +60,16 @@ let argv = optimist
   .string('w')
   .string('o')
   .string('period')
-  .string('keosdUrl', 'wallet')
-  .string('password', 'keystore')
-  .string('debt', 'chain', 'token', 'debtor', 'wanReceiver', 'oriReceiver')
+  .string('keosdUrl')
+  .string('wallet')
+  .string('password')
+  .string('keystore')
+  .string('debt')
+  .string('chain')
+  .string('token')
+  .string('debtor')
+  .string( 'wanReceiver')
+  .string('oriReceiver')
   .boolean('testnet', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr', 'keosd', 'doDebt', 'withdraw')
   .argv;
 
@@ -172,6 +179,7 @@ global.agentDict = {
 
 global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
+global.mpcLogger = new Logger("storemanAgent-mpc", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 
 async function init() {
   try {
@@ -681,7 +689,7 @@ async function syncMpcRequest(logger, db) {
 
 async function doDebt(logger) {
   try {
-    if (global.argv.isLeader && global.argv.doDebt && global.argv.debtor && global.argv.debt) {
+    if (global.argv.leader && global.argv.doDebt && global.argv.debtor && global.argv.debt) {
       let crossChain = global.argv.chain;
       let tokenAddr = global.argv.token;
       let tokenType;
@@ -715,13 +723,13 @@ async function doDebt(logger) {
       logger.error("doDebt error:", "Only the leader can launch the debt trans request");
     }
   } catch (err) {
-    logger.error("doDebt error:", error);
+    logger.error("doDebt error:", err);
   }
 }
 
 async function withdrawFee(logger) {
   try {
-    if (global.argv.isLeader && global.argv.withdraw && (global.argv.wanReceiver || global.argv.oriReceiver)) {
+    if (global.argv.leader && global.argv.withdraw && (global.argv.wanReceiver || global.argv.oriReceiver)) {
       let crossChain = global.argv.chain;
       let tokenAddr = global.argv.token;
       let tokenType;
@@ -747,14 +755,14 @@ async function withdrawFee(logger) {
         if (global.argv.wanReceiver) {
           receiver = global.argv.wanReceiver;
           crossAgent = tokenTypeHandler.wanCrossAgent;
-          let wanContent = crossAgent.createWithdrawData('WAN', crossChain, tokenType, tokenAddr, receiver, timestamp);
+          let wanContent = crossAgent.createWithdrawFeeData('WAN', crossChain, tokenType, tokenAddr, receiver, timestamp);
           logger.info("withdrawFee request:",
           "at chain ", "WAN", " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with receiver is ", receiver, " and timestamp ", timestamp);
           await modelOps.syncSave(...wanContent);
         } else if (global.argv.oriReceiver) {
           receiver = global.argv.oriReceiver;
           crossAgent = tokenTypeHandler.originCrossAgent;
-          let oriContent = crossAgent.createWithdrawData(crossChain, crossChain, tokenType, tokenAddr, receiver, timestamp);
+          let oriContent = crossAgent.createWithdrawFeeData(crossChain, crossChain, tokenType, tokenAddr, receiver, timestamp);
           logger.info("withdrawFee request:",
           "at chain ", chainType, " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with receiver is ", receiver, " and timestamp ", timestamp);
           await modelOps.syncSave(...oriContent);
@@ -764,7 +772,7 @@ async function withdrawFee(logger) {
       logger.error("withdrawFee error:", "Only the leader can launch the withdrawFee trans request");
     }
   } catch (err) {
-    logger.error("withdrawFee error:", error);
+    logger.error("withdrawFee error:", err);
   }
 }
 
@@ -825,11 +833,11 @@ async function main() {
   await updateRecordAfterRestart(global.monitorLogger);
 
   if (global.argv.doDebt || global.argv.withdraw) {
-    if (global.argv.isLeader) {
+    if (global.argv.leader) {
       await doDebt(global.monitorLogger);
       await withdrawFee(global.monitorLogger);
     } else {
-      syncMpcRequest(global.syncLogger, db);
+      syncMpcRequest(global.mpcLogger, db);
     }
   }
 

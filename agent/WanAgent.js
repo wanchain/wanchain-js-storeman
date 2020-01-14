@@ -398,7 +398,7 @@ module.exports = class WanAgent extends baseAgent{
         receiver = global.argv.wanReceiver;
         let tokenAddr = ""; // Wan only have the 'wan' fee
 
-        content = this.createWithdrawData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, receiver, timestamp);
+        content = this.createWithdrawFeeData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, receiver, timestamp);
       }
     }
     return content;
