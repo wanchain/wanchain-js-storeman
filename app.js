@@ -675,7 +675,7 @@ async function syncMpcRequest(logger, db) {
       logger.error("syncMpcRequest failed:", err);
     }
 
-    await sleep(moduleConfig.INTERVAL_TIME);
+    await sleep(moduleConfig.MPCREQUEST_TIME);
   }
 }
 

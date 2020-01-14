@@ -52,6 +52,7 @@ const config = {
   SAFE_BLOCK_NUM: 100,
   CONFIRM_BLOCK_NUM: 12,
   INTERVAL_TIME: 15 * 1000,
+  MPCREQUEST_TIME: 5 * 1000,
 
   secureLockIntervalRatio: 20, /*lock action needed to be done before suspendTime - 1/20 lockedTime*/ 
 
@@ -188,6 +189,7 @@ const test_Config = {
   SAFE_BLOCK_NUM: 100,
   CONFIRM_BLOCK_NUM: 2,
   INTERVAL_TIME: 15 * 1000,
+  MPCREQUEST_TIME: 5 * 1000,
 
   secureLockIntervalRatio: 20, /*lock action needed to be done before suspendTime - 1/20 lockedTime*/ 
 
