@@ -628,7 +628,7 @@ async function syncMpcRequest(logger, db) {
 
       let mpcApproveDatas = [];
       mpcApproveDatas = await mpc.getDataForApprove();
-      this.logger.debug("********************************** syncMpcRequest start **********************************");
+      logger.debug("********************************** syncMpcRequest start **********************************");
 
       let multiDataApproves = [...mpcApproveDatas].map((approveData) => {
         return new Promise(async (resolve, reject) => {
@@ -666,9 +666,9 @@ async function syncMpcRequest(logger, db) {
     
       try {
         await Promise.all(multiDataApproves);
-        syncLogger.debug("********************************** syncMpcRequest done **********************************");
+        logger.debug("********************************** syncMpcRequest done **********************************");
       } catch (err) {
-        global.syncLogger.error("splitEvent", err);
+        logger.error("splitEvent", err);
         return Promise.reject(err);
       }
     } catch (err) {
