@@ -3,6 +3,7 @@
 const {
   loadConfig,
   getGlobalChain,
+  generateKey,
   sha256,
   sleep
 } = require('comm/lib');
@@ -12,7 +13,7 @@ const moduleConfig = require('conf/moduleConfig.js');
 
 let Contract = require("contract/Contract.js");
 
-let MPC = require("mpc/schnorrMpc.js");
+let MPC = require("mpc/mpc.js");
 let SchnorrMPC = require("mpc/schnorrMpc.js");
 
 module.exports = class BaseAgent {
@@ -50,6 +51,8 @@ module.exports = class BaseAgent {
     }
 
     this.record = record;
+    this.isDebt = false; // init
+    this.isFee = false;
     if (record !== null) {
       this.hashKey = record.hashX;
       if (record.x !== '0x') {
@@ -66,7 +69,24 @@ module.exports = class BaseAgent {
 
       this.tokenAddr = record.tokenAddr;
       this.tokenSymbol = record.tokenSymbol;
-      this.decimals = this.crossTokens[this.tokenAddr].decimals;
+      this.decimals = record.decimals;
+    }
+
+    this.debtOptEnable = moduleConfig.crossInfoDict[crossChain].CONF.debtOptEnable;
+
+    this.debtFunc = crossInfoInst.debtFunc;
+    this.debtEvent = crossInfoInst.debtEvent;
+
+    if (this.debtOptEnable && (record !== null) && record.isDebt) {
+      this.isDebt = record.isDebt;
+      this.crossFunc = this.debtFunc;
+    }
+
+    this.withdrawFeeFunc = crossInfoInst.withdrawFeeFunc;
+    this.withdrawFeeEvent = crossInfoInst.withdrawFeeEvent;
+
+    if (this.debtOptEnable && (record !== null) && record.isFee) {
+      this.isFee = record.isFee;
     }
   }
 
@@ -192,6 +212,9 @@ module.exports = class BaseAgent {
         } else if (action === 'revoke') {
           this.data = await this.getRevokeData();
           this.build = this.buildRevokeData;
+        } else if (action === 'withdrawFee') {
+          this.data = await this.getWithdrawFeeData();
+          this.build = this.buildWithdrawFeeData;
         }
 
         this.logger.debug("********************************** setData **********************************", JSON.stringify(this.data, null, 4), "hashX", this.hashKey);
@@ -291,7 +314,11 @@ module.exports = class BaseAgent {
             internalSignature = await this.getInternalSign(this.mpcSignData);
             // this.mpcSignData = this.mpcSignData.push(internalSignature.R, internalSignature.s);
           } else {
-            internalSignature = await this.validateInternalSign(this.mpcSignData);
+            if ((this.isDebt && this.record.storeman !== this.storemanPk) || this.isFee) {
+              internalSignature = await this.approveInternalSign(this.mpcSignData);
+            } else {
+              internalSignature = await this.validateInternalSign(this.mpcSignData);
+            }
           }
           resolve(internalSignature);
         } catch (err) {
@@ -307,7 +334,20 @@ module.exports = class BaseAgent {
     return new Promise(async (resolve, reject) => {
       try {
         this.logger.debug("********************************** getInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
-        let mpc = new SchnorrMPC(mpcSignData, this.storemanPk, this.hashKey);
+        // let mpc = new SchnorrMPC(mpcSignData, this.storemanPk, this.hashKey);
+        let mpc = new SchnorrMPC();
+        mpc.setHashX(this.hashKey);
+        let extern;
+        if (this.isDebt) {
+          extern = "cross:" + this.debtFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+        } else if (this.isFee) {
+          extern = "cross:" + this.withdrawFeeFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+        } else {
+          extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+        }
+        mpc.setSignData(this.storemanPk, mpcSignData, extern);
+
+
         // internalSignature is a object, {R:, S:}
         let internalSignature = await mpc.signViaMpc();
         this.logger.debug("********************************** getInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
@@ -323,7 +363,19 @@ module.exports = class BaseAgent {
     return new Promise(async (resolve, reject) => {
       try {
         this.logger.debug("********************************** validateInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
-        let mpc = new SchnorrMPC(mpcSignData, this.storemanPk, this.hashKey);
+        // let mpc = new SchnorrMPC(mpcSignData, this.storemanPk, this.hashKey);
+        let mpc = new SchnorrMPC();
+        mpc.setHashX(this.hashKey);
+        let extern;
+        if (this.isDebt) {
+          extern = "cross:" + this.debtFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+        } else if (this.isFee) {
+          extern = "cross:" + this.withdrawFeeFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+        } else {
+          extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+        }
+        mpc.setSignData(this.storemanPk, mpcSignData, extern);
+
         let internalSignature = await mpc.addValidDataViaMpc();
         this.logger.debug("********************************** validateInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
         resolve({
@@ -332,6 +384,35 @@ module.exports = class BaseAgent {
         });
       } catch (err) {
         this.logger.error("********************************** validateInternalSign Via Mpc failed ********************************** hashX", this.hashKey, err);
+        reject(err);
+      }
+    });
+  }
+
+  approveInternalSign(mpcSignData) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        this.logger.debug("********************************** approveInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
+        let mpc = new SchnorrMPC();
+        mpc.setHashX(this.hashKey);
+        let extern;
+        if (this.isDebt) {
+          extern = "cross:" + this.debtFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+        } else if (this.isFee) {
+          extern = "cross:" + this.withdrawFeeFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+        } else {
+          extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+        }
+        mpc.setSignData(this.storemanPk, mpcSignData, extern);
+
+        let internalSignature = await mpc.approveData();
+        this.logger.debug("********************************** approveInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
+        resolve({
+          R: null,
+          s: null
+        });
+      } catch (err) {
+        this.logger.error("********************************** approveInternalSign Via Mpc failed ********************************** hashX", this.hashKey, err);
         reject(err);
       }
     });
@@ -350,33 +431,116 @@ module.exports = class BaseAgent {
     });
   }
 
-  buildLockData(hashKey, result) { 
-    this.logger.debug("********************************** insertLockData trans **********************************", hashKey);
+  createDebtData(chainType, crossChain, tokenType, tokenAddr, debtor, debt, hashKey) {
+    let x = "";
+    let hashX;
+    if (!hashKey) {
+      x = generateKey();
+      hashX = sha256(x);
+    } else {
+      // debtredeem donot need schnorr, only leader own the x
+      hashX = hashKey;
+    }
+
+    this.logger.debug("********************************** createDebtData ********************************** hashX", hashX, 
+    "at chain ", chainType, " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with debtor is ", debtor, " and debt ", debt);
 
     let content = {
-      storemanLockTxHash: (Array.isArray(this.record.storemanLockTxHash)) ? [...this.record.storemanLockTxHash] : [this.record.storemanLockTxHash]
+      x: x,
+      hashX: hashX,
+      direction: 0,
+      crossChain: crossChain,
+      tokenType: tokenType,
+      tokenAddr: tokenAddr,
+      tokenSymbol: this.crossTokens[tokenAddr].tokenSymbol,
+      decimals: this.crossTokens[tokenAddr].decimals,
+      originChain: chainType,
+      from: this.storemanAddress,
+      crossAddress: this.storemanPk,
+      storeman: debtor,
+      toHtlcAddr: this.contractAddr,
+      value: eosToFloat(debt),
+      isDebt: true
+    };
+
+    return [hashX, content];
+  }
+
+  createWithdrawFeeData(chainType, crossChain, tokenType, tokenAddr, receiver, timestamp, hashKey) {
+    let x = "";
+    let hashX;
+    if (!hashKey) {
+      x = generateKey();
+      hashX = sha256(x);
+    } else {
+      // Withdraw donot need x confirm, only leader own the x
+      hashX = hashKey;
     }
-    content.storemanLockTxHash.push(result.toLowerCase());
+
+    this.logger.debug("********************************** createWithdrawFeeData ********************************** hashX", hashX, 
+    "at chain ", chainType, " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with receiver is ", receiver, " and timestamp ", timestamp);
+
+    let content = {
+      x: x,
+      hashX: hashX,
+      crossChain: crossChain,
+      tokenType: tokenType,
+      tokenAddr: tokenAddr,
+      originChain: chainType,
+      crossAddress: receiver,
+      withdrawFeeTime: timestamp,
+      isFee: true
+    };
+
+    if (tokenAddr) {
+      content.tokenSymbol = this.crossTokens[tokenAddr].tokenSymbol;
+      content.decimals = this.crossTokens[tokenAddr].decimals;
+    }
+
+    return [hashX, content];
+  }
+
+  buildLockData(hashKey, result) {
+    let txHashName = this.isDebt ? "walletLockTxHash" : "storemanLockTxHash";
+    this.logger.debug("********************************** insertLockData trans **********************************", txHashName, hashKey);
+
+    let content = {};
+    content[txHashName] = (Array.isArray(this.record[txHashName])) ? [...this.record[txHashName]] : [this.record[txHashName]]
+
+    content[txHashName].push(result.toLowerCase());
     return content;
   }
 
   buildRedeemData(hashKey, result) {
-    this.logger.debug("********************************** insertRedeemData trans **********************************", hashKey);
+    let txHashName = this.isDebt ? "walletRedeemTxHash" : "storemanRedeemTxHash";
+    this.logger.debug("********************************** insertRedeemData trans **********************************", txHashName, hashKey);
 
-    let content = {
-      storemanRedeemTxHash: (Array.isArray(this.record.storemanRedeemTxHash)) ? [...this.record.storemanRedeemTxHash] : [this.record.storemanRedeemTxHash]
-    }
-    content.storemanRedeemTxHash.push(result.toLowerCase());
+    let content = {};
+    content[txHashName] = (Array.isArray(this.record[txHashName])) ? [...this.record[txHashName]] : [this.record[txHashName]]
+
+    content[txHashName].push(result.toLowerCase());
     return content;
   }
 
   buildRevokeData(hashKey, result) {
-    this.logger.debug("********************************** insertRevokeData trans **********************************", hashKey);
+    let txHashName = this.isDebt ? "walletRevokeTxHash" : "storemanRevokeTxHash";
+    this.logger.debug("********************************** insertRevokeData trans **********************************", txHashName, hashKey);
 
-    let content = {
-      storemanRevokeTxHash: (Array.isArray(this.record.storemanRevokeTxHash)) ? [...this.record.storemanRevokeTxHash] : [this.record.storemanRevokeTxHash]
-    }
-    content.storemanRevokeTxHash.push(result.toLowerCase());
+    let content = {};
+    content[txHashName] = (Array.isArray(this.record[txHashName])) ? [...this.record[txHashName]] : [this.record[txHashName]]
+
+    content[txHashName].push(result.toLowerCase());
+    return content;
+  }
+
+  buildWithdrawFeeData(hashKey, result) {
+    let txHashName = "withdrawFeeTxHash";
+    this.logger.debug("********************************** insertWithdrawFeeData trans **********************************", txHashName, hashKey);
+
+    let content = {};
+    content[txHashName] = (Array.isArray(this.record[txHashName])) ? [...this.record[txHashName]] : [this.record[txHashName]]
+
+    content[txHashName].push(result.toLowerCase());
     return content;
   }
 
@@ -406,11 +570,12 @@ module.exports = class BaseAgent {
     let storeman;
 
     try {
+      //Event: wallet revoke(in/out), [ schnorr: wallet redeem(out), storeman redeem(in/out), storeman revoke(in) ]don't have storeman
       if (!((eventName === this.depositEvent[2] && chainType !== 'WAN') ||
         (eventName === this.withdrawEvent[2] && chainType === 'WAN') ||
-        (eventName === this.withdrawEvent[1] && chainType === 'EOS' && crossChain === 'EOS') ||
-        (eventName === this.withdrawEvent[1] && chainType === 'WAN' && crossChain === 'EOS') ||
-        (eventName === this.withdrawEvent[2] && chainType === 'EOS' && crossChain === 'EOS'))) {
+        (eventName === this.withdrawEvent[1] && this.schnorrMpc) ||
+        (eventName === this.withdrawEvent[2] && this.schnorrMpc) ||
+        (eventName === this.depositEvent[1] && chainType !== 'WAN' && this.schnorrMpc))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
 
         if([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(storeman) === -1) {
@@ -418,8 +583,8 @@ module.exports = class BaseAgent {
         }
       }
       if ((eventName === this.depositEvent[0] && chainType !== 'WAN') ||
-        (eventName === this.withdrawEvent[0] && chainType === 'WAN')) {
-        this.logger.debug("********************************** 1: found new wallet lock transaction ********************************** hashX", hashX, " on Chain:", chainType);
+        (eventName === this.withdrawEvent[0] && chainType === 'WAN') ||
+        (eventName === this.debtEvent[0] && chainType !== 'WAN')) {
         let tokenAddr = this.getDecodeEventTokenAddr(decodeEvent);
         content = {
           hashX: hashX,
@@ -442,34 +607,49 @@ module.exports = class BaseAgent {
           HTLCtime: (1000 * 2 * lockedTime + Number(decodeEvent.timestamp) * 1000).toString(),
           walletLockEvent: event
         };
+        if (eventName === this.debtEvent[0]) {
+          content.isDebt = true;
+          this.isDebt = true;
+        }
+        this.logger.debug("********************************** 1: found new wallet lock transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
       } else if ((eventName === this.depositEvent[0] && chainType === 'WAN') ||
-        (eventName === this.withdrawEvent[0] && chainType !== 'WAN')) {
-        this.logger.debug("********************************** 2: found storeman lock transaction ********************************** hashX", hashX, " on Chain:", chainType);
+        (eventName === this.withdrawEvent[0] && chainType !== 'WAN') ||
+        (eventName === this.debtEvent[0] && chainType === 'WAN')) {
+        this.logger.debug("********************************** 2: found storeman lock transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
         content = {
           storemanLockEvent: event
         };
       } else if ((eventName === this.depositEvent[1] && chainType === 'WAN') ||
-        (eventName === this.withdrawEvent[1] && chainType !== 'WAN')) {
-        this.logger.debug("********************************** 3: found wallet redeem transaction ********************************** hashX", hashX, " on Chain:", chainType);
+        (eventName === this.withdrawEvent[1] && chainType !== 'WAN') ||
+        (eventName === this.debtEvent[1] && chainType === 'WAN')) {
+        this.logger.debug("********************************** 3: found wallet redeem transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
         content = {
           x: args.x,
           walletRedeemEvent: event
         };
       } else if ((eventName === this.depositEvent[1] && chainType !== 'WAN') ||
-        (eventName === this.withdrawEvent[1] && chainType === 'WAN')) {
-        this.logger.debug("********************************** 4: found storeman redeem transaction ********************************** hashX", hashX, " on Chain:", chainType);
+        (eventName === this.withdrawEvent[1] && chainType === 'WAN') ||
+        (eventName === this.debtEvent[1] && chainType !== 'WAN')) {
+        this.logger.debug("********************************** 4: found storeman redeem transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
         content = {
           storemanRedeemEvent: event
         };
       } else if ((eventName === this.depositEvent[2] && chainType !== 'WAN') ||
-        (eventName === this.withdrawEvent[2] && chainType === 'WAN')) {
-        this.logger.debug("********************************** 5: found wallet revoke transaction ********************************** hashX", hashX, " on Chain:", chainType);
+        (eventName === this.withdrawEvent[2] && chainType === 'WAN') ||
+        (eventName === this.debtEvent[2] && chainType !== 'WAN')) {
+        this.logger.debug("********************************** 5: found wallet revoke transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
         content = {
           walletRevokeEvent: event,
         };
       } else if ((eventName === this.depositEvent[2] && chainType === 'WAN') ||
-        (eventName === this.withdrawEvent[2] && chainType !== 'WAN')) {
-        this.logger.debug("********************************** 6: found storeman revoke transaction ********************************** hashX", hashX, " on Chain:", chainType);
+        (eventName === this.withdrawEvent[2] && chainType !== 'WAN') ||
+        (eventName === this.debtEvent[2] && chainType === 'WAN')) {
+        this.logger.debug("********************************** 6: found storeman revoke transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+        content = {
+          storemanRevokeEvent: event
+        };
+      } else if (eventName === this.withdrawFeeEvent) {
+        this.logger.debug("********************************** 7: found storeman withdrawFee transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
         content = {
           storemanRevokeEvent: event
         };

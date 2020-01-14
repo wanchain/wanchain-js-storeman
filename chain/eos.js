@@ -108,9 +108,12 @@ class EosChain extends baseChain {
             // };
             if (data.xHash) {
               data.xHash = '0x' + data.xHash;
-            }          
+            };
             if (data.x) {
               data.x = '0x' + data.x;
+            };
+            if (data.pk) {
+              data.storeman = '0x' + data.pk;
             };
             obj = {
               ...obj,
@@ -400,6 +403,80 @@ class EosChain extends baseChain {
         reject(err);
       }
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' sendRawTransactionSync timeout')
+  }
+
+  async getTableRows(scAddr, scope, table) {
+    let chainType = this.chainType;
+    let eos = this.client;
+
+    let tableParams = {
+      json: true,
+      code: undefined,
+      scope: undefined,
+      table: undefined,
+      table_key: '',
+      lower_bound: '',
+      upper_bound: '',
+      index_position: 1,
+      key_type: '',
+      limit: 10,
+      reverse: false,
+      show_payer: false
+    };
+    let args = Object.assign({}, tableParams);
+    args.code = scAddr;
+    args.scope = scope;
+    args.table = table;
+
+    return new TimeoutPromise(async (resolve, reject) => {
+      try {
+        /*
+        * Result:
+        * {
+        *   rows:[{xxx},{xxx}]
+        *   more:false
+        * }
+        */
+        let result = await eos.rpc.get_table_rows(args);
+        resolve(result.rows);
+      } catch (err) {
+        reject(err);
+      }
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTableRows timeout')
+  }
+
+  async getTokenStoremanFee(crossChain, tokenType, tokenOrigAddr, smgAddress) {
+    let chainType = this.chainType;
+    let func = this.getQuotaLedgerFunc(crossChain, tokenType, 'getStoremanFee');
+    return new TimeoutPromise(async (resolve, reject) => {
+      try {
+        let htlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr;
+        let pks = await this.getTableRows(htlcAddr, htlcAddr, 'pks');
+        let pkId = null;
+        for (let storeman in pks) {
+          if (storeman.pk === smgAddress) {
+            pkId = storeman.id;
+            break;
+          }
+        }
+
+        if (pkId === null) {
+          reject('storemanPk is not found');
+        } else {
+          let fees = await this.getTableRows(htlcAddr, pkId, 'fees');
+          let feeBalance = 0;
+          for (let fee in fees) {
+            if (this.encodeToken(fee.account, fee.balance) === tokenOrigAddr) {
+              feeBalance = fee.balance;
+              break;
+            }
+          }
+          resolve(feeBalance);
+        }
+      } catch (err) {
+        reject(err);
+      }
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenStoremanFee timeout');
   }
 
 }

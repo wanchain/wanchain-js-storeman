@@ -11,6 +11,14 @@ const eventSchema = new Schema({
   direction: {
     type: Number, /*0: deposit, 1: withdraw*/
   },
+  isDebt: {
+    type: Boolean, /*false: normal cross trans, true: debt trans*/
+    default: false
+  },
+  isFee: {
+    type: Boolean, /*false: normal cross trans, true: withdrawFee trans*/
+    default: false
+  },
   crossChain: {
     type: String
   },
@@ -110,6 +118,15 @@ const eventSchema = new Schema({
     type: Number,
     default: 0
   },
+  walletLockTxHash: {
+    type: Array,
+    lowercase: true,
+    default: []
+  },
+  walletLockTxBlockNumber: {
+    type: Array,
+    default: []
+  },
   walletLockEvent: {
     type: Array,
     default: []
@@ -129,7 +146,20 @@ const eventSchema = new Schema({
     lowercase: true,
     default: []
   },
+  storemanLockTxBlockNumber: {
+    type: Array,
+    default: []
+  },
   storemanLockEvent: {
+    type: Array,
+    default: []
+  },
+  walletRedeemTxHash: {
+    type: Array,
+    lowercase: true,
+    default: []
+  },
+  walletRedeemTxBlockNumber: {
     type: Array,
     default: []
   },
@@ -142,7 +172,20 @@ const eventSchema = new Schema({
     lowercase: true,
     default: []
   },
+  storemanRedeemTxBlockNumber: {
+    type: Array,
+    default: []
+  },
   storemanRedeemEvent: {
+    type: Array,
+    default: []
+  },
+  walletRevokeTxHash: {
+    type: Array,
+    lowercase: true,
+    default: []
+  },
+  walletRevokeTxBlockNumber: {
     type: Array,
     default: []
   },
@@ -155,7 +198,28 @@ const eventSchema = new Schema({
     lowercase: true,
     default: []
   },
+  storemanRevokeTxBlockNumber: {
+    type: Array,
+    default: []
+  },
   storemanRevokeEvent: {
+    type: Array,
+    default: []
+  },
+  withdrawFeeTime: {
+    type: Number,
+    default: 0
+  },
+  withdrawFeeTxHash: {
+    type: Array,
+    lowercase: true,
+    default: []
+  },
+  withdrawFeeTxBlockNumber: {
+    type: Array,
+    default: []
+  },
+  withdrawFeeEvent: {
     type: Array,
     default: []
   },

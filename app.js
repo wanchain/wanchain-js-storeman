@@ -4,7 +4,12 @@ const optimist = require('optimist');
 const CronJob = require("cron").CronJob;
 
 let argv = optimist
-  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [mpcPort] -dbip [dbIp] -dbport [dbPort] -dbuser [dbUser] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] [--testnet] [--dev] [--leader] [--init] [--renew] -period [period] [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password] --keystore [keystore] ")
+  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [fh] -dbip [dbIp] -dbport [dbPort] -dbuser [dbUser] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] \
+  [--testnet] [--dev] [--leader] [--init] [--renew] -period [period] \
+  [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password] --keystore [keystore] \
+  [--doDebt] --chain [chain] --token [token] --debtor [debtor] --debt [debt] \
+  [--withdraw] --chain [chain] --token [token] --wanReceiver [wanReceiver] --oriReceiver [oriReceiver]\
+   ")
   .alias('h', 'help')
   .alias('i', 'index')
   .alias('mpcip', 'mpcIP')
@@ -38,6 +43,14 @@ let argv = optimist
   .describe('wallet', 'identify EOS keosd wallet name if keosd enable')
   .describe('password', 'identify password path(file)')
   .describe('keystore', 'identify keystore path(dir)')
+  .describe('doDebt', 'debug whether to doDebt')
+  .describe('withdraw', 'debug whether to withdraw')
+  .describe('chain', 'identify debt chain or withdrawFee chain')
+  .describe('token', 'identify debt token or withdrawFee token')
+  .describe('debt', 'identify debt amount')
+  .describe('debtor', 'identify debt debtor')
+  .describe('wanReceiver', 'identify withdrawFee wanReceiver')
+  .describe('oriReceiver', 'identify withdrawFee oriReceiver')
   .default('i', 0)
   .default('period', '2')
   .string('pk')
@@ -49,7 +62,8 @@ let argv = optimist
   .string('period')
   .string('keosdUrl', 'wallet')
   .string('password', 'keystore')
-  .boolean('testnet', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr', 'keosd')
+  .string('debt', 'chain', 'token', 'debtor', 'wanReceiver', 'oriReceiver')
+  .boolean('testnet', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr', 'keosd', 'doDebt', 'withdraw')
   .argv;
 
 let pass = true;
@@ -58,6 +72,9 @@ if (argv.leader) {
   if ((argv.mpc && (!argv.mpcIP && !argv.mpcPort))
     || (!argv.password || !argv.keystore)
     || (argv.keosd && (!argv.keosdUrl || !argv.wallet || !argv.password))
+    || (argv.doDebt && (!argv.chain && !argv.token && !argv.debtor && !argv.debt))
+    || (argv.withdraw && (!argv.chain && !argv.token && !argv.wanReceiver))
+    || (argv.withdraw && (!argv.chain && !argv.token && !argv.oriReceiver))
     || (argv.init && (!argv.c || !argv.w || !argv.o))) {
     pass = false;
   }
@@ -130,7 +147,10 @@ const ModelOps = require('db/modelOps');
 const EthAgent = require("agent/EthAgent.js");
 const EosAgent = require("agent/EosAgent.js");
 const WanAgent = require("agent/WanAgent.js");
-const StateAction = require("monitor/monitor.js");
+// const StateAction = require("monitor/monitor.js");
+const NormalCross = require("monitor/normalCross.js");
+const Debt = require("monitor/debt.js");
+const WithdrawFee = require("monitor/withdrawFee.js");
 
 let handlingList = {};
 
@@ -327,10 +347,10 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
         let tokenTypeHandler = tokenList[crossChain][tokenType];
         let lockedTime = tokenList[crossChain][tokenType].lockedTime; 
         let crossAgent;
-        if (chainType === 'WAN') {
-          crossAgent = tokenTypeHandler.wanCrossAgent;
-        } else {
+        if (chainType === crossChain) {
           crossAgent = tokenTypeHandler.originCrossAgent;
+        } else {
+          crossAgent = tokenTypeHandler.wanCrossAgent;
         }
 
         let decodeEvent;
@@ -418,7 +438,7 @@ async function syncChain(chainType, crossChain, logger) {
         let blkIndex = from;
         let blkEnd;
         let range = to - from;
-        let cntPerTime = 1000;
+        let cntPerTime = 20000;
 
         while (blkIndex < to) {
           if ((blkIndex + cntPerTime) > to) {
@@ -453,7 +473,7 @@ async function syncChain(chainType, crossChain, logger) {
             events = [];
           }
           await modelOps.syncSaveScannedBlockNumber(crossChain, chainType, blkEnd);
-          logger.info("********************************** saveState **********************************", chainType, crossChain);
+          logger.info("********************************** saveState **********************************", chainType, crossChain, blkEnd);
 
           blkIndex += cntPerTime;
           range -= cntPerTime;
@@ -512,6 +532,20 @@ async function updateRecordAfterRestart(logger) {
 }
 
 function monitorRecord(record) {
+  let StateAction;
+  // debt and withdraw will use leader-monitor and follower-apply mode
+  if (record.isDebt) {
+    if (tokenList.storemanAddress.includes(record.storeman)) {
+      StateAction = NormalCross;
+    } else {
+      StateAction = Debt;
+    }
+  } else if (record.isFee) {
+    StateAction = WithdrawFee;
+  } else {
+    StateAction = NormalCross;
+  }
+
   let stateAction = new StateAction(record, global.monitorLogger, db);
   stateAction.takeAction()
     .then(result => {
@@ -551,12 +585,12 @@ async function handlerMain(logger, db) {
       }
       if (global.storemanRestart) {
         option.status = {
-          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'fundLostFinished']
+          $nin: ['redeemFinished', 'revokeFinished', 'withdrawFinished', 'transIgnored', 'fundLostFinished']
         }
         global.storemanRestart = false;
       } else {
         option.status = {
-          $nin: ['redeemFinished', 'revokeFinished', 'transIgnored', 'fundLostFinished', 'interventionPending']
+          $nin: ['redeemFinished', 'revokeFinished', 'withdrawFinished', 'transIgnored', 'fundLostFinished', 'interventionPending']
         }
       }
       console.log("aaron debug here handlerMain option", option);
@@ -583,6 +617,154 @@ async function handlerMain(logger, db) {
       logger.error("handlerMain error:", error);
     }
     await sleep(moduleConfig.INTERVAL_TIME);
+  }
+}
+
+async function syncMpcRequest(logger, db) {
+  while (1) {
+    try {
+      let SchnorrMPC = require("mpc/schnorrMpc.js");
+      let mpc = new SchnorrMPC();
+
+      let mpcApproveDatas = [];
+      mpcApproveDatas = await mpc.getDataForApprove();
+      this.logger.debug("********************************** syncMpcRequest start **********************************");
+
+      let multiDataApproves = [...mpcApproveDatas].map((approveData) => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            if (!tokenList.storemanAddress.includes(approveData.pk)) {
+              // only manager the approve request only the storemanPK same
+              resolve();
+              return;
+            }
+            // approveData extern should be "cross:debt:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:WAN"  / "cross:normal:EOS:tokenType:EOS" /"cross:normal:EOS:tokenType:WAN"
+            let extern = approveData.extern.split(':');
+            if (extern.length === 5 && extern[0] === 'cross') {
+              let crossChain = extern[2];
+              let tokenType = extern[3];
+              let transOnChain = extern[4];
+              let tokenTypeHandler = tokenList[crossChain][tokenType];
+              let crossAgent;
+              if (crossChain === transOnChain) {
+                crossAgent = tokenTypeHandler.originCrossAgent;
+                } else {
+                  crossAgent = tokenTypeHandler.wanCrossAgent;
+                }
+
+                let content = crossAgent.decodeSignatureData(approveData);
+                if (content !== null) {
+                  await modelOps.syncSave(...content);
+                }
+            } 
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        });
+      });
+    
+      try {
+        await Promise.all(multiDataApproves);
+        syncLogger.debug("********************************** syncMpcRequest done **********************************");
+      } catch (err) {
+        global.syncLogger.error("splitEvent", err);
+        return Promise.reject(err);
+      }
+    } catch (err) {
+      logger.error("syncMpcRequest failed:", err);
+    }
+
+    await sleep(moduleConfig.INTERVAL_TIME);
+  }
+}
+
+async function doDebt(logger) {
+  try {
+    if (global.argv.isLeader && global.argv.doDebt && global.argv.debtor && global.argv.debt) {
+      let crossChain = global.argv.chain;
+      let tokenAddr = global.argv.token;
+      let tokenType;
+      let debtor = global.argv.debtor;
+      let debt = global.argv.debt;
+
+      for (let token in global.config["crossTokens"][crossChain]["TOKEN"]) {
+        if (token !== tokenAddr) {
+          continue;
+        } else {
+          tokenType = global.config["crossTokens"][crossChain]["TOKEN"][token].tokenType;
+        }
+      }
+
+      if (!tokenType) {
+        logger.error("withdrawFee error:", "The tokenAddr can not be found!", tokenAddr);
+        return;
+      }
+  
+      if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc && moduleConfig.crossInfoDict[crossChain].CONF.debtOptEnable) {
+        let tokenTypeHandler = tokenList[crossChain][tokenType];
+        let crossAgent;
+  
+        crossAgent = tokenTypeHandler.originCrossAgent;
+        let content = crossAgent.createDebtData(crossChain, crossChain, tokenType, tokenAddr, debtor, debt);
+        logger.info("doDebt request:",
+        "at chain ", chainType, " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with debtor is ", debtor, " and debt ", debt);
+        await modelOps.syncSave(...content);
+      }
+    } else if (global.argv.doDebt) {
+      logger.error("doDebt error:", "Only the leader can launch the debt trans request");
+    }
+  } catch (err) {
+    logger.error("doDebt error:", error);
+  }
+}
+
+async function withdrawFee(logger) {
+  try {
+    if (global.argv.isLeader && global.argv.withdraw && (global.argv.wanReceiver || global.argv.oriReceiver)) {
+      let crossChain = global.argv.chain;
+      let tokenAddr = global.argv.token;
+      let tokenType;
+      let receiver;
+      let timestamp = parseInt(new Date().getTime() / 1000);
+
+      for (let token in global.config["crossTokens"][crossChain]["TOKEN"]) {
+        if (token !== tokenAddr) {
+          continue;
+        } else {
+          tokenType = global.config["crossTokens"][crossChain]["TOKEN"][token].tokenType;
+        }
+      }
+      if (!tokenType) {
+        logger.error("withdrawFee error:", "The tokenAddr can not be found!", tokenAddr);
+        return;
+      }
+  
+      if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc && moduleConfig.crossInfoDict[crossChain].CONF.debtOptEnable) {
+        let tokenTypeHandler = tokenList[crossChain][tokenType];
+        let crossAgent;
+  
+        if (global.argv.wanReceiver) {
+          receiver = global.argv.wanReceiver;
+          crossAgent = tokenTypeHandler.wanCrossAgent;
+          let wanContent = crossAgent.createWithdrawData('WAN', crossChain, tokenType, tokenAddr, receiver, timestamp);
+          logger.info("withdrawFee request:",
+          "at chain ", "WAN", " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with receiver is ", receiver, " and timestamp ", timestamp);
+          await modelOps.syncSave(...wanContent);
+        } else if (global.argv.oriReceiver) {
+          receiver = global.argv.oriReceiver;
+          crossAgent = tokenTypeHandler.originCrossAgent;
+          let oriContent = crossAgent.createWithdrawData(crossChain, crossChain, tokenType, tokenAddr, receiver, timestamp);
+          logger.info("withdrawFee request:",
+          "at chain ", chainType, " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with receiver is ", receiver, " and timestamp ", timestamp);
+          await modelOps.syncSave(...oriContent);
+        }
+      }
+    } else if (global.argv.doDebt) {
+      logger.error("withdrawFee error:", "Only the leader can launch the withdrawFee trans request");
+    }
+  } catch (err) {
+    logger.error("withdrawFee error:", error);
   }
 }
 
@@ -639,7 +821,18 @@ async function main() {
 
 
   syncMain(global.syncLogger, db);
+
   await updateRecordAfterRestart(global.monitorLogger);
+
+  if (global.argv.doDebt || global.argv.withdraw) {
+    if (global.argv.isLeader) {
+      await doDebt(global.monitorLogger);
+      await withdrawFee(global.monitorLogger);
+    } else {
+      syncMpcRequest(global.syncLogger, db);
+    }
+  }
+
   handlerMain(global.monitorLogger, db);
 }
 

@@ -6,6 +6,7 @@ let RawTrans = require("trans/EosRawTrans.js");
 
 const {
   encodeAccount,
+  hexAdd0x,
   hexTrip0x,
   decodeAccount,
   eosToFloat,
@@ -23,6 +24,12 @@ module.exports = class EosAgent extends baseAgent{
     this.crossFunc = (this.crossDirection === 0) ? this.crossInfoInst.depositAction : this.crossInfoInst.withdrawAction;
     this.depositEvent = this.crossInfoInst.depositAction;
     this.withdrawEvent = this.crossInfoInst.withdrawAction;
+
+    this.debtFunc = this.crossInfoInst.debtAction;
+    this.debtEvent = this.crossInfoInst.debtAction;
+
+    this.withdrawFeeFunc = this.crossInfoInst.withdrawFeeAction;
+    this.withdrawFeeEvent = this.crossInfoInst.withdrawFeeAction;
   }
 
   getTransInfo(action) {
@@ -81,13 +88,22 @@ module.exports = class EosAgent extends baseAgent{
     });
   }
 
-  // outlock(eosio::name storeman, eosio::name user, eosio::asset quantity, std::string xHash, std::string wanAddr, std::string pk, std::string R, std::string s)
-  // outlock(eosio::name storeman, eosio::name user, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)
+  // outlock(eosio::name user, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)
+  // verify(&userView, &acctView, &qView, &xHashView)
+  // debtOpt, debtOptEnable is needed in moduleConfig
+  // lockdebt(std::string npk, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)
+  // verify(&npkView, &acctView, &qView, &xHashView)
   async getLockData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
 
-    let signData = [this.storemanAddress, this.crossAddress, this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.hashKey)];
+    let signData;
+    if (!this.isDebt) {
+      signData = [hexTrip0x(this.crossAddress), this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.hashKey)];
+    } else {
+      signData = [hexTrip0x(this.record.storeman), this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.hashKey)];
+    }
+     
     let internalSignature = await this.internalSignViaMpc(signData);
 
     if (this.isLeader) {
@@ -99,14 +115,8 @@ module.exports = class EosAgent extends baseAgent{
           permission: 'active',
         }],
         data: {
-          // tokenOrigAccount: 'htlceos',
-          // xHash: this.hashKey,
+          // storeman: this.storemanAddress,
           // user: this.crossAddress,
-          // value: this.amount
-          // storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
-          // storeman: hexTrip0x(this.storemanPk),
-          storeman: this.storemanAddress,
-          user: this.crossAddress,
           account: this.tokenAddr.split(':')[0],
           quantity: this.amount,
           xHash: hexTrip0x(this.hashKey),
@@ -115,6 +125,11 @@ module.exports = class EosAgent extends baseAgent{
           s: hexTrip0x(internalSignature.S)
         }
       }];
+      if (!this.isDebt) {
+        actions[0].data.user = hexTrip0x(this.crossAddress);
+      } else {
+        actions[0].data.npk = hexTrip0x(this.record.storeman);
+      }
       return actions;
     } else {
       return null;
@@ -122,25 +137,14 @@ module.exports = class EosAgent extends baseAgent{
   }
 
   // inredeem(eosio::name storeman, std::string x, std::string r, std::string s)
+  // inredeem(std::string x)
+  // redeemdebt(std::string x)
   async getRedeemData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
     this.logger.debug('getRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
 
-
-    // if (this.hashKey === '0xe24b6e28e5e8835f03be187197aa68e8dd59c83a9c1b8e5d804e2eea2b926ec7') {
-    //   this.key = '0xf9e3c53945a4287beec09b55636418c78aafa2df91873414f8224c84acf09d6f';
-    // } else if (this.hashKey === '0x44ad684bde62eafab28c205ed889ef6dceaa4273f0d8e4b6394b8ef3c18f3060') {
-    //   this.key = '0x204b84afd243c144ae2e828b9bf2f1f24153511785daabcbb779eb45f5a16ba9';
-    // } else if (this.hashKey === '0xeafd6521494402abfed88e888107e3870f6c42a9bd5c79c550d23ed14630e7c2') {
-    //   this.key = '0x00dff2025305035d12b17e2f0836b690e79be6bf82f78713c50365b7d06c7f82';
-    // } else if (this.hashKey === '0x80933de75748db7820458215190f252f3f2f5ad06edf919fd37c188565eb9a2d') {
-    //   this.key = '0x57ca9b55867833332843389c8fc557076803ab430c69c1e79ab489c55c75c235';
-    // } else if (this.hashKey === '0x5ce9ff5a7e5a5d3a2e7172ecd81e13750e6573105d9cdf8fd32e4fdf86e47211') {
-    //   this.key = '0xfdbf6dc5c99651f8c494f0a08d2e4c2cd298f868d3c293d775d8acc9c01bcccf';
-    // }
-
-    let signData = [hexTrip0x(this.storemanAddress), hexTrip0x(this.key)];
-    let internalSignature = await this.internalSignViaMpc(signData);
+    // let signData = [hexTrip0x(this.storemanAddress), hexTrip0x(this.key)];
+    // let internalSignature = await this.internalSignViaMpc(signData);
 
     if (this.isLeader) {
       let actions = [{
@@ -153,10 +157,10 @@ module.exports = class EosAgent extends baseAgent{
         data: {
           // storemanGroup: decodeAccount(this.crossChain, this.storemanAddress),
           // storeman: hexTrip0x(this.storemanPk),
-          storeman: this.storemanAddress,
+          // storeman: this.storemanAddress,
           x: hexTrip0x(this.key),
-          r: hexTrip0x(internalSignature.R),
-          s: hexTrip0x(internalSignature.S)
+          // r: hexTrip0x(internalSignature.R),
+          // s: hexTrip0x(internalSignature.S)
         }
       }];
       return actions;
@@ -166,6 +170,8 @@ module.exports = class EosAgent extends baseAgent{
   }
 
   // outrevoke(eosio::name storeman, std::string xHash, std::string r, std::string s)
+  // outrevoke(std::string xHash)
+  // revokedebt(std::string xHash)
   async getRevokeData() {
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
     this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
@@ -194,26 +200,201 @@ module.exports = class EosAgent extends baseAgent{
     }
   }
 
+  // // debt opt
+  // // debtOptEnable is needed in moduleConfig
+  // // lockdebt(eosio::name storeman, std::string npk, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)
+  // // verify(&npkView, &acctView, &qView, &xHashView)
+  // async getDebtLockData() {
+  //   if (this.debtOptEnable) {
+  //     this.logger.debug("********************************** funcInterface **********************************", this.debtFunc[0], "hashX", this.hashKey);
+  //     this.logger.debug('getDebtLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
+  
+  //     let signData = [this.storemanAddress, this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.crossAddress), hexTrip0x(this.hashKey)];
+  //     let internalSignature = await this.internalSignViaMpc(signData);
+  
+  //     if (this.isLeader) {
+  //       let actions = [{
+  //         account: this.contractAddr,
+  //         name: this.debtFunc[0],
+  //         authorization: [{
+  //           actor: this.storemanAddress,
+  //           permission: 'active',
+  //         }],
+  //         data: {
+  //           storeman: this.storemanAddress,
+  //           account: this.tokenAddr.split(':')[0],
+  //           quantity: this.amount,
+  //           npk: hexTrip0x(this.crossAddress),
+  //           xHash: hexTrip0x(this.hashKey),
+  //           pk: hexTrip0x(this.storemanPk),
+  //           r: hexTrip0x(internalSignature.R),
+  //           s: hexTrip0x(internalSignature.S)
+  //         }
+  //       }];
+  //       return actions;
+  //     } else {
+  //       return null;
+  //     }
+  //   } else {
+  //     this.logger.warn("********************************** funcInterface ********************************** getDebtLockData", "hashX", this.hashKey, "debtOptEnable is ", this.debtOptEnable);
+  //     this.logger.warn('getDebtLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
+  
+  //     return null;
+  //   }
+
+  // }
+
+  // // redeemdebt(eosio::name storeman, std::string x, std::string r, std::string s)
+  // async getDebtRedeemData() {
+  //   if (this.debtOptEnable) {
+  //     this.logger.debug("********************************** funcInterface **********************************", this.debtFunc[1], "hashX", this.hashKey);
+  //     this.logger.debug('getDebtRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
+  
+  //     let signData = [hexTrip0x(this.storemanAddress), hexTrip0x(this.key)];
+  //     let internalSignature = await this.internalSignViaMpc(signData);
+  
+  //     if (this.isLeader) {
+  //       let actions = [{
+  //         account: this.contractAddr,
+  //         name: this.debtFunc[1],
+  //         authorization: [{
+  //           actor: this.storemanAddress,
+  //           permission: 'active',
+  //         }],
+  //         data: {
+  //           storeman: this.storemanAddress,
+  //           x: hexTrip0x(this.key),
+  //           r: hexTrip0x(internalSignature.R),
+  //           s: hexTrip0x(internalSignature.S)
+  //         }
+  //       }];
+  //       return actions;
+  //     } else {
+  //       return null;
+  //     }
+  //   } else {
+  //     this.logger.warn("********************************** funcInterface ********************************** getDebtRedeemData", "hashX", this.hashKey, "debtOptEnable is ", this.debtOptEnable);
+  //     this.logger.warn('getDebtRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'key-', this.key);
+
+  //     return null;
+  //   }
+
+  // }
+
+  // // revokedebt(std::string xHash, std::string r, std::string s)
+  // async getDebtRevokeData() {
+  //   if (this.debtOptEnable) {
+  //     this.logger.debug("********************************** funcInterface **********************************", this.debtFunc[2], "hashX", this.hashKey);
+  //     this.logger.debug('getDebtRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
+  
+  //     // let signData = [hexTrip0x(this.storemanAddress), hexTrip0x(this.hashKey)];
+  //     // let internalSignature = await this.internalSignViaMpc(signData);
+  
+  //     if (this.isLeader) {
+  //       let actions = [{
+  //         account: this.contractAddr,
+  //         name: this.debtFunc[2],
+  //         authorization: [{
+  //           actor: this.storemanAddress,
+  //           permission: 'active',
+  //         }],
+  //         data: {
+  //           // storeman: hexTrip0x(this.storemanAddress),
+  //           xHash: hexTrip0x(this.hashKey),
+  //           // r: hexTrip0x(internalSignature.R),
+  //           // s: hexTrip0x(internalSignature.S)
+  //         }
+  //       }];
+  //       return actions;
+  //     } else {
+  //       return null;
+  //     }
+  //   } else {
+  //     this.logger.warn("********************************** funcInterface ********************************** getDebtRevokeData", "hashX", this.hashKey, "debtOptEnable is ", this.debtOptEnable);
+  //     this.logger.warn('getDebtRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
+
+  //     return null;
+  //   }
+
+  // }
+
+  // withdraw(eosio::name storeman, std::string account, std::string sym, std::string pk, std::string timeStamp,eosio::name receiver,std::string r,std::string s)
+  // verify(&timeStampView, &receiverView, &acctView, &symVie)
+  async getWithdrawFeeData() {
+    if (this.debtOptEnable) {
+      this.logger.debug("********************************** funcInterface **********************************", this.withdrawFeeFunc, "hashX", this.hashKey);
+      this.logger.debug('getWithdrawFeeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
+
+      let account = '';
+      let sys = '';
+      if (tokenAddr) {
+        account = this.tokenAddr.split(':')[0];
+        sys = this.decimals + ',' + this.tokenSymbol;
+      }
+      let signData = [this.record.withdrawFeeTime, this.crossAddress, account, sys];
+      let internalSignature = await this.internalSignViaMpc(signData);
+
+      if (this.isLeader) {
+        let actions = [{
+          account: this.contractAddr,
+          name: this.withdrawFeeFunc,
+          authorization: [{
+            actor: this.storemanAddress,
+            permission: 'active',
+          }],
+          data: {
+            storeman: hexTrip0x(this.storemanAddress),
+            account: account,
+            sys: sys,
+            pk: hexTrip0x(this.storemanPk),
+            timeStamp: this.record.withdrawFeeTime,
+            receiver: this.crossAddress,
+            r: hexTrip0x(internalSignature.R),
+            s: hexTrip0x(internalSignature.S)
+          }
+        }];
+        return actions;
+      } else {
+        return null;
+      }
+    } else {
+      this.logger.warn("********************************** funcInterface ********************************** getWithdrawFeeData", "hashX", this.hashKey, "debtOptEnable is ", this.debtOptEnable);
+      this.logger.warn('getWithdrawFeeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
+
+      return null;
+    }
+  }
+
   getDecodeEventTokenAddr(decodeEvent) {
     return decodeEvent.args.tokenOrigAccount;
   }
 
   getDecodeEventStoremanGroup(decodeEvent) {
-    return decodeEvent.args.storeman;
-    // storeman = encodeAccount(this.crossChain, storeman);
-    // return '0x01000373746f72656d616e';
+    if (decodeEvent.event === this.debtEvent[0]) {
+      return decodeEvent.args.npk;
+    } else {
+      return decodeEvent.args.storeman;
+    }
   }
 
   getDecodeEventValue(decodeEvent) {
     // return decodeEvent.args.value;
     let symbol = this.config.crossTokens[this.crossChain].TOKEN[this.getDecodeEventTokenAddr(decodeEvent)].tokenSymbol;
     let decimals = this.config.crossTokens[this.crossChain].TOKEN[this.getDecodeEventTokenAddr(decodeEvent)].decimals;
-    let value = eosToFloat(decodeEvent.args.value, symbol);
+    let value = eosToFloat(decodeEvent.args.value);
     return tokenToWei(value, decimals);
   }
 
   getDecodeEventToHtlcAddr(decodeEvent) {
     return decodeEvent.args.toHtlcAddr;
+  }
+
+  getDecodeCrossAddress(decodeEvent) {
+    if (decodeEvent.event === this.debtEvent[0]) {
+      return decodeEvent.args.pk;
+    } else {
+      return decodeEvent.args.wanAddr;
+    }
   }
 
   _stringToHex(string) {
@@ -224,25 +405,84 @@ module.exports = class EosAgent extends baseAgent{
         else
           val += string.charCodeAt(i).toString(16);
       }
-      return val
+      return val;
+  }
+
+  stringToHex(str) {
+    const buf = Buffer.from(str, 'utf8');
+    return buf.toString('hex');
+  }
+
+  hexToString(str) {
+    const buf = new Buffer(str, 'hex');
+    return buf.toString('utf8');
+  }
+
+  encodeBase64(data) {
+    return new Buffer(data).toString('base64');
+  }
+
+  decodeBase64(data) {
+    return new Buffer(data, 'base64').toString();
+  }
+
+  encodeToken(account, quantity) {
+    let symbol = quantity.split(' ')[1];
+    return account + ':' + symbol;
   }
 
   encode(signData, typesArray) {
     let data = '';
     if (Array.isArray(signData)) {
-      // for (var index in signData) {
-      //   data += signData[index];
-      //   if (Number(index) + 1 < signData.length) {
-      //     data += ':';
-      //   }
-      // }
       data = signData.join(':');
     } else {
       data = signData;
     }
     this.logger.debug("********************************** encode signData **********************************", data, "hashX:", this.hashKey);
-    let str = new Buffer(data).toString('base64');
+    let str = this.encodeBase64(data);
     this.logger.debug("********************************** encode signData after base64 **********************************", str, "hashX:", this.hashKey);
-    return this._stringToHex(str);
+    return hexAdd0x(this.stringToHex(str));
+    // return this._stringToHex(str);
+  }
+
+  decode(signData, typesArray) {
+    this.logger.debug("********************************** decode signData **********************************", signData, "hashX:", this.hashKey);
+
+    let strData = this.hexToString(hexTrip0x(signData));
+    let decodeResult = this.decodeBase64(strData);
+
+    return decodeResult.split(':');
+  }
+
+  // only follower with decodeSignatureData to create debtlock
+  decodeSignatureData(signData) {
+    // signData extern should be "cross:debt:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:WAN"  / "cross:normal:EOS:tokenType:EOS" /"cross:normal:EOS:tokenType:WAN"
+    let content = null;
+    let extern = signData.extern.split(':');
+    if (extern.length === 5 && extern[0] === 'cross') {
+      let data = this.decode(signData.data);
+      if (extern[1] === this.debtFunc[0]) {
+        // lockdebt(eosio::name storeman, std::string npk, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)
+        // verify(&npkView, &acctView, &qView, &xHashView)
+        let debtor = data[0];
+        let tokenAddr = this.encodeToken(data[1], data[2]);
+        let debt = eosToFloat(data[2]);
+        let hashX = data[3];
+
+        content = this.createDebtData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, debtor, debt, hashX);
+      } else if (extern[1] === this.withdrawFeeFunc && global.argv.oriReceiver) {
+        // withdraw(eosio::name storeman, std::string account, std::string sym, std::string pk, std::string timeStamp,eosio::name receiver,std::string r,std::string s)
+        // verify(&timeStampView, &receiverView, &acctView, &symVie)
+        let timestamp = data[0];
+        let receiver;
+        // receiver = data[1];
+        receiver = global.argv.oriReceiver;
+        let symbol = dat1[3].split(',')[1];
+        let tokenAddr = this.encodeToken(data[2], symbol);
+
+        content = this.createWithdrawFeeData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, receiver, timestamp);
+      }
+    }
+    return content;
   }
 }

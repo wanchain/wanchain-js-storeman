@@ -9,15 +9,15 @@ const {
 } = require('comm/lib');
 
 module.exports = class mpc {
-  constructor(data, pk, hashX) {
-    this.pk = pk;
-    this.hashX = hashX;
+  constructor() {
+    // this.pk = pk;
+    // this.hashX = hashX;
     // this.data = this.encode(mpcSignData);
-    this.signData = {
-      pk: this.pk,
-      data: data
-    }
-    global.monitorLogger.debug("********************************** mpc signData **********************************", this.signData, "hashX:", this.hashX);
+    // this.signData = {
+    //   pk: this.pk,
+    //   data: data
+    // }
+    // global.monitorLogger.debug("********************************** mpc signData **********************************", this.signData, "hashX:", this.hashX);
 
     this.mpcWeb3 = new Web3();
 
@@ -33,6 +33,20 @@ module.exports = class mpc {
       this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(global.mpcUrl, net));
     }
     web3Mpc.extend(this.mpcWeb3);
+  }
+
+  setHashX(hashX) {
+    this.hashX = hashX;
+  }
+
+  setSignData(pk, data, extern = "cross") {
+    this.pk = pk;
+    this.signData = {
+      pk: pk,
+      data: data,
+      extern: extern
+    }
+    global.monitorLogger.debug("********************************** mpc signData **********************************", this.signData, "hashX:", this.hashX);
   }
 
   // encode(mpcSignData) {
@@ -84,6 +98,44 @@ module.exports = class mpc {
         })
       } catch (err) {
         global.monitorLogger.error("********************************** mpc addValidData failed **********************************", err, "hashX:", this.hashX);
+        reject(err);
+      }
+    });
+  }
+
+  getDataForApprove() {
+    return new Promise((resolve, reject) => {
+      try {
+        this.mpcWeb3.storeman.getDataForApprove((err, result) => {
+          if (!err) {
+            global.monitorLogger.debug("********************************** mpc getDataForApprove successfully **********************************", result);
+            resolve(result);
+          } else {
+            global.monitorLogger.error("********************************** mpc getDataForApprove failed **********************************", err);
+            reject(err);
+          }
+        })
+      } catch (err) {
+        global.monitorLogger.error("********************************** mpc getDataForApprove failed **********************************", err);
+        reject(err);
+      }
+    });
+  }
+
+  approveData() {
+    return new Promise((resolve, reject) => {
+      try {
+        this.mpcWeb3.storeman.approveData(this.signData, (err, result) => {
+          if (!err) {
+            global.monitorLogger.debug("********************************** mpc approveData successfully **********************************", result, "hashX:", this.hashX);
+            resolve(result);
+          } else {
+            global.monitorLogger.error("********************************** mpc approveData failed **********************************", err, "hashX:", this.hashX);
+            reject(err);
+          }
+        })
+      } catch (err) {
+        global.monitorLogger.error("********************************** mpc approveData failed **********************************", err, "hashX:", this.hashX);
         reject(err);
       }
     });

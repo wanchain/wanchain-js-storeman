@@ -6,6 +6,7 @@ const { Decimal } = require("decimal.js");
 // const net = require('net');
 const BigNumber = require('bignumber.js');
 const crypto = require('crypto');
+const secp256k1 = require('secp256k1');
 
 const EthChain = require('chain/eth');
 const WanChain = require('chain/wan');
@@ -397,6 +398,14 @@ function weiToToken(tokenWei, decimals = 18) {
   return toBigNumber(tokenWei).dividedBy('1e' + decimals).toString(10);
 }
 
+function generateKey() {
+  let randomBuf;
+  do {
+    randomBuf = crypto.randomBytes(32);
+  } while (!secp256k1.privateKeyVerify(randomBuf));
+  return '0x' + randomBuf.toString('hex');
+}
+
 function sha256(params) {
   let kBuf = new Buffer(params.slice(2), 'hex');
   let hash = crypto.createHash("sha256").update(kBuf);
@@ -482,5 +491,6 @@ exports.hexAdd0x = hexAdd0x;
 exports.tokenToWeiHex = tokenToWeiHex;
 exports.tokenToWei = tokenToWei;
 exports.weiToToken = weiToToken;
+exports.generateKey = generateKey;
 exports.sha256 = sha256;
 exports.writeConfigToFile = writeConfigToFile;

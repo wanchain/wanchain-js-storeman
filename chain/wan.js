@@ -49,6 +49,20 @@ class WanChain extends baseChain {
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenStoremanQuota timeout');
   }
 
+  getTokenStoremanFee(crossChain, tokenType, tokenOrigAddr, smgAddress) {
+    let chainType = this.chainType;
+    let func = this.getQuotaLedgerFunc(crossChain, tokenType, 'getStoremanFee');
+    return new TimeoutPromise((resolve, reject) => {
+      func(smgAddress, function(err, result) {
+        if (err) {
+          return reject(err);
+        } else {
+          return resolve(result);
+        }
+      });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenStoremanFee timeout');
+  }
+
   getStoremanGroups(crossChain) {
     let log = this.log;
     let chainType = this.chainType;
