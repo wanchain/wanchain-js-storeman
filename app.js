@@ -633,7 +633,7 @@ async function syncMpcRequest(logger, db) {
       let multiDataApproves = [...mpcApproveDatas].map((approveData) => {
         return new Promise(async (resolve, reject) => {
           try {
-            if (!tokenList.storemanAddress.includes(approveData.pk)) {
+            if (!tokenList.storemanAddress.includes(approveData.pk) || !approveData.extern) {
               // only manager the approve request only the storemanPK same
               resolve();
               return;
