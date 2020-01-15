@@ -75,15 +75,16 @@ class EosChain extends baseChain {
     actions.map(action => {
       try{
         const { account, name, authorization, data } = action.action_trace.act;
+        let date = new Date(action.block_time + 'Z'); // "Z" is a zero time offset
         let obj = {
           address: account,
           blockNumber: action.block_num,
           transactionHash: action.action_trace.trx_id,
           authorization: authorization,
-          // timestamp: action.block_time
+          timestamp: date.getTime()/1000,
           event: name
         }
-        if (name === 'transfer') {
+        if (name === moduleConfig.crossInfoDict[this.chainType].TOKEN.depositAction[0]) {
           if (action.action_trace.act.data.memo.split(':').length === 5 && action.action_trace.act.data.memo.split(':')[0] === 'inlock') {
             const { from, to, quantity, memo } = action.action_trace.act.data;
             obj = {
@@ -98,6 +99,12 @@ class EosChain extends baseChain {
                 tokenOrigAccount: self.encodeToken(account, quantity)
               }
             };
+          } else if (global.argv.leader && action.action_trace.act.data.memo.split(':').length === 1 && action.action_trace.act.data.memo.split(':')[0] === moduleConfig.crossInfoDict[this.chainType].TOKEN.withdrawFeeAction) {
+            obj.event = action.action_trace.act.data.memo;
+            obj = {
+              ...obj,
+              args: data
+            }
           } else {
             return;
           }
@@ -138,7 +145,12 @@ class EosChain extends baseChain {
     let eos = this.client;
     let self = this;
     return new TimeoutPromise(async function (resolve, reject) {
-      let filter = action => action.block_num >= fromBlk && action.block_num <= toBlk && (['transfer', 'inredeem', 'inrevoke', 'outlock', 'outredeem', 'outrevoke'].includes(action.action_trace.act.name));
+      let filterFunc = [];
+      filterFunc = filterFunc.concat(moduleConfig.crossInfoDict[chainType].TOKEN.depositAction,
+        moduleConfig.crossInfoDict[chainType].TOKEN.withdrawAction,
+        // moduleConfig.crossInfoDict[chainType].TOKEN.withdrawFeeAction, // withdrawFee will in eosio.token inline action
+        moduleConfig.crossInfoDict[chainType].TOKEN.debtAction);
+      let filter = action => action.block_num >= fromBlk && action.block_num <= toBlk && (filterFunc.includes(action.action_trace.act.name));
 
       let filterGet = async function (filter) {
         try {

@@ -305,6 +305,11 @@ async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
   let i = 0;
   let end;
   logger.info("events length: ", events.length);
+
+  if (chain.chainType === 'EOS') {
+    return events; // EOS has timestamp already
+  }
+
   while (i < events.length) {
     if ((i + cntPerTime) > events.length) {
       end = events.length;
@@ -388,6 +393,17 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
             if (result.length === 0) {
               resolve();
               return;
+            }
+          } else if (content[1].hasOwnProperty("withdrawFeeEvent")) {
+            let option = {
+              "withdrawFeeTxHash": content[0]
+            };
+            let result = await modelOps.getEventHistory(option);
+            if (result.length === 0) {
+              resolve();
+              return;
+            } else {
+              content = [result[0].hashX, content[1]];
             }
           }
           await modelOps.syncSave(...content);
@@ -596,12 +612,12 @@ async function handlerMain(logger, db) {
       }
       if (global.storemanRestart) {
         option.status = {
-          $nin: ['redeemFinished', 'revokeFinished', 'withdrawFinished', 'transIgnored', 'fundLostFinished']
+          $nin: ['redeemFinished', 'revokeFinished', 'withdrawFeeFinished', 'transIgnored', 'fundLostFinished']
         }
         global.storemanRestart = false;
       } else {
         option.status = {
-          $nin: ['redeemFinished', 'revokeFinished', 'withdrawFinished', 'transIgnored', 'fundLostFinished', 'interventionPending']
+          $nin: ['redeemFinished', 'revokeFinished', 'withdrawFeeFinished', 'transIgnored', 'fundLostFinished', 'interventionPending']
         }
       }
       console.log("aaron debug here handlerMain option", option);

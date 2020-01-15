@@ -564,6 +564,14 @@ module.exports = class BaseAgent {
     let args = this.getDecodeCrossHashX(decodeEvent.args);
     let eventName = decodeEvent.event;
 
+    if (global.argv.leader && eventName === this.withdrawFeeEvent) {
+      this.logger.debug("********************************** 7: found storeman withdrawFee transaction ********************************** on Chain:", chainType, " isDebt:", this.isDebt);
+      content = {
+        withdrawFeeEvent: event
+      };
+      return [event.transactionHash, content];
+    }
+
     if (!args.xHash) {
       return null;
     }
@@ -650,11 +658,12 @@ module.exports = class BaseAgent {
         content = {
           storemanRevokeEvent: event
         };
-      } else if (eventName === this.withdrawFeeEvent) {
-        this.logger.debug("********************************** 7: found storeman withdrawFee transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
-        content = {
-          storemanRevokeEvent: event
-        };
+      // withdrawFee doesn't need record event
+      // } else if (eventName === this.withdrawFeeEvent) {
+      //   this.logger.debug("********************************** 7: found storeman withdrawFee transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+      //   content = {
+      //     withdrawFeeEvent: event
+      //   };
       }
       return [hashX, content];
     } catch (err) {

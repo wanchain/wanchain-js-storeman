@@ -188,6 +188,7 @@ module.exports = class StateAction {
         return;
       }
 
+
       if ((['redeem', 'revoke'].indexOf(actionArray) === -1) && (this.crossDirection === 0)) {
         if (!await this.checkStoremanQuota()) {
           let content = {
@@ -227,6 +228,17 @@ module.exports = class StateAction {
           }
         }
         this.logger.debug("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
+
+        // schnorr-mpc, follow storeman agent only need to approve withdrawFee action
+        if (this.record.isFee && !global.isLeader) {
+          let content = {
+            status: nextState[1],
+            transRetried: 0,
+            transConfirmed: 0
+          }
+          await this.updateRecord(content);
+          return;
+        }
       }
       result.transRetried = 0;
       result.status = nextState[0];

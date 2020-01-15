@@ -326,12 +326,12 @@ module.exports = class EosAgent extends baseAgent{
       this.logger.debug('getWithdrawFeeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey);
 
       let account = '';
-      let sys = '';
+      let sym = '';
       if (this.tokenAddr) {
         account = this.tokenAddr.split(':')[0];
-        sys = this.decimals + ',' + this.tokenSymbol;
+        sym = this.decimals + ',' + this.tokenSymbol;
       }
-      let signData = [this.record.withdrawFeeTime, this.crossAddress, account, sys];
+      let signData = [this.record.withdrawFeeTime, this.crossAddress, account, sym];
       let internalSignature = await this.internalSignViaMpc(signData);
 
       if (this.isLeader) {
@@ -343,9 +343,9 @@ module.exports = class EosAgent extends baseAgent{
             permission: 'active',
           }],
           data: {
-            storeman: hexTrip0x(this.storemanAddress),
+            // storeman: hexTrip0x(this.storemanAddress),
             account: account,
-            sys: sys,
+            sym: sym,
             pk: hexTrip0x(this.storemanPk),
             timeStamp: this.record.withdrawFeeTime,
             receiver: this.crossAddress,
@@ -363,6 +363,62 @@ module.exports = class EosAgent extends baseAgent{
 
       return null;
     }
+  }
+
+  buildLockData(hashKey, result) {
+    let txHashName = this.isDebt ? "walletLockTxHash" : "storemanLockTxHash";
+    let txBlkNumName = this.isDebt ? "walletLockTxBlockNumber" : "storemanLockTxBlockNumber";
+    this.logger.debug("********************************** insertLockData trans **********************************", txHashName, hashKey);
+
+    let content = {};
+    content[txHashName] = (Array.isArray(this.record[txHashName])) ? [...this.record[txHashName]] : [this.record[txHashName]]
+    content[txBlkNumName] = (Array.isArray(this.record[txBlkNumName])) ? [...this.record[txBlkNumName]] : [this.record[txBlkNumName]]
+
+    content[txHashName].push(result.transaction_id.toLowerCase());
+    content[txBlkNumName].push(result.processed.block_num);
+    return content;
+  }
+
+  buildRedeemData(hashKey, result) {
+    let txHashName = this.isDebt ? "walletRedeemTxHash" : "storemanRedeemTxHash";
+    let txBlkNumName = this.isDebt ? "walletRedeemTxBlockNumber" : "storemanRedeemTxBlockNumber";
+    this.logger.debug("********************************** insertRedeemData trans **********************************", txHashName, hashKey);
+
+    let content = {};
+    content[txHashName] = (Array.isArray(this.record[txHashName])) ? [...this.record[txHashName]] : [this.record[txHashName]]
+    content[txBlkNumName] = (Array.isArray(this.record[txBlkNumName])) ? [...this.record[txBlkNumName]] : [this.record[txBlkNumName]]
+
+    content[txHashName].push(result.transaction_id.toLowerCase());
+    content[txBlkNumName].push(result.processed.block_num);
+    return content;
+  }
+
+  buildRevokeData(hashKey, result) {
+    let txHashName = this.isDebt ? "walletRevokeTxHash" : "storemanRevokeTxHash";
+    let txBlkNumName = this.isDebt ? "walletRevokeTxBlockNumber" : "storemanRevokeTxBlockNumber";
+    this.logger.debug("********************************** insertRevokeData trans **********************************", txHashName, hashKey);
+
+    let content = {};
+    content[txHashName] = (Array.isArray(this.record[txHashName])) ? [...this.record[txHashName]] : [this.record[txHashName]]
+    content[txBlkNumName] = (Array.isArray(this.record[txBlkNumName])) ? [...this.record[txBlkNumName]] : [this.record[txBlkNumName]]
+
+    content[txHashName].push(result.transaction_id.toLowerCase());
+    content[txBlkNumName].push(result.processed.block_num);
+    return content;
+  }
+
+  buildWithdrawFeeData(hashKey, result) {
+    let txHashName = "withdrawFeeTxHash";
+    let txBlkNumName = "withdrawFeeTxBlockNumber";
+    this.logger.debug("********************************** insertWithdrawFeeData trans **********************************", txHashName, hashKey);
+
+    let content = {};
+    content[txHashName] = (Array.isArray(this.record[txHashName])) ? [...this.record[txHashName]] : [this.record[txHashName]]
+    content[txBlkNumName] = (Array.isArray(this.record[txBlkNumName])) ? [...this.record[txBlkNumName]] : [this.record[txBlkNumName]]
+
+    content[txHashName].push(result.transaction_id.toLowerCase());
+    content[txBlkNumName].push(result.processed.block_num);
+    return content;
   }
 
   getDecodeEventTokenAddr(decodeEvent) {
