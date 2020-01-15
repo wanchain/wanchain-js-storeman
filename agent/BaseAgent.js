@@ -339,11 +339,11 @@ module.exports = class BaseAgent {
         mpc.setHashX(this.hashKey);
         let extern;
         if (this.isDebt) {
-          extern = "cross:" + this.debtFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+          extern = "cross:" + this.debtFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         } else if (this.isFee) {
-          extern = "cross:" + this.withdrawFeeFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+          extern = "cross:" + this.withdrawFeeFunc + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         } else {
-          extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+          extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         }
         mpc.setSignData(this.storemanPk, mpcSignData, extern);
 
@@ -368,11 +368,11 @@ module.exports = class BaseAgent {
         mpc.setHashX(this.hashKey);
         let extern;
         if (this.isDebt) {
-          extern = "cross:" + this.debtFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+          extern = "cross:" + this.debtFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         } else if (this.isFee) {
-          extern = "cross:" + this.withdrawFeeFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+          extern = "cross:" + this.withdrawFeeFunc + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         } else {
-          extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+          extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         }
         mpc.setSignData(this.storemanPk, mpcSignData, extern);
 
@@ -397,11 +397,11 @@ module.exports = class BaseAgent {
         mpc.setHashX(this.hashKey);
         let extern;
         if (this.isDebt) {
-          extern = "cross:" + this.debtFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+          extern = "cross:" + this.debtFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         } else if (this.isFee) {
-          extern = "cross:" + this.withdrawFeeFunc[0] + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+          extern = "cross:" + this.withdrawFeeFunc + ":" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         } else {
-          extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase();
+          extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         }
         mpc.setSignData(this.storemanPk, mpcSignData, extern);
 
@@ -456,8 +456,8 @@ module.exports = class BaseAgent {
       decimals: this.crossTokens[tokenAddr].decimals,
       originChain: chainType,
       from: this.storemanAddress,
-      crossAddress: this.storemanPk,
-      storeman: debtor,
+      crossAddress: debtor,
+      storeman: this.storemanPk,
       toHtlcAddr: this.contractAddr,
       value: eosToFloat(debt),
       isDebt: true
@@ -489,6 +489,8 @@ module.exports = class BaseAgent {
       originChain: chainType,
       crossAddress: receiver,
       withdrawFeeTime: timestamp,
+      storeman: this.storemanPk,
+      toHtlcAddr: this.contractAddr,
       isFee: true
     };
 

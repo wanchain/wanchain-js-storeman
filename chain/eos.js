@@ -112,8 +112,8 @@ class EosChain extends baseChain {
             if (data.x) {
               data.x = '0x' + data.x;
             };
-            if (data.pk) {
-              data.storeman = '0x' + data.pk;
+            if (data.npk) {
+              data.storeman = '0x' + data.npk;
             };
             obj = {
               ...obj,
@@ -447,27 +447,27 @@ class EosChain extends baseChain {
 
   async getTokenStoremanFee(crossChain, tokenType, tokenOrigAddr, smgAddress) {
     let chainType = this.chainType;
-    let func = this.getQuotaLedgerFunc(crossChain, tokenType, 'getStoremanFee');
+
     return new TimeoutPromise(async (resolve, reject) => {
       try {
         let htlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr;
         let pks = await this.getTableRows(htlcAddr, htlcAddr, 'pks');
         let pkId = null;
-        for (let storeman in pks) {
-          if (storeman.pk === smgAddress) {
-            pkId = storeman.id;
+        for (let id in pks) {
+          if (pks[id].pk === smgAddress) {
+            pkId = pks[id].id;
             break;
           }
         }
 
         if (pkId === null) {
-          reject('storemanPk is not found');
+          reject('storemanPk is not found', smgAddress);
         } else {
           let fees = await this.getTableRows(htlcAddr, pkId, 'fees');
           let feeBalance = 0;
-          for (let fee in fees) {
-            if (this.encodeToken(fee.account, fee.balance) === tokenOrigAddr) {
-              feeBalance = fee.balance;
+          for (let fee of fees) {
+            if (this.encodeToken(fee.account, fee.fee) === tokenOrigAddr) {
+              feeBalance = fee.fee;
               break;
             }
           }

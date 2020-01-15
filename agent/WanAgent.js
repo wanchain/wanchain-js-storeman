@@ -329,7 +329,7 @@ module.exports = class WanAgent extends baseAgent{
   getDecodeEventStoremanGroup(decodeEvent) {
     if (this.schnorrMpc) {
       if (decodeEvent.event === this.debtEvent[0]) {
-        return decodeEvent.args.npk;
+        return decodeEvent.args.dstStoremanPK;
       } else {
         return decodeEvent.args.storemanGroupPK;
       }
@@ -387,19 +387,17 @@ module.exports = class WanAgent extends baseAgent{
     // signData extern should be "cross:debt:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:WAN"  / "cross:normal:EOS:tokenType:EOS" /"cross:normal:EOS:tokenType:WAN"
     let content = null;
     let extern = signData.extern.split(':');
-    if (extern.length === 5 && extern[0] === 'cross') {
-      let data = this.decode(signData.data, ['uint', 'address']);
-      if (extern[1] === this.withdrawFeeFunc && global.argv.wanReceiver) {
-        // Schnorr: smgWithdrawFee(bytes storemanGroupPK, uint timeStamp, address receiver, bytes r, bytes32 s)
-        // verify(&timeStampView, &receiverView)
-        let timestamp = data[0];
-        let receiver;
-        // receiver = data[1];
-        receiver = global.argv.wanReceiver;
-        let tokenAddr = ""; // Wan only have the 'wan' fee
+    let data = this.decode(signData.data, ['uint', 'address']);
+    if (extern[1] === this.withdrawFeeFunc && global.argv.wanReceiver) {
+      // Schnorr: smgWithdrawFee(bytes storemanGroupPK, uint timeStamp, address receiver, bytes r, bytes32 s)
+      // verify(&timeStampView, &receiverView)
+      let timestamp = data[0];
+      let receiver;
+      // receiver = data[1];
+      receiver = global.argv.wanReceiver;
+      let tokenAddr = ""; // Wan only have the 'wan' fee
 
-        content = this.createWithdrawFeeData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, receiver, timestamp);
-      }
+      content = this.createWithdrawFeeData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, receiver, timestamp);
     }
     return content;
   }

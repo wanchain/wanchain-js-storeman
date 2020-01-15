@@ -1,5 +1,10 @@
 "use strict";
 const StateAction = require("monitor/stateAction.js");
+const moduleConfig = require('conf/moduleConfig.js');
+const {
+  getGlobalChain,
+  hexTrip0x
+} = require('comm/lib');
 
 /* action: [functionName, paras, nextState, rollState] */
 var stateDict = {
@@ -26,15 +31,14 @@ var stateDict = {
   // exception handling
   transFailed: {
     action: 'takeIntervention',
-    paras: ['waitingIntervention', 'transFailed']
+    paras: ['transIgnored', 'transFailed']
   },
   waitingIntervention: {
   },
   transIgnored: {},
-
   interventionPending: {
-    action: 'checkFee',
-    paras: ['withdrawFee', 'transIgnored']
+    // action: 'checkFee',
+    // paras: ['withdrawFee', 'transIgnored']
   }
 };
 
@@ -45,7 +49,7 @@ module.exports = class WithdrawFee extends StateAction{
     
     this.stateDict = stateDict;
 
-    this.logger.debug("********************************** WithdrawFee ********************************** hashX:", this.hashX, "status:", this.state);
+    this.logger.debug("********************************** WithdrawFee ********************************** hashX:", this.hashX, "on chain", this.record.originChain, "status:", this.state);
   }
 
   checkHashTimeout() {
@@ -53,23 +57,29 @@ module.exports = class WithdrawFee extends StateAction{
   }
 
   async checkFee(nextState, rollState) {
+    this.logger.debug("********************************** WithdrawFee checkFee ********************************** hashX:", this.hashX, "on chain", this.record.originChain);
     if(!moduleConfig.crossInfoDict[this.crossChain].CONF.schnorrMpc) {
       await this.updateState(rollState);
       return;
     }
 
-    if (this.recode.originChain === 'EOS' && !this.tokenAddr) {
+    if (this.record.originChain === 'EOS' && !this.record.tokenAddr) {
       await this.updateState(nextState);
       return;
     }
 
-    let chain = getGlobalChain(this.recode.originChain);
+    let chain = getGlobalChain(this.record.originChain);
     let storemanGroupAddr = global.config.crossTokens[this.crossChain].CONF.storemanPk;
     // let tokenOrigAddr = encodeAccount(this.crossChain, this.record.tokenAddr);
+
+    if (this.record.originChain === 'EOS') {
+      storemanGroupAddr = hexTrip0x(storemanGroupAddr);
+    }
     
     await chain.getTokenStoremanFee(this.crossChain, this.tokenType, this.record.tokenAddr, storemanGroupAddr)
       .then(async (result) => {
-        if (result === 0) {
+        this.logger.debug("********************************** WithdrawFee checkFee ********************************** hashX:", this.hashX, "on chain", this.record.originChain, "result is", result.toString(10));
+        if (result.toString(10) === '0') {
           await this.updateState(rollState);
         } else {
           await this.updateState(nextState);

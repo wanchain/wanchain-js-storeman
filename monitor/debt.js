@@ -67,8 +67,8 @@ var stateDict = {
     paras: ['fundLostFinished', 'fundLosted']
   },
   interventionPending: {
-    action: 'checkAllowance',
-    paras: ['waitingDebtLock', 'waitingDebtApproveLock']
+    // action: 'checkAllowance',
+    // paras: ['waitingDebtLock', 'waitingDebtApproveLock']
   },
   fundLostFinished: {}
 };

@@ -101,7 +101,7 @@ module.exports = class EosAgent extends baseAgent{
     if (!this.isDebt) {
       signData = [hexTrip0x(this.crossAddress), this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.hashKey)];
     } else {
-      signData = [hexTrip0x(this.record.storeman), this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.hashKey)];
+      signData = [hexTrip0x(this.crossAddress), this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.hashKey)];
     }
      
     let internalSignature = await this.internalSignViaMpc(signData);
@@ -128,7 +128,7 @@ module.exports = class EosAgent extends baseAgent{
       if (!this.isDebt) {
         actions[0].data.user = hexTrip0x(this.crossAddress);
       } else {
-        actions[0].data.npk = hexTrip0x(this.record.storeman);
+        actions[0].data.npk = hexTrip0x(this.crossAddress);
       }
       return actions;
     } else {
@@ -327,7 +327,7 @@ module.exports = class EosAgent extends baseAgent{
 
       let account = '';
       let sys = '';
-      if (tokenAddr) {
+      if (this.tokenAddr) {
         account = this.tokenAddr.split(':')[0];
         sys = this.decimals + ',' + this.tokenSymbol;
       }
@@ -370,11 +370,12 @@ module.exports = class EosAgent extends baseAgent{
   }
 
   getDecodeEventStoremanGroup(decodeEvent) {
-    if (decodeEvent.event === this.debtEvent[0]) {
-      return decodeEvent.args.npk;
-    } else {
-      return decodeEvent.args.storeman;
-    }
+    // if (decodeEvent.event === this.debtEvent[0]) {
+    //   return decodeEvent.args.npk;
+    // } else {
+    //   return decodeEvent.args.storeman;
+    // }
+    return decodeEvent.args.storeman;
   }
 
   getDecodeEventValue(decodeEvent) {
@@ -459,29 +460,27 @@ module.exports = class EosAgent extends baseAgent{
     // signData extern should be "cross:debt:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:WAN"  / "cross:normal:EOS:tokenType:EOS" /"cross:normal:EOS:tokenType:WAN"
     let content = null;
     let extern = signData.extern.split(':');
-    if (extern.length === 5 && extern[0] === 'cross') {
-      let data = this.decode(signData.data);
-      if (extern[1] === this.debtFunc[0]) {
-        // lockdebt(eosio::name storeman, std::string npk, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)
-        // verify(&npkView, &acctView, &qView, &xHashView)
-        let debtor = data[0];
-        let tokenAddr = this.encodeToken(data[1], data[2]);
-        let debt = eosToFloat(data[2]);
-        let hashX = data[3];
+    let data = this.decode(signData.data);
+    if (extern[1] === this.debtFunc[0]) {
+      // lockdebt(eosio::name storeman, std::string npk, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)
+      // verify(&npkView, &acctView, &qView, &xHashView)
+      let debtor = data[0];
+      let tokenAddr = this.encodeToken(data[1], data[2]);
+      let debt = eosToFloat(data[2]);
+      let hashX = data[3];
 
-        content = this.createDebtData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, debtor, debt, hashX);
-      } else if (extern[1] === this.withdrawFeeFunc && global.argv.oriReceiver) {
-        // withdraw(eosio::name storeman, std::string account, std::string sym, std::string pk, std::string timeStamp,eosio::name receiver,std::string r,std::string s)
-        // verify(&timeStampView, &receiverView, &acctView, &symVie)
-        let timestamp = data[0];
-        let receiver;
-        // receiver = data[1];
-        receiver = global.argv.oriReceiver;
-        let symbol = dat1[3].split(',')[1];
-        let tokenAddr = this.encodeToken(data[2], symbol);
+      content = this.createDebtData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, debtor, debt, hashX);
+    } else if (extern[1] === this.withdrawFeeFunc && global.argv.oriReceiver) {
+      // withdraw(eosio::name storeman, std::string account, std::string sym, std::string pk, std::string timeStamp,eosio::name receiver,std::string r,std::string s)
+      // verify(&timeStampView, &receiverView, &acctView, &symVie)
+      let timestamp = data[0];
+      let receiver;
+      // receiver = data[1];
+      receiver = global.argv.oriReceiver;
+      let symbol = dat1[3].split(',')[1];
+      let tokenAddr = this.encodeToken(data[2], symbol);
 
-        content = this.createWithdrawFeeData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, receiver, timestamp);
-      }
+      content = this.createWithdrawFeeData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, receiver, timestamp);
     }
     return content;
   }

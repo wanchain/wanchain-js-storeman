@@ -648,7 +648,7 @@ async function syncMpcRequest(logger, db) {
             }
             // approveData extern should be "cross:debt:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:WAN"  / "cross:normal:EOS:tokenType:EOS" /"cross:normal:EOS:tokenType:WAN"
             let extern = approveData.extern.split(':');
-            if (extern.length === 5 && extern[0] === 'cross') {
+            if (extern.length === 6 && extern[0] === 'cross') {
               let crossChain = extern[2];
               let tokenType = extern[3];
               let transOnChain = extern[4];
@@ -685,6 +685,48 @@ async function syncMpcRequest(logger, db) {
 
     await sleep(moduleConfig.MPCREQUEST_TIME);
   }
+}
+
+async function updateDebtRecordAfterRestart(logger) {
+  let option = {
+    isDebt: {
+      $in: [true]
+    },
+    status: {
+      $in: ['init', 'waitingDebtApproveLock', 'waitingDebtLock']
+    }
+  }
+  let changeList = await modelOps.getEventHistory(option);
+  let content = {
+    status: 'transIgnored'
+  }
+  logger.debug('changeList length is ', changeList.length);
+  for (let i = 0; i < changeList.length; i++) {
+    let record = changeList[i];
+    await modelOps.syncSave(record.hashX, content);
+  }
+  logger.debug('updateDebtRecordAfterRestart finished!');
+}
+
+async function updateWithdrawRecordAfterRestart(logger) {
+  let option = {
+    isFee: {
+      $in: [true]
+    },
+    status: {
+      $nin: ['transIgnored', 'transFailed', 'withdrawFeeFinished', 'waitingWithdrawFeeConfirming', "interventionPending"]
+    }
+  }
+  let changeList = await modelOps.getEventHistory(option);
+  let content = {
+    status: 'transIgnored'
+  }
+  logger.debug('changeList length is ', changeList.length);
+  for (let i = 0; i < changeList.length; i++) {
+    let record = changeList[i];
+    await modelOps.syncSave(record.hashX, content);
+  }
+  logger.debug('updateWithdrawRecordAfterRestart finished!');
 }
 
 async function doDebt(logger) {
@@ -759,12 +801,13 @@ async function withdrawFee(logger) {
           logger.info("withdrawFee request:",
           "at chain ", "WAN", " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with receiver is ", receiver, " and timestamp ", timestamp);
           await modelOps.syncSave(...wanContent);
-        } else if (global.argv.oriReceiver) {
+        }
+        if (global.argv.oriReceiver) {
           receiver = global.argv.oriReceiver;
           crossAgent = tokenTypeHandler.originCrossAgent;
           let oriContent = crossAgent.createWithdrawFeeData(crossChain, crossChain, tokenType, tokenAddr, receiver, timestamp);
           logger.info("withdrawFee request:",
-          "at chain ", chainType, " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with receiver is ", receiver, " and timestamp ", timestamp);
+          "at chain ", crossChain, " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with receiver is ", receiver, " and timestamp ", timestamp);
           await modelOps.syncSave(...oriContent);
         }
       }
@@ -834,6 +877,8 @@ async function main() {
 
   if (global.argv.doDebt || global.argv.withdraw) {
     if (global.argv.leader) {
+      await updateWithdrawRecordAfterRestart(global.monitorLogger);
+
       await doDebt(global.monitorLogger);
       await withdrawFee(global.monitorLogger);
     } else {
