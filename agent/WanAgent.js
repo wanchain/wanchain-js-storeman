@@ -386,7 +386,7 @@ module.exports = class WanAgent extends baseAgent{
   decodeSignatureData(signData) {
     // signData extern should be "cross:debt:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:WAN"  / "cross:normal:EOS:tokenType:EOS" /"cross:normal:EOS:tokenType:WAN"
     let content = null;
-    let extern = signData.extern.split(':');
+    let extern = signData.Extern.split(':');
     let data = this.decode(signData.data, ['uint', 'address']);
     if (extern[1] === this.withdrawFeeFunc && global.argv.wanReceiver) {
       // Schnorr: smgWithdrawFee(bytes storemanGroupPK, uint timeStamp, address receiver, bytes r, bytes32 s)

@@ -108,7 +108,7 @@ module.exports = class mpc {
       try {
         this.mpcWeb3.storeman.getDataForApprove((err, result) => {
           if (!err) {
-            global.monitorLogger.debug("********************************** mpc getDataForApprove successfully **********************************", result);
+            global.monitorLogger.debug("********************************** mpc getDataForApprove successfully **********************************");
             resolve(result);
           } else {
             global.monitorLogger.error("********************************** mpc getDataForApprove failed **********************************", err);
@@ -125,7 +125,7 @@ module.exports = class mpc {
   approveData() {
     return new Promise((resolve, reject) => {
       try {
-        this.mpcWeb3.storeman.approveData(this.signData, (err, result) => {
+        this.mpcWeb3.storeman.approveData([this.signData], (err, result) => {
           if (!err) {
             global.monitorLogger.debug("********************************** mpc approveData successfully **********************************", result, "hashX:", this.hashX);
             resolve(result);

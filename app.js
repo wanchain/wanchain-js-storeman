@@ -511,7 +511,10 @@ async function syncMain(logger, db) {
           }
         // }
       }
-      firstSyncDone = true;
+      if (!firstSyncDone) {
+        logger.info("syncMain firstSyncDone!", firstSyncDone);
+        firstSyncDone = true;
+      }
     } catch (err) {
       logger.error("syncMain failed:", err);
     }
@@ -641,13 +644,13 @@ async function syncMpcRequest(logger, db) {
       let multiDataApproves = [...mpcApproveDatas].map((approveData) => {
         return new Promise(async (resolve, reject) => {
           try {
-            if (!tokenList.storemanAddress.includes(approveData.pk) || !approveData.extern) {
+            if (!tokenList.storemanAddress.includes(approveData.pk) || !approveData.Extern) {
               // only manager the approve request only the storemanPK same
               resolve();
               return;
             }
             // approveData extern should be "cross:debt:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:WAN"  / "cross:normal:EOS:tokenType:EOS" /"cross:normal:EOS:tokenType:WAN"
-            let extern = approveData.extern.split(':');
+            let extern = approveData.Extern.split(':');
             if (extern.length === 6 && extern[0] === 'cross') {
               let crossChain = extern[2];
               let tokenType = extern[3];
@@ -660,9 +663,16 @@ async function syncMpcRequest(logger, db) {
                   crossAgent = tokenTypeHandler.wanCrossAgent;
                 }
 
-                let content = crossAgent.decodeSignatureData(approveData);
-                if (content !== null) {
-                  await modelOps.syncSave(...content);
+                let option = {
+                  hashX : extern[5]
+                };
+                let result = await modelOps.getEventHistory(option);
+                if (result.length === 0) {
+                  logger.debug("********************************** syncMpcRequest get one valid data **********************************", approveData);
+                  let content = crossAgent.decodeSignatureData(approveData);
+                  if (content !== null) {
+                    await modelOps.syncSave(...content);
+                  }
                 }
             } 
             resolve();
@@ -836,11 +846,11 @@ let db = mongoose.createConnection(dbUrl, dbOption);
 
 db.on('connected', function(err) {
   if (err) {
-    global.syncLogger.error('Unable to connect to database(' + moduleConfig.crossDbUrl.split('/')[3] + ')：' + err);
+    global.syncLogger.error('Unable to connect to database(' + moduleConfig.crossDbUrl.split('/')[3] + global.index + ')：' + err);
     global.syncLogger.error('Aborting');
     process.exit();
   } else {
-    global.syncLogger.info('Connecting to database ' + moduleConfig.crossDbUrl.split('/')[3] + ' is successful!');
+    global.syncLogger.info('Connecting to database ' + moduleConfig.crossDbUrl.split('/')[3] + global.index + ' is successful!');
   }
 });
 
@@ -887,6 +897,7 @@ async function main() {
   }
 
   handlerMain(global.monitorLogger, db);
+
 }
 
 process.on('unhandledRejection', error => {

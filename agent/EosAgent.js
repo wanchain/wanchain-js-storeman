@@ -432,6 +432,10 @@ module.exports = class EosAgent extends baseAgent{
     return account + ':' + symbol;
   }
 
+  encodeTokenWithSymbol(account, symbol) {
+    return account + ':' + symbol;
+  }
+
   encode(signData, typesArray) {
     let data = '';
     if (Array.isArray(signData)) {
@@ -459,7 +463,8 @@ module.exports = class EosAgent extends baseAgent{
   decodeSignatureData(signData) {
     // signData extern should be "cross:debt:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:WAN"  / "cross:normal:EOS:tokenType:EOS" /"cross:normal:EOS:tokenType:WAN"
     let content = null;
-    let extern = signData.extern.split(':');
+    let extern = signData.Extern.split(':');
+    let hashX = extern[5];
     let data = this.decode(signData.data);
     if (extern[1] === this.debtFunc[0]) {
       // lockdebt(eosio::name storeman, std::string npk, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)
@@ -467,7 +472,7 @@ module.exports = class EosAgent extends baseAgent{
       let debtor = data[0];
       let tokenAddr = this.encodeToken(data[1], data[2]);
       let debt = eosToFloat(data[2]);
-      let hashX = data[3];
+      // let hashX = data[3];
 
       content = this.createDebtData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, debtor, debt, hashX);
     } else if (extern[1] === this.withdrawFeeFunc && global.argv.oriReceiver) {
@@ -477,10 +482,11 @@ module.exports = class EosAgent extends baseAgent{
       let receiver;
       // receiver = data[1];
       receiver = global.argv.oriReceiver;
-      let symbol = dat1[3].split(',')[1];
-      let tokenAddr = this.encodeToken(data[2], symbol);
+      let symbol = data[3].split(',')[1];
+      let tokenAddr = this.encodeTokenWithSymbol(data[2], symbol);
+      // let hashX = extern[5];
 
-      content = this.createWithdrawFeeData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, receiver, timestamp);
+      content = this.createWithdrawFeeData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, receiver, timestamp, hashX);
     }
     return content;
   }
