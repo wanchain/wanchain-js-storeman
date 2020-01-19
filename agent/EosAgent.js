@@ -523,6 +523,7 @@ module.exports = class EosAgent extends baseAgent{
     let content = null;
     let extern = signData.Extern.split(':');
     let hashX = extern[5];
+    this.hashKey = hashX;
     let data = this.decode(signData.data);
     if (extern[1] === this.debtFunc[0]) {
       // lockdebt(eosio::name storeman, std::string npk, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)

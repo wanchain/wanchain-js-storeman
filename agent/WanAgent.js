@@ -387,6 +387,8 @@ module.exports = class WanAgent extends baseAgent{
     // signData extern should be "cross:debt:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:EOS"  /"cross:withdraw:EOS:tokenType:WAN"  / "cross:normal:EOS:tokenType:EOS" /"cross:normal:EOS:tokenType:WAN"
     let content = null;
     let extern = signData.Extern.split(':');
+    let hashX = extern[5];
+    this.hashKey = hashX;
     let data = this.decode(signData.data, ['uint', 'address']);
     if (extern[1] === this.withdrawFeeFunc && global.argv.wanReceiver) {
       // Schnorr: smgWithdrawFee(bytes storemanGroupPK, uint timeStamp, address receiver, bytes r, bytes32 s)
@@ -395,9 +397,9 @@ module.exports = class WanAgent extends baseAgent{
       let receiver;
       // receiver = data[1];
       receiver = global.argv.wanReceiver;
-      let tokenAddr = ""; // Wan only have the 'wan' fee
+      let tokenAddr = Object.keys(global.config["crossTokens"][this.crossChain].TOKEN)[0]; // Wan only have the 'wan' fee, so random set the tokenAddr to pass the db filter
 
-      content = this.createWithdrawFeeData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, receiver, timestamp);
+      content = this.createWithdrawFeeData(this.transChainType.toUpperCase(), this.crossChain, this.tokenType, tokenAddr, receiver, timestamp, hashX);
     }
     return content;
   }
