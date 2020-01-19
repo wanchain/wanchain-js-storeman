@@ -287,13 +287,13 @@ module.exports = class WanAgent extends baseAgent{
   async getWithdrawFeeData() {
     if (this.debtOptEnable) {
       this.logger.debug("********************************** funcInterface **********************************", this.withdrawFeeFunc, "hashX", this.hashKey);
-      this.logger.debug('getDebtLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
+      this.logger.debug('getWithdrawFeeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
   
       if (this.schnorrMpc) {
         let signData = [this.record.withdrawFeeTime, this.crossAddress];
         let typesArray = ['uint', 'address'];
         let internalSignature = await this.internalSignViaMpc(signData, typesArray);
-        let params = this.storemanPk.concat(signData, internalSignature.R, internalSignature.S);
+        let params = [this.storemanPk].concat(signData, internalSignature.R, internalSignature.S);
         if (this.isLeader) {
           return this.contract.constructData(this.withdrawFeeFunc, ...params);
         } else {

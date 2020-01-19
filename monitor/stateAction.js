@@ -408,19 +408,39 @@ module.exports = class StateAction {
       storemanRevokeEvent: 'revoke'
     }
 
-    if (this.crossDirection === 0) {
-      if (eventName === 'storemanRedeemEvent') {
-        transOnChain = this.crossChain;
+    if (this.record.isFee) {
+      transOnChain = this.record.originChain;
+    } else if (this.record.isDebt) {
+      if (this.crossDirection === 0) {
+        if (eventName === 'walletRedeemEvent') {
+          transOnChain = 'WAN';
+        } else {
+          transOnChain = this.crossChain;
+        }
       } else {
-        transOnChain = 'WAN';
+        content = {
+          status: rollState[1],
+          transConfirmed: 0
+        }
+        let failReason = 'Debt trans crossDirection should be 0!';
+        await this.updateFailReason(actionMap[eventName], failReason);
       }
     } else {
-      if (eventName === 'storemanRedeemEvent') {
-        transOnChain = 'WAN';
+      if (this.crossDirection === 0) {
+        if (eventName === 'storemanRedeemEvent') {
+          transOnChain = this.crossChain;
+        } else {
+          transOnChain = 'WAN';
+        }
       } else {
-        transOnChain = this.crossChain;
+        if (eventName === 'storemanRedeemEvent') {
+          transOnChain = 'WAN';
+        } else {
+          transOnChain = this.crossChain;
+        }
       }
     }
+
 
     try {
       this.logger.debug("********************************** checkTransOnline checkEvent**********************************", eventName, this.hashX);

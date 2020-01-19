@@ -699,7 +699,9 @@ async function syncMpcRequest(logger, db) {
       });
     
       try {
-        await Promise.all(multiDataApproves);
+        if (mpcApproveDatas !== null) {
+          await Promise.all(multiDataApproves);
+        }
         logger.debug("********************************** syncMpcRequest done **********************************");
       } catch (err) {
         logger.error("splitEvent", err);
