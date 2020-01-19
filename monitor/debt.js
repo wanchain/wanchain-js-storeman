@@ -83,4 +83,7 @@ module.exports = class Debt extends StateAction{
     this.logger.debug("********************************** follower ********************************** hashX:", this.hashX, "status:", this.state);
   }
 
+  getTransChainType() {
+    return ((this.crossDirection === 0) ^ (action === 'redeem')) ? this.record.crossChain : 'WAN';
+  }
 }

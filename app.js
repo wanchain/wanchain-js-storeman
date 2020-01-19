@@ -528,8 +528,8 @@ async function syncMain(logger, db) {
         // }
       }
       if (!firstSyncDone) {
-        logger.info("syncMain firstSyncDone!", firstSyncDone);
         firstSyncDone = true;
+        logger.info("syncMain firstSyncDone!", firstSyncDone);
       }
     } catch (err) {
       logger.error("syncMain failed:", err);

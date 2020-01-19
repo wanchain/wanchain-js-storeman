@@ -211,7 +211,7 @@ module.exports = class StateAction {
         await sleep(retryWaitTime);
       }
       for (var action of actionArray) {
-        let transOnChain = ((this.crossDirection === 0) ^ (action === 'redeem')) ? 'WAN' : this.record.crossChain;
+        let transOnChain = this.getTransChainType();
         let newAgent = new global.agentDict[transOnChain](this.crossChain, this.tokenType, this.record);
         this.logger.debug("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
