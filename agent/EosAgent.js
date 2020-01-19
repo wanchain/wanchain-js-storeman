@@ -426,12 +426,14 @@ module.exports = class EosAgent extends baseAgent{
   }
 
   getDecodeEventStoremanGroup(decodeEvent) {
-    // if (decodeEvent.event === this.debtEvent[0]) {
-    //   return decodeEvent.args.npk;
-    // } else {
-    //   return decodeEvent.args.storeman;
-    // }
-    return decodeEvent.args.storeman;
+    if (decodeEvent.event === this.debtEvent[0]) {
+      return decodeEvent.args.npk;
+    } else if (decodeEvent.event === this.withdrawEvent[0]) {
+      return decodeEvent.args.pk;
+    } else {
+      return decodeEvent.args.storeman;
+    }
+    // return decodeEvent.args.storeman;
   }
 
   getDecodeEventValue(decodeEvent) {

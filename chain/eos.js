@@ -119,9 +119,9 @@ class EosChain extends baseChain {
             if (data.x) {
               data.x = '0x' + data.x;
             };
-            if (data.npk) {
-              data.storeman = '0x' + data.npk;
-            };
+            // if (data.npk) {
+            //   data.storeman = '0x' + data.npk;
+            // };
             obj = {
               ...obj,
               args: data
@@ -392,7 +392,7 @@ class EosChain extends baseChain {
       eos = api;
       let result = await eos.pushSignedTransaction(signedTx);
       log.debug("sendRawTransaction result is", result)
-      callback(null, result.transaction_id);
+      callback(null, result);
     } catch (err) {
       callback(err, null);
     }
@@ -410,7 +410,7 @@ class EosChain extends baseChain {
         eos = api;
         let result = await eos.pushSignedTransaction(signedTx);
         log.debug("sendRawTransaction result is", result)
-        resolve(result.transaction_id);
+        resolve(result);
       } catch (err) {
         reject(err);
       }
