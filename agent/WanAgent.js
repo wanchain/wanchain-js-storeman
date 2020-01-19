@@ -379,7 +379,7 @@ module.exports = class WanAgent extends baseAgent{
     this.logger.debug("********************************** decode signData **********************************", signData, "hashX:", this.hashKey);
 
     let coder = require("web3/lib/solidity/coder");
-    return coder.encodeParams(typesArray, hexTrip0x(signData));
+    return coder.decodeParams(typesArray, hexTrip0x(signData));
   }
 
   // only follower with decodeSignatureData to create debtlock
