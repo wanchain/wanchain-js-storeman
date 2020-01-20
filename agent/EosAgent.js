@@ -32,8 +32,8 @@ module.exports = class EosAgent extends baseAgent{
     this.withdrawFeeEvent = this.crossInfoInst.withdrawFeeAction;
   }
 
-  encodeValue(value) {
-    return eosToFloat(value);
+  encodeValue(value, decimals) {
+    return tokenToWei(eosToFloat(value), decimals);
   }
 
   getTransInfo(action) {
@@ -538,7 +538,7 @@ module.exports = class EosAgent extends baseAgent{
       // verify(&npkView, &acctView, &qView, &xHashView)
       let debtor = data[0];
       let tokenAddr = this.encodeToken(data[1], data[2]);
-      let debt = eosToFloat(data[2]);
+      let debt = data[2];
       // let hashX = data[3];
 
       content = this.createDebtData(this.crossChain, this.crossChain, this.tokenType, tokenAddr, debtor, debt, hashX);

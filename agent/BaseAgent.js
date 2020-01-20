@@ -105,7 +105,7 @@ module.exports = class BaseAgent {
     return this.crossChain.toLowerCase();
   }
 
-  encodeValue(value) {
+  encodeValue(value, decimals) {
     return value;
   }
   // getContract() {
@@ -462,7 +462,7 @@ module.exports = class BaseAgent {
       crossAddress: this.storemanPk,
       storeman: debtor,
       toHtlcAddr: this.contractAddr,
-      value: this.encodeValue(debt),
+      value: this.encodeValue(debt, this.crossTokens[tokenAddr].decimals),
       isDebt: true
     };
 
