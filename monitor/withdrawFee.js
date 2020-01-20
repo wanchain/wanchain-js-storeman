@@ -52,8 +52,12 @@ module.exports = class WithdrawFee extends StateAction{
     this.logger.debug("********************************** WithdrawFee ********************************** hashX:", this.hashX, "on chain", this.record.originChain, "status:", this.state);
   }
 
-  getTransChainType() {
-    return this.record.originChain.toUpperCase();
+  getActionChainType(action) {
+    return this.record.originChain;
+  }
+
+  getTransChainType(transHashName) {
+    return this.record.originChain;
   }
 
   checkHashTimeout() {

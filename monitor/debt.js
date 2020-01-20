@@ -83,7 +83,20 @@ module.exports = class Debt extends StateAction{
     this.logger.debug("********************************** follower ********************************** hashX:", this.hashX, "status:", this.state);
   }
 
-  getTransChainType() {
+  getActionChainType(action) {
     return ((this.crossDirection === 0) ^ (action === 'redeem')) ? this.record.crossChain : 'WAN';
+  }
+
+  getTransChainType(transHashName) {
+    if (this.crossDirection === 0) {
+      if (transHashName === 'walletRedeemTxHash') {
+        return 'WAN';
+      } else {
+        return this.crossChain;
+      }
+    } else {
+      // 'Debt trans crossDirection should be 0!';
+      return null;
+    }
   }
 }

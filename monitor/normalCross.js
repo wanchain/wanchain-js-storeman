@@ -87,8 +87,12 @@ module.exports = class NormalCross extends StateAction{
     this.logger.debug("********************************** NormalCross ********************************** hashX:", this.hashX, "status:", this.state);
   }
 
-  getTransChainType() {
+  getActionChainType(action) {
     return ((this.crossDirection === 0) ^ (action === 'redeem')) ? 'WAN' : this.record.crossChain;
+  }
+
+  getTransChainType(transHashName) {
+    return ((this.crossDirection === 0) ^ (transHashName === 'storemanRedeemTxHash')) ? 'WAN' : this.record.crossChain;
   }
 
 }

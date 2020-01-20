@@ -136,7 +136,7 @@ class WanChain extends baseChain {
     return tokenStoremanGroups;
   }
 
-  async getTokenStoremanGroups(crossChain, tokenAddr) {
+  async getTokenStoremanGroups(crossChain, tokenAddr, storemanWan, storemanOri) {
     let log = this.log;
     let chainType = this.chainType;
     let self = this;
@@ -167,6 +167,8 @@ class WanChain extends baseChain {
               parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
             }
 
+            let unRegLog = [];
+  
             for (let i of parsedLogs) {
               let tokenOrigParam;
               if (i && i.args.hasOwnProperty('tokenOrigAccount')) {
@@ -176,28 +178,74 @@ class WanChain extends baseChain {
               } else {
                 continue;
               }
+              let smgParam;
+              if (i && i.args.hasOwnProperty('smgWanAddr')) {
+                smgParam = 'smgWanAddr';
+              } else if (i && i.args.hasOwnProperty('storemanGroup')) {
+                smgParam = 'storemanGroup';
+              } else {
+                continue;
+              }
+
               if (i && i.event === 'StoremanGroupRegistrationLogger' && i.args[tokenOrigParam] === tokenAddr) {
-                storemanGroup.push(i.args);
+                if (i.args[smgParam] === storemanWan) {
+                  if (!storemanOri || (storemanOri && i.args.smgOrigAddr === storemanOri)) {
+                    storemanGroup.push(i);
+                  }
+                } 
+              }
+
+              if (i && i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args[tokenOrigParam] === tokenAddr) {
+                if (i.args[smgParam] === storemanWan) {
+                  if (!storemanOri || (storemanOri && i.args.smgOrigAddr === storemanOri)) {
+                    unRegLog.push(i);
+                  }
+                } 
               }
             }
-            for (let i of parsedLogs) {
-              let tokenOrigParam;
-              if (i && i.args.hasOwnProperty('tokenOrigAccount')) {
-                tokenOrigParam = 'tokenOrigAccount';
-              } else if (i && i.args.hasOwnProperty('tokenOrigAddr')) {
-                tokenOrigParam = 'tokenOrigAddr';
-              } else {
-                continue;
-              }
-              if (i && i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args[tokenOrigParam] === tokenAddr) {
-                for (let index = 0; index < storemanGroup.length; index++) {
-                  if ((storemanGroup[index][tokenOrigParam] === i.args[tokenOrigParam] && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
-                    storemanGroup.splice(index, 1);
-                    break;
-                  }
+
+            for (let i of unRegLog) {
+              for (let index = 0; index < storemanGroup.length; index++) {
+                if (i.blockNumber > storemanGroup[index].blockNumber) {
+                  storemanGroup.splice(index, 1);
+                  break;
                 }
               }
             }
+
+            // for (let i of regLogs) {
+            //   let tokenOrigParam;
+            //   if (i && i.args.hasOwnProperty('tokenOrigAccount')) {
+            //     tokenOrigParam = 'tokenOrigAccount';
+            //   } else if (i && i.args.hasOwnProperty('tokenOrigAddr')) {
+            //     tokenOrigParam = 'tokenOrigAddr';
+            //   } else {
+            //     continue;
+            //   }
+            //   if (i && i.event === 'StoremanGroupRegistrationLogger' && i.args[tokenOrigParam] === tokenAddr) {
+            //     if (storemanOri && i.args.smgWanAddr)
+            //     storemanGroup.push(i.args);
+            //   }
+            // }
+
+            // for (let i of unRegLog) {
+            //   let tokenOrigParam;
+            //   if (i && i.args.hasOwnProperty('tokenOrigAccount')) {
+            //     tokenOrigParam = 'tokenOrigAccount';
+            //   } else if (i && i.args.hasOwnProperty('tokenOrigAddr')) {
+            //     tokenOrigParam = 'tokenOrigAddr';
+            //   } else {
+            //     continue;
+            //   }
+            //   if (i && i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args[tokenOrigParam] === tokenAddr) {
+            //     for (let index = 0; index < storemanGroup.length; index++) {
+            //       if ((storemanGroup[index][tokenOrigParam] === i.args[tokenOrigParam] && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
+            //         storemanGroup.splice(index, 1);
+            //         break;
+            //       }
+            //     }
+            //   }
+            // }
             resolve(storemanGroup);
           }
         })

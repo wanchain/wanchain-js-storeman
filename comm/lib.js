@@ -128,12 +128,13 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
               return new Promise(async (resolve, reject) => {
                 let tokenStoremanGroups;
                 try {
-                  tokenStoremanGroups = await wanChain.getTokenStoremanGroups(crossChain, token.tokenOrigAccount);
+                  tokenStoremanGroups = await wanChain.getTokenStoremanGroups(crossChain, token.tokenOrigAccount, storemanPk);
                 } catch (err) {
                   reject(err);
                 }
-                for (let storeman of tokenStoremanGroups) {
-                  if (storeman.storemanGroup === storemanPk) {
+                // for (let storeman of tokenStoremanGroups) {
+                //   if (storeman.storemanGroup === storemanPk) {
+                  if (tokenStoremanGroups.length > 0) {
                     token.name = wanChain.client.toAscii(token.name);
                     token.tokenSymbol = wanChain.client.toAscii(token.symbol);
                     token.tokenType = "TOKEN";
@@ -141,7 +142,7 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
                     crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
                     empty = false;
                   }
-                }
+                // }
                 resolve();
               });
             })
@@ -197,12 +198,13 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
               return new Promise(async (resolve, reject) => {
                 let tokenStoremanGroups;
                 try {
-                  tokenStoremanGroups = await wanChain.getTokenStoremanGroups(crossChain, token.tokenOrigAddr);
+                  tokenStoremanGroups = await wanChain.getTokenStoremanGroups(crossChain, token.tokenOrigAddr, storemanWan, storemanOri);
                 } catch (err) {
                   reject(err);
                 }
-                for (let storeman of tokenStoremanGroups) {
-                  if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanOri) {
+                // for (let storeman of tokenStoremanGroups) {
+                //   if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanOri) {3
+                  if (tokenStoremanGroups.length > 0) {
                         let chain = getGlobalChain('WAN');
                         let tokenInfo = await chain.getTokenInfo(token.tokenWanAddr);
                         Object.assign(token, tokenInfo);
@@ -210,7 +212,7 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
                         crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAddr)] = token;
                         empty = false;
                   }
-                }
+                // }
                 resolve();
               });
             })

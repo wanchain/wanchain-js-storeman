@@ -211,8 +211,8 @@ module.exports = class StateAction {
         await sleep(retryWaitTime);
       }
       for (var action of actionArray) {
-        let transOnChain = this.getTransChainType();
-        let newAgent = new global.agentDict[transOnChain](this.crossChain, this.tokenType, this.record);
+        let actionOnChain = this.getActionChainType(action);
+        let newAgent = new global.agentDict[actionOnChain](this.crossChain, this.tokenType, this.record);
         this.logger.debug("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
 
@@ -408,39 +408,17 @@ module.exports = class StateAction {
       storemanRevokeEvent: 'revoke'
     }
 
-    if (this.record.isFee) {
-      transOnChain = this.record.originChain;
-    } else if (this.record.isDebt) {
-      if (this.crossDirection === 0) {
-        if (eventName === 'walletRedeemEvent') {
-          transOnChain = 'WAN';
-        } else {
-          transOnChain = this.crossChain;
-        }
-      } else {
-        content = {
-          status: rollState[1],
-          transConfirmed: 0
-        }
-        let failReason = 'Debt trans crossDirection should be 0!';
-        await this.updateFailReason(actionMap[eventName], failReason);
+    transOnChain = this.getTransChainType(transHashName);
+    if (transOnChain === null) {
+      let content = {
+        status: rollState[1],
+        transConfirmed: 0
       }
-    } else {
-      if (this.crossDirection === 0) {
-        if (eventName === 'storemanRedeemEvent') {
-          transOnChain = this.crossChain;
-        } else {
-          transOnChain = 'WAN';
-        }
-      } else {
-        if (eventName === 'storemanRedeemEvent') {
-          transOnChain = 'WAN';
-        } else {
-          transOnChain = this.crossChain;
-        }
-      }
+      let failReason = "getTransChainType not found!";
+      await this.updateFailReason(actionMap[eventName], failReason);
+      await this.updateRecord(content);
+      return;
     }
-
 
     try {
       this.logger.debug("********************************** checkTransOnline checkEvent**********************************", eventName, this.hashX);
