@@ -179,7 +179,7 @@ module.exports = class StateAction {
     console.log("aaron debug here crossChain", this.crossChain);
     if (!Array.isArray(actionArray)) {
       // schnorr-mpc, follow storeman agent don't need do revoke action
-      if ((['redeem', 'revoke'].indexOf(actionArray) !== -1) && !global.isLeader && moduleConfig.crossInfoDict[this.crossChain].CONF.schnorrMpc && moduleConfig.mpcSignature && (this.crossDirection === 0) ) {
+      if ((['redeem', 'revoke'].indexOf(actionArray) !== -1) && !global.isLeader && moduleConfig.crossInfoDict[this.crossChain].CONF.schnorrMpc && moduleConfig.mpcSignature) {
         let content = {
           status: nextState[0],
           transConfirmed: 0

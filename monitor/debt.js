@@ -80,7 +80,7 @@ module.exports = class Debt extends StateAction{
     
     this.stateDict = stateDict;
 
-    this.logger.debug("********************************** follower ********************************** hashX:", this.hashX, "status:", this.state);
+    this.logger.debug("********************************** Debt StateAction ********************************** hashX:", this.hashX, "status:", this.state);
   }
 
   getActionChainType(action) {

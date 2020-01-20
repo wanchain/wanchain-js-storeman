@@ -536,7 +536,7 @@ module.exports = class EosAgent extends baseAgent{
     if (extern[1] === this.debtFunc[0]) {
       // lockdebt(eosio::name storeman, std::string npk, eosio::name account, eosio::asset quantity, std::string xHash, std::string pk, std::string r, std::string s)
       // verify(&npkView, &acctView, &qView, &xHashView)
-      let debtor = data[0];
+      let debtor = hexAdd0x(data[0]);
       let tokenAddr = this.encodeToken(data[1], data[2]);
       let debt = data[2];
       // let hashX = data[3];

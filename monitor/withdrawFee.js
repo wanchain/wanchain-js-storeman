@@ -49,7 +49,7 @@ module.exports = class WithdrawFee extends StateAction{
     
     this.stateDict = stateDict;
 
-    this.logger.debug("********************************** WithdrawFee ********************************** hashX:", this.hashX, "on chain", this.record.originChain, "status:", this.state);
+    this.logger.debug("********************************** WithdrawFee StateAction ********************************** hashX:", this.hashX, "on chain", this.record.originChain, "status:", this.state);
   }
 
   getActionChainType(action) {

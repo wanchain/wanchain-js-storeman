@@ -84,7 +84,7 @@ module.exports = class NormalCross extends StateAction{
 
     this.stateDict = stateDict;
 
-    this.logger.debug("********************************** NormalCross ********************************** hashX:", this.hashX, "status:", this.state);
+    this.logger.debug("********************************** NormalCross StateAction ********************************** hashX:", this.hashX, "status:", this.state);
   }
 
   getActionChainType(action) {
