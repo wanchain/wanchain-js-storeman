@@ -204,11 +204,14 @@ class WanChain extends baseChain {
               }
             }
 
-            for (let i of unRegLog) {
-              for (let index = 0; index < storemanGroup.length; index++) {
-                if (i.blockNumber > storemanGroup[index].blockNumber) {
-                  storemanGroup.splice(index, 1);
-                  break;
+            // debtOpt need the storemanRegistration check
+            if (!global.argv.doDebt) {
+              for (let i of unRegLog) {
+                for (let index = 0; index < storemanGroup.length; index++) {
+                  if (i.blockNumber > storemanGroup[index].blockNumber) {
+                    storemanGroup.splice(index, 1);
+                    break;
+                  }
                 }
               }
             }

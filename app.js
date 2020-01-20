@@ -214,10 +214,10 @@ async function init() {
       await initNonce('WAN', tokenList[crossChain].storemanWan);
       syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", 'WAN', tokenList[crossChain].storemanWan,  global['wanLastNonce'][tokenList[crossChain].storemanWan]);
 
-      tokenList.storemanAddress.push(tokenList[crossChain].storemanWan);
       if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
         tokenList.storemanAddress.push(global.config.crossTokens[crossChain].CONF.storemanPk);
       } else {
+        tokenList.storemanAddress.push(tokenList[crossChain].storemanWan);
         tokenList.storemanAddress.push(tokenList[crossChain].storemanOri);
       }
 
@@ -620,6 +620,11 @@ async function handlerMain(logger, db) {
           $nin: ['redeemFinished', 'revokeFinished', 'withdrawFeeFinished', 'transIgnored', 'fundLostFinished', 'interventionPending']
         }
       }
+      if (global.argv.doDebt) {
+        option.storeman = {
+          $in: tokenList.storemanAddress.concat(global.argv.debtor)
+        }
+      }
       console.log("aaron debug here handlerMain option", option);
       let history = await modelOps.getEventHistory(option);
       logger.debug('history length is ', history.length);
@@ -721,7 +726,7 @@ async function updateDebtRecordAfterRestart(logger) {
       $in: [true]
     },
     status: {
-      $in: ['init', 'waitingDebtApproveLock', 'waitingDebtLock']
+      $in: [null, 'init', 'waitingDebtApproveLock', 'waitingDebtLock']
     }
   }
   let changeList = await modelOps.getEventHistory(option);
@@ -771,6 +776,7 @@ async function doDebt(logger) {
           continue;
         } else {
           tokenType = global.config["crossTokens"][crossChain]["TOKEN"][token].tokenType;
+          break;
         }
       }
 
@@ -786,7 +792,7 @@ async function doDebt(logger) {
         crossAgent = tokenTypeHandler.originCrossAgent;
         let content = crossAgent.createDebtData(crossChain, crossChain, tokenType, tokenAddr, debtor, debt);
         logger.info("doDebt request:",
-        "at chain ", chainType, " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with debtor is ", debtor, " and debt ", debt);
+        "at chain ", crossChain, " about crossChain ", crossChain, " about tokenType ", tokenType, " tokenAddr ", tokenAddr, " with debtor is ", debtor, " and debt ", debt);
         await modelOps.syncSave(...content);
       }
     } else if (global.argv.doDebt) {
@@ -905,10 +911,15 @@ async function main() {
 
   if (global.argv.doDebt || global.argv.withdraw) {
     if (global.argv.leader) {
-      await updateWithdrawRecordAfterRestart(global.monitorLogger);
+      if (global.argv.doDebt) {
+        await updateDebtRecordAfterRestart(global.monitorLogger);
+        await doDebt(global.monitorLogger);
+      }
 
-      await doDebt(global.monitorLogger);
-      await withdrawFee(global.monitorLogger);
+      if (global.argv.withdraw) {
+        await updateWithdrawRecordAfterRestart(global.monitorLogger);
+        await withdrawFee(global.monitorLogger);
+      }
     } else {
       syncMpcRequest(global.mpcLogger, db);
     }

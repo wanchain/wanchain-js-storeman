@@ -32,6 +32,10 @@ module.exports = class EosAgent extends baseAgent{
     this.withdrawFeeEvent = this.crossInfoInst.withdrawFeeAction;
   }
 
+  encodeValue(value) {
+    return eosToFloat(value);
+  }
+
   getTransInfo(action) {
     let from;
     let to;
@@ -101,7 +105,7 @@ module.exports = class EosAgent extends baseAgent{
     if (!this.isDebt) {
       signData = [hexTrip0x(this.crossAddress), this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.hashKey)];
     } else {
-      signData = [hexTrip0x(this.crossAddress), this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.hashKey)];
+      signData = [hexTrip0x(this.record.storeman), this.tokenAddr.split(':')[0], this.amount, hexTrip0x(this.hashKey)];
     }
      
     let internalSignature = await this.internalSignViaMpc(signData);
@@ -128,8 +132,9 @@ module.exports = class EosAgent extends baseAgent{
       if (!this.isDebt) {
         actions[0].data.user = hexTrip0x(this.crossAddress);
       } else {
-        actions[0].data.npk = hexTrip0x(this.crossAddress);
+        actions[0].data.npk = hexTrip0x(this.record.storeman);
       }
+      this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey, actions);
       return actions;
     } else {
       return null;
@@ -163,6 +168,7 @@ module.exports = class EosAgent extends baseAgent{
           // s: hexTrip0x(internalSignature.S)
         }
       }];
+      this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey, actions);
       return actions;
     } else {
       return null;
@@ -194,6 +200,7 @@ module.exports = class EosAgent extends baseAgent{
           // s: hexTrip0x(internalSignature.S)
         }
       }];
+      this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey, actions);
       return actions;
     } else {
       return null;
@@ -353,6 +360,7 @@ module.exports = class EosAgent extends baseAgent{
             s: hexTrip0x(internalSignature.S)
           }
         }];
+        this.logger.debug("********************************** funcInterface ********************************** getWithdrawFeeData", "hashX", this.hashKey, actions);
         return actions;
       } else {
         return null;
