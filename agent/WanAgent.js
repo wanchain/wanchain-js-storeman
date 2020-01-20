@@ -362,6 +362,10 @@ module.exports = class WanAgent extends baseAgent{
     }
   }
 
+  getDecodeFromAddress(decodeEvent) {
+    return decodeEvent.args.wanAddr;
+  }
+
   encode(signData, typesArray) {
     this.logger.debug("********************************** encode signData **********************************", signData, "hashX:", this.hashKey);
 

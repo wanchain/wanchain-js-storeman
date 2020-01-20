@@ -588,7 +588,9 @@ module.exports = class BaseAgent {
         (eventName === this.withdrawEvent[2] && chainType === 'WAN') ||
         (eventName === this.withdrawEvent[1] && this.schnorrMpc) ||
         (eventName === this.withdrawEvent[2] && this.schnorrMpc) ||
-        (eventName === this.depositEvent[1] && chainType !== 'WAN' && this.schnorrMpc))) {
+        (eventName === this.depositEvent[1] && chainType !== 'WAN' && this.schnorrMpc) ||
+        (eventName === this.debtEvent[1] && chainType !== 'WAN' && this.schnorrMpc) ||
+        (eventName === this.debtEvent[2] && chainType !== 'WAN' && this.schnorrMpc))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
 
         if([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(storeman) === -1 && eventName !== this.debtEvent[0]) {
@@ -608,7 +610,7 @@ module.exports = class BaseAgent {
           tokenSymbol: this.crossTokens[tokenAddr].tokenSymbol,
           decimals: this.crossTokens[tokenAddr].decimals,
           originChain: chainType,
-          from: (chainType !== 'WAN') ? args.user : args.wanAddr,
+          from: this.getDecodeFromAddress(decodeEvent),
           crossAddress: this.getDecodeCrossAddress(decodeEvent),
           toHtlcAddr: this.getDecodeEventToHtlcAddr(decodeEvent),
           storeman: storeman,

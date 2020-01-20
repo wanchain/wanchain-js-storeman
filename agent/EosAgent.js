@@ -138,7 +138,7 @@ module.exports = class EosAgent extends baseAgent{
       } else {
         actions[0].data.npk = hexTrip0x(this.record.storeman);
       }
-      this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey, actions);
+      this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey, JSON.stringify(actions, null, 4));
       return actions;
     } else {
       return null;
@@ -172,7 +172,7 @@ module.exports = class EosAgent extends baseAgent{
           // s: hexTrip0x(internalSignature.S)
         }
       }];
-      this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey, actions);
+      this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey, JSON.stringify(actions, null, 4));
       return actions;
     } else {
       return null;
@@ -204,7 +204,7 @@ module.exports = class EosAgent extends baseAgent{
           // s: hexTrip0x(internalSignature.S)
         }
       }];
-      this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey, actions);
+      this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey, JSON.stringify(actions, null, 4));
       return actions;
     } else {
       return null;
@@ -364,7 +364,7 @@ module.exports = class EosAgent extends baseAgent{
             s: hexTrip0x(internalSignature.S)
           }
         }];
-        this.logger.debug("********************************** funcInterface ********************************** getWithdrawFeeData", "hashX", this.hashKey, actions);
+        this.logger.debug("********************************** funcInterface ********************************** getWithdrawFeeData", "hashX", this.hashKey, JSON.stringify(actions, null, 4));
         return actions;
       } else {
         return null;
@@ -444,6 +444,10 @@ module.exports = class EosAgent extends baseAgent{
   getDecodeEventStoremanGroup(decodeEvent) {
     if (decodeEvent.event === this.debtEvent[0]) {
       return hexAdd0x(decodeEvent.args.npk);
+    } else if (decodeEvent.event === this.debtEvent[1]) {
+      return decodeEvent.args.dstStoremanPK;
+    } else if (decodeEvent.event === this.debtEvent[2]) {
+      return decodeEvent.args.dstStoremanPK;
     } else if (decodeEvent.event === this.withdrawEvent[0]) {
       return decodeEvent.args.pk;
     } else {
@@ -461,7 +465,11 @@ module.exports = class EosAgent extends baseAgent{
   }
 
   getDecodeEventToHtlcAddr(decodeEvent) {
-    return decodeEvent.args.toHtlcAddr;
+    if (decodeEvent.event === this.debtEvent[0]) {
+      return decodeEvent.address;
+    } else {
+      return decodeEvent.args.toHtlcAddr;
+    }
   }
 
   getDecodeCrossAddress(decodeEvent) {
@@ -469,6 +477,14 @@ module.exports = class EosAgent extends baseAgent{
       return hexAdd0x(decodeEvent.args.pk);
     } else {
       return decodeEvent.args.wanAddr;
+    }
+  }
+
+  getDecodeFromAddress(decodeEvent) {
+    if (decodeEvent.event === this.debtEvent[0]) {
+      return decodeEvent.authorization[0].actor;
+    } else {
+      return decodeEvent.args.user;
     }
   }
 

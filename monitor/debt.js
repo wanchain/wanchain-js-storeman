@@ -31,6 +31,8 @@ var stateDict = {
     action: 'checkEventOnline',
     paras: ['storemanLockEvent', 'readyX', 'releaseX']
   },
+  suspending: {
+  },
   releaseX: {
     action: 'sendTrans',
     paras: ['redeem', 'walletRedeemEvent', ['waitingDebtRedeemConfirming', 'redeemFinished'],
@@ -105,7 +107,10 @@ module.exports = class Debt extends StateAction{
     let state = this.state;
     this.logger.debug("********************************** checkHashTimeout ********************************** hashX:", this.hashX, record.status);
 
-    return false;
+    if (this.record.walletLockEvent.length === 0) {
+      return false;
+    }
+
     if (state === "interventionPending" || state === "fundLosted" || state === "transFailed") {
       return false;
     }
@@ -118,89 +123,40 @@ module.exports = class Debt extends StateAction{
         HTLCtime = Number(record.timestamp) + Number(record.lockedTime);
       }
       let HTLC2time = Number(record.timestamp) + Number(record.lockedTime) * 2;
-      let suspendTime = Number(record.suspendTime);
+      // let suspendTime = Number(record.suspendTime);
       let timestamp = Number(record.timestamp);
 
       let HTLCtimeDate = new Date(HTLCtime).toString();
       let HTLC2timeDate = new Date(HTLC2time).toString();
-      let suspendTimeDate = new Date(suspendTime).toString();
+      // let suspendTimeDate = new Date(suspendTime).toString();
       let timestampDate = new Date(timestamp).toString();
       let nowData = new Date().toString();
 
       console.log("aaron debug here checkhashtimeout,", "HTLCtime:", HTLCtime, "HTLC2time:", timestamp, "nowData:", Date.now())
-      // beforeHTLC2time, revoke maybe fail because of late walletRedeemEvent
-      if (state === "waitingIntervention") {
-        if (HTLC2time <= Date.now()) {
-          if (record.walletRedeemEvent.length !== 0) {
-            this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLC2timeDate:", HTLC2timeDate, "nowData:", nowData);
-            await this.updateState('fundLosted');
-          } else {
-            await this.updateState("interventionPending");
-            return true; // return true to take no action
-          }
-        } else {
-          if((record.failAction === 'lock' || record.failAction === 'approve' || record.failAction === 'approveZero') && record.storemanLockEvent.length !== 0) {
-            this.state = 'waitingX';
-          } else if (record.failAction === 'redeem' && record.storemanRedeemEvent.length !== 0) {
-            this.state = 'redeemFinished';
-          } else if (record.failAction === 'revoke' && record.storemanRevokeEvent.length !== 0) {
-            this.state = 'revokeFinished';
-          } else if (record.failAction === 'revoke' && record.walletRedeemEvent.length !== 0) {
-            this.state = 'receivedX';
-          }
-          let content = {
-            transConfirmed: 0,
-            transRetried: 0,
-            status: this.state
-          }
-          await this.updateRecord(content);
-        }
-        return false;
-      }
-
-      if (state === "waitingRevoke" ||
-        state === "waitingCrossRevokeConfirming") {
-        if (record.walletRedeemEvent.length !== 0) {
-          if (Date.now() < HTLC2time) {
-            let content = {
-              status: 'receivedX',
-              transConfirmed: 0,
-              transRetried: 0
-            }
-            await this.updateRecord(content);
-            this.state = 'receivedX';
-          } else {
-            this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLC2timeDate:", HTLC2timeDate, "nowData:", nowData);
-            await this.updateState('fundLosted');
-          }
-        }
-        return false;
-      }
 
       if (HTLCtime <= Date.now()) {
         this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
-        if (record.walletRevokeEvent.length !== 0) {
-          await this.updateState('revokeFinished');
-        } else if (record.storemanRedeemEvent.length !== 0) {
+        if (record.walletRedeemEvent.length !== 0) {
           await this.updateState('redeemFinished');
-        } else if (record.storemanLockEvent.length === 0) {
-          await this.updateState('transIgnored');
-        } else if (record.walletRedeemEvent.length !== 0) {
-          // redeem may happened until HTLC2time
-          if (HTLC2time <= Date.now()) {
-            // await this.updateState("waitingRevoke");
-            await this.updateState("fundLosted");
-          }
         } else {
-          await this.updateState('waitingRevoke');
+          if (HTLC2time <= Date.now()) {
+            if (state === "waitingDebtRevoke" ||
+              state === "waitingDebtRevokeConfirming") {
+              return false;
+            }
+            this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLC2timeDate:", HTLC2timeDate, "nowData:", nowData);
+            if (record.walletRevokeEvent.length !== 0) {
+              await this.updateState('revokeFinished');
+            } else if (record.storemanRedeemEvent.length !== 0 && record.walletRevokeEvent.length === 0) {
+              await this.updateState("fundLosted");
+            } else {
+              await this.updateState('waitingDebtRevoke');
+            }
+          } else if (state !== 'suspending') {
+            await this.updateState('suspending');
+          }
         }
         return false;
-      }
-
-      if ((suspendTime <= Date.now()) && (record.storemanLockEvent.length === 0)) {
-        this.logger.debug("********************************** checkSecureSuspendTimeOut ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "suspendTimeDate:", suspendTimeDate, "nowData:", nowData);
-        await this.updateState('transIgnored');
-        return true;
       }
     } catch (err) {
       this.logger.error("checkHashTimeout:", err);
