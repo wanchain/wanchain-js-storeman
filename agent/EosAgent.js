@@ -449,7 +449,7 @@ module.exports = class EosAgent extends baseAgent{
     } else if (decodeEvent.event === this.debtEvent[2]) {
       return decodeEvent.args.dstStoremanPK;
     } else if (decodeEvent.event === this.withdrawEvent[0]) {
-      return decodeEvent.args.pk;
+      return hexAdd0x(decodeEvent.args.pk);
     } else {
       return decodeEvent.args.storeman;
     }

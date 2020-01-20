@@ -52,6 +52,7 @@ module.exports = class BaseAgent {
 
     this.record = record;
     this.isDebt = false; // init
+    this.isDebtor = false;
     this.isFee = false;
     if (record !== null) {
       this.hashKey = record.hashX;
@@ -80,6 +81,9 @@ module.exports = class BaseAgent {
     if (this.debtOptEnable && (record !== null) && record.isDebt) {
       this.isDebt = record.isDebt;
       this.crossFunc = this.debtFunc;
+      if ([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(record.storeman) !== -1) {
+        this.isDebtor = true;
+      }
     }
 
     this.withdrawFeeFunc = crossInfoInst.withdrawFeeFunc;
@@ -506,7 +510,7 @@ module.exports = class BaseAgent {
   }
 
   buildLockData(hashKey, result) {
-    let txHashName = this.isDebt ? "walletLockTxHash" : "storemanLockTxHash";
+    let txHashName = (this.isDebt && !this.isDebtor) ? "walletLockTxHash" : "storemanLockTxHash";
     this.logger.debug("********************************** insertLockData trans **********************************", txHashName, hashKey);
 
     let content = {};
@@ -517,7 +521,7 @@ module.exports = class BaseAgent {
   }
 
   buildRedeemData(hashKey, result) {
-    let txHashName = this.isDebt ? "walletRedeemTxHash" : "storemanRedeemTxHash";
+    let txHashName = (this.isDebt && !this.isDebtor) ? "walletRedeemTxHash" : "storemanRedeemTxHash";
     this.logger.debug("********************************** insertRedeemData trans **********************************", txHashName, hashKey);
 
     let content = {};
@@ -528,7 +532,7 @@ module.exports = class BaseAgent {
   }
 
   buildRevokeData(hashKey, result) {
-    let txHashName = this.isDebt ? "walletRevokeTxHash" : "storemanRevokeTxHash";
+    let txHashName = (this.isDebt && !this.isDebtor) ? "walletRevokeTxHash" : "storemanRevokeTxHash";
     this.logger.debug("********************************** insertRevokeData trans **********************************", txHashName, hashKey);
 
     let content = {};
@@ -593,7 +597,7 @@ module.exports = class BaseAgent {
         (eventName === this.debtEvent[2] && chainType !== 'WAN' && this.schnorrMpc))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
 
-        if([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(storeman) === -1 && eventName !== this.debtEvent[0]) {
+        if([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(storeman) === -1 && !global.argv.doDebt) {
           return null;
         }
       }

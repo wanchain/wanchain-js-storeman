@@ -33,7 +33,7 @@ var stateDict = {
   },
   waitingX: {
     action: 'checkEventOnline',
-    paras: ['walletRedeemEvent', 'receivedX', 'waitingX']
+    paras: ['walletRedeemEvent', 'receivedX']
   },
   receivedX: {
     action: 'sendTrans',

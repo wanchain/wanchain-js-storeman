@@ -29,7 +29,7 @@ var stateDict = {
   },
   readyX: {
     action: 'checkEventOnline',
-    paras: ['storemanLockEvent', 'readyX', 'releaseX']
+    paras: ['storemanLockEvent', 'releaseX']
   },
   suspending: {
   },

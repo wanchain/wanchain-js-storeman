@@ -330,6 +330,10 @@ module.exports = class WanAgent extends baseAgent{
     if (this.schnorrMpc) {
       if (decodeEvent.event === this.debtEvent[0]) {
         return decodeEvent.args.dstStoremanPK;
+      } else if (decodeEvent.event === this.debtEvent[1]) {
+        return decodeEvent.args.dstStoremanPK;
+      } else if (decodeEvent.event === this.debtEvent[2]) {
+        return decodeEvent.args.dstStoremanPK;
       } else {
         return decodeEvent.args.storemanGroupPK;
       }
