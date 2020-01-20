@@ -606,9 +606,9 @@ async function handlerMain(logger, db) {
         // hashX: {
         //   $in: ['0x9f2d25cbc77f4d3bf42b4949f9c2485e68611586d72c7a85c281b3483c295207']
         // },
-        storeman: {
-          $in: tokenList.storemanAddress
-        }
+        // storeman: {
+        //   $in: tokenList.storemanAddress
+        // }
       }
       if (global.storemanRestart) {
         option.status = {
@@ -620,9 +620,9 @@ async function handlerMain(logger, db) {
           $nin: ['redeemFinished', 'revokeFinished', 'withdrawFeeFinished', 'transIgnored', 'fundLostFinished', 'interventionPending']
         }
       }
-      if (global.argv.doDebt) {
+      if (!global.argv.doDebt) {
         option.storeman = {
-          $in: tokenList.storemanAddress.concat(global.argv.debtor)
+          $in: tokenList.storemanAddress
         }
       }
       console.log("aaron debug here handlerMain option", option);
