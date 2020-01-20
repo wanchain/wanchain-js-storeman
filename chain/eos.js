@@ -119,6 +119,9 @@ class EosChain extends baseChain {
             if (data.x) {
               data.x = '0x' + data.x;
             };
+            if (data.quantity) {
+              data.value = data.quantity;
+            };
             // if (data.npk) {
             //   data.storeman = '0x' + data.npk;
             // };

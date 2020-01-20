@@ -591,7 +591,7 @@ module.exports = class BaseAgent {
         (eventName === this.depositEvent[1] && chainType !== 'WAN' && this.schnorrMpc))) {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
 
-        if([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(storeman) === -1) {
+        if([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(storeman) === -1 && eventName !== this.debtEvent[0]) {
           return null;
         }
       }

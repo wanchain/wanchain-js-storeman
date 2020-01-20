@@ -30,6 +30,10 @@ module.exports = class EosAgent extends baseAgent{
 
     this.withdrawFeeFunc = this.crossInfoInst.withdrawFeeAction;
     this.withdrawFeeEvent = this.crossInfoInst.withdrawFeeAction;
+
+    if (this.debtOptEnable && (record !== null) && record.isDebt) {
+      this.crossFunc = this.debtFunc;
+    }
   }
 
   encodeValue(value, decimals) {
@@ -430,12 +434,16 @@ module.exports = class EosAgent extends baseAgent{
   }
 
   getDecodeEventTokenAddr(decodeEvent) {
-    return decodeEvent.args.tokenOrigAccount;
+    if (decodeEvent.event === this.debtEvent[0]) {
+      return this.encodeToken(decodeEvent.args.account, decodeEvent.args.quantity);
+    } else {
+      return decodeEvent.args.tokenOrigAccount;
+    }
   }
 
   getDecodeEventStoremanGroup(decodeEvent) {
     if (decodeEvent.event === this.debtEvent[0]) {
-      return decodeEvent.args.npk;
+      return hexAdd0x(decodeEvent.args.npk);
     } else if (decodeEvent.event === this.withdrawEvent[0]) {
       return decodeEvent.args.pk;
     } else {
@@ -458,7 +466,7 @@ module.exports = class EosAgent extends baseAgent{
 
   getDecodeCrossAddress(decodeEvent) {
     if (decodeEvent.event === this.debtEvent[0]) {
-      return decodeEvent.args.pk;
+      return hexAdd0x(decodeEvent.args.pk);
     } else {
       return decodeEvent.args.wanAddr;
     }
