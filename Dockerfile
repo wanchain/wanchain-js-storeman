@@ -12,8 +12,8 @@ RUN apt-get install vim -y
 
 EXPOSE 1000
 
-ENV MONGO_USER ***
-ENV MONGO_PWD ***
+#ENV MONGO_USER ***
+#ENV MONGO_PWD ***
 
 ENTRYPOINT pm2-runtime start.sh $0 $@
 #CMD pm2-runtime start.sh
