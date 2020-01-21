@@ -580,6 +580,7 @@ module.exports = class BaseAgent {
     }
 
     if (!args.xHash) {
+      this.logger.debug("********************************** getDecodeEventDbData ********************************** hashX not included", " on Chain:", chainType, " isDebt:", this.isDebt, "transactionHash is", decodeEvent.transactionHash);
       return null;
     }
 
@@ -598,6 +599,7 @@ module.exports = class BaseAgent {
         storeman = this.getDecodeEventStoremanGroup(decodeEvent);
 
         if([this.crossConf.storemanOri, this.crossConf.storemanPk, this.crossConf.storemanWan].indexOf(storeman) === -1 && !global.argv.doDebt) {
+          this.logger.debug("********************************** getDecodeEventDbData ********************************** storeman not included, hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt, "transactionHash is", decodeEvent.transactionHash);
           return null;
         }
       }
@@ -605,6 +607,10 @@ module.exports = class BaseAgent {
         (eventName === this.withdrawEvent[0] && chainType === 'WAN') ||
         (eventName === this.debtEvent[0] && chainType !== 'WAN')) {
         let tokenAddr = this.getDecodeEventTokenAddr(decodeEvent);
+        if (!this.crossTokens.hasOwnProperty(tokenAddr)) {
+          this.logger.debug("********************************** getDecodeEventDbData ********************************** tokenAddr not included, hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt, "transactionHash is", decodeEvent.transactionHash);
+          return null;
+        };
         content = {
           hashX: hashX,
           direction: (chainType !== 'WAN') ? 0 : 1,

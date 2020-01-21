@@ -406,7 +406,7 @@ class EosChain extends baseChain {
     let chainType = this.chainType;
     return new TimeoutPromise(async (resolve, reject) => {
       try {
-        let nodeUrl = "http://jungle2.cryptolions.io:80";
+        let nodeUrl = global.config.crossTokens[chainType].CONF.bpNodeUrl;
         const rpc = new JsonRpc(nodeUrl, { fetch });
         const api = new Api({ rpc, authorityProvider: rpc, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
         let eos = this.client;
