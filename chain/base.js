@@ -78,7 +78,11 @@ class baseChain {
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getNetworkId timeout');
   }
 
-  getScEvent(address, topics, fromBlk, toBlk, callback) {
+  getScEvent(address, topics, fromBlk, toBlk, retryTimes, callback) {
+    let baseChain = this;
+    let chainType = this.chainType;
+    let times = 0;
+
     let filterValue = {
       fromBlock: fromBlk,
       toBlock: toBlk,
@@ -86,9 +90,28 @@ class baseChain {
       address: address
     };
     let filter = this.client.eth.filter(filterValue);
-    filter.get(function(err, events) {
-      callback(err, events);
-    });
+    let filterGet = function (filter) {
+      filter.get(function (err, events) {
+        if (err) {
+          if (times >= retryTimes) {
+            baseChain.log.error("ChainType:", chainType, "getScEvent", err);
+            callback(err, events);
+          } else {
+            baseChain.log.debug("ChainType:", chainType, "getScEvent retry", times);
+            times++;
+            filterGet(filter);
+          }
+        } else {
+          callback(err, events);
+        }
+      });
+    }
+    try {
+      filterGet(filter);
+    } catch (err) {
+      baseChain.log.error("ChainType:", chainType, "getScEvent", err);
+      callback(err, null);
+    }
   }
 
   getScEventSync(address, topics, fromBlk, toBlk, retryTimes = 0) {

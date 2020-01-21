@@ -73,7 +73,7 @@ class WanChain extends baseChain {
 
     return new TimeoutPromise((resolve, reject) => {
       try {
-      self.getScEvent(contractAddr, topic, 0, 'latest', async (err, logs) => {
+      self.getScEvent(contractAddr, topic, 0, 'latest', moduleConfig.web3RetryTimes, async (err, logs) => {
         if (err) {
           log.error(err);
           reject(err);
@@ -154,7 +154,7 @@ class WanChain extends baseChain {
     let storemanGroup = [];
     let getMultiStoremanEvent = addrs.map((contractAddr) => {
       return new TimeoutPromise((resolve, reject) => {
-        self.getScEvent(contractAddr, topic, 0, 'latest', async (err, logs) => {
+        self.getScEvent(contractAddr, topic, 0, 'latest', moduleConfig.web3RetryTimes, async (err, logs) => {
           if (err) {
             log.error(err);
             reject(err);
@@ -272,7 +272,7 @@ class WanChain extends baseChain {
     let contractAddr = moduleConfig.crossInfoDict[crossChain].TOKEN.tokenManagerAddr;
 
     return new TimeoutPromise((resolve, reject) => {
-      self.getScEvent(contractAddr, [], 0, 'latest', async (err, logs) => {
+      self.getScEvent(contractAddr, [], 0, 'latest', moduleConfig.web3RetryTimes, async (err, logs) => {
         if (err) {
           log.error(err);
           reject(err);
