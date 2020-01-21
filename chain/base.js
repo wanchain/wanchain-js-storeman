@@ -390,7 +390,7 @@ class baseChain {
     }
   }
 
-  getTransactionConfirmSync(txHash, waitBlocks) {
+  getTransactionConfirmSync(txHash, waitBlocks, block_num) {
     let log = this.log;
     let client = this.client;
     let chainType = this.chainType;

@@ -243,13 +243,13 @@ class EosChain extends baseChain {
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getBlockByNumberSync timeout');
   }
 
-  getTransactionReceiptSync(txHash) {
+  getTransactionReceiptSync(txHash, block_num) {
     let chainType = this.chainType;
     let eos = this.client;
     
     return new TimeoutPromise(async (resolve, reject) => {
       try {
-        let result = await eos.rpc.history_get_transaction(txHash);
+        let result = await eos.rpc.history_get_transaction(txHash, block_num);
         resolve(result);
       } catch (err) {
         reject(err);
@@ -257,7 +257,7 @@ class EosChain extends baseChain {
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTransactionReceiptSync timeout')
   }
   
-  getTransactionConfirmSync(txHash, waitBlocks) {
+  getTransactionConfirmSync(txHash, waitBlocks, block_num) {
     let chainType = this.chainType;
     let log = this.log;
     let self = this;
@@ -267,7 +267,7 @@ class EosChain extends baseChain {
 
     return new TimeoutPromise(async (resolve, reject) => {
       try {
-        receipt = await self.getTransactionReceiptSync(txHash);
+        receipt = await self.getTransactionReceiptSync(txHash, block_num);
         if (receipt === null) {
           resolve(receipt);
           return;
@@ -279,7 +279,7 @@ class EosChain extends baseChain {
         while (receiptBlockNumber + waitBlocks > curBlockNum) {
           log.info("ChainType:", chainType, "getTransactionConfirmSync was called at block: ", receipt.block_num, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
           await sleep(sleepTime * 1000);
-          receipt = await self.getTransactionReceiptSync(txHash);
+          receipt = await self.getTransactionReceiptSync(txHash, block_num);
           curBlockNum = await self.getBlockNumberSync();
           receiptBlockNumber = receipt.block_num;
         }
