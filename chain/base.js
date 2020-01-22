@@ -567,7 +567,7 @@ class baseChain {
           reject(err);
         }
       }
-    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenAllowance timeout');
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenInfo timeout');
   }
 
 }

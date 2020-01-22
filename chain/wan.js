@@ -101,12 +101,12 @@ class WanChain extends baseChain {
           }
           resolve(storemanGroup);
         }
-      }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getStoremanGroups timeout')
+      })
       } catch (err) {
         reject(err);
       }
 
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getStoremanGroups timeout');
   }
 
   async getTokenStoremanGroupsOfMutiTokens(crossChain, tokens) {

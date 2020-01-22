@@ -40,7 +40,7 @@ const config = {
   testnet: testnet,
 
   web3RetryTimes: 30,
-  promiseTimeout: 30 * 1000,
+  promiseTimeout: 120 * 1000,
 
   retryTimes: 10,
   retryWaitTime: 120 * 1000,
