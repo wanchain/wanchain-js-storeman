@@ -6,6 +6,9 @@ const fetch = require('node-fetch');
 const { JsSignatureProvider } = require('eosjs/dist/eosjs-jssig');
 const { TextEncoder, TextDecoder } = require('util');
 
+const moduleConfig = require('conf/moduleConfig.js');
+const TimeoutPromise = require('utils/timeoutPromise.js')
+
 module.exports = class EosRawTrans {
   constructor(from, to, value) {
     this.txParams = [from, to, value, ''];
@@ -22,7 +25,7 @@ module.exports = class EosRawTrans {
   async signTransDebug(privateKeys, chain) {
     let self = this;
 
-    return new Promise(async (resolve, reject) => {
+    return new TimeoutPromise(async (resolve, reject) => {
       try {
         let rawTx;
 
@@ -69,7 +72,7 @@ module.exports = class EosRawTrans {
         console.log("signTransDebug failed: ", err);
         reject(err);
       }
-    })
+    }, moduleConfig.promiseTimeout, "ChainType: " + 'EOS' + ' signTransDebug timeout')
   }
 
   checkDateParse(date) {
@@ -92,7 +95,7 @@ module.exports = class EosRawTrans {
   async signTransFromKeosd(wallet, password, chain) {
     let self = this;
 
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       try {
         keosd.unlock(wallet, password, (err, result) => {
           if (err) {
@@ -192,6 +195,6 @@ module.exports = class EosRawTrans {
       } catch (err) {
         reject(err);
       }
-    });
+    }, moduleConfig.promiseTimeout, "ChainType: " + 'EOS' + ' signTransFromKeosd timeout');
   }
 }

@@ -74,6 +74,7 @@ module.exports = class EosAgent extends baseAgent{
 
         if (!global.keosd) {
           if (global.secret['EOS_KEY']) {
+            self.logger.debug("********************************** signTrans use privateKey ********************************** hashX", self.hashKey);
             let privateKey= [global.secret['EOS_KEY']];
             rawTx = await this.trans.signTransDebug(privateKey, self.chain);
           } else {
@@ -81,6 +82,7 @@ module.exports = class EosAgent extends baseAgent{
           }
         } else {
           if (global.wallet) {
+            self.logger.debug("********************************** signTrans use keosd ********************************** hashX", self.hashKey);
             let wallet = global.wallet;
             let password = this.getChainPassword();
             rawTx = await self.trans.signTransFromKeosd(wallet, password, self.chain);
@@ -88,6 +90,7 @@ module.exports = class EosAgent extends baseAgent{
             reject('Missing wallet name!');
           }
         }
+        self.logger.debug("********************************** signTrans successfully ********************************** hashX", self.hashKey);
         resolve(rawTx);
       } catch (err) {
         self.logger.error("********************************** signTrans failed ********************************** hashX", self.hashKey);

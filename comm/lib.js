@@ -452,7 +452,7 @@ function writeConfigToFile(argv) {
 
       let url;
       if (argv.mpcIP || argv.mpcipc) {
-        if (argv.mpcIP) {
+        if (!argv.mpcipc) {
           url = 'http://' + argv.mpcIP + ':' + argv.mpcPort;
         } else {
           url = argv.mpcipc;
