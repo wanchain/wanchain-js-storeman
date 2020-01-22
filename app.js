@@ -862,7 +862,7 @@ let dbOption = {
   useNewUrlParser: true
 }
 let dbUrl = moduleConfig.crossDbUrl + global.index;
-if (!global.replica) {
+if (global.replica) {
   const awsDBOption = {
     // used for mongo replicaSet
     replicaSet: "s0",
