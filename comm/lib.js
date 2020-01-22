@@ -452,7 +452,11 @@ function writeConfigToFile(argv) {
 
       let url;
       if (argv.mpcIP) {
-        url = 'http://' + argv.mpcIP + ':' + argv.mpcPort;
+        if (argv.mpcIP.indexOf("http://") !== -1) {
+          url = 'http://' + argv.mpcIP + ':' + argv.mpcPort;
+        } else {
+          url = argv.mpcIP + argv.mpcPort;
+        }
         config[net].mpcUrl = url;
         global.mpcUrl = url;
       }

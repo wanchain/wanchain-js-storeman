@@ -4,8 +4,8 @@ const optimist = require('optimist');
 const CronJob = require("cron").CronJob;
 
 let argv = optimist
-  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [fh] -dbip [dbIp] -dbport [dbPort] -dbuser [dbUser] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] \
-  [--testnet] [--dev] [--leader] [--init] [--renew] -period [period] \
+  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [mpcPort] -dbip [dbIp] -dbport [dbPort] -dbuser [dbUser] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] \
+  [--testnet] [--replica] [--dev] [--leader] [--init] [--renew] -period [period] \
   [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password] --keystore [keystore] \
   [--doDebt] --chain [chain] --token [token] --debtor [debtor] --debt [debt] \
   [--withdraw] --chain [chain] --token [token] --wanReceiver [wanReceiver] --oriReceiver [oriReceiver]\
@@ -32,7 +32,8 @@ let argv = optimist
   .describe('w', 'identify storemanWanAddr')
   .describe('o', 'identify storemanOriAddr')
   .describe('testnet', 'identify whether using testnet or not, if no "--testnet", using mainnet as default')
-  .describe('dev', 'identify whether production env or development env, if no "--dev", production env as default')
+  .describe('replica', 'identify whether use replica set , if no "--replica", one mongo db as default')
+  .describe('dev', 'identify whether production env or development env, use different log server, if no "--dev", production env as default')
   .describe('leader', 'identify whether is leader agent, only leader can send the transaction')
   .describe('init', 'identify whether to init after startup')
   .describe('renew', 'identify whether to renew the storemanAgent in cycle')
@@ -55,6 +56,7 @@ let argv = optimist
   .default('period', '2')
   .string('pk')
   .string('mpcip')
+  .string('mpcport')
   .string('dbip')
   .string('c')
   .string('w')
@@ -70,7 +72,7 @@ let argv = optimist
   .string('debtor')
   .string( 'wanReceiver')
   .string('oriReceiver')
-  .boolean('testnet', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr', 'keosd', 'doDebt', 'withdraw')
+  .boolean('testnet', 'replica', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr', 'keosd', 'doDebt', 'withdraw')
   .argv;
 
 let pass = true;
@@ -108,6 +110,7 @@ global.mpcPort = argv.mpcPort;
 global.dbIp = argv.dbIp;
 global.dbPort = argv.dbPort;
 global.testnet = argv.testnet ? true : false;
+global.replica = argv.replica ? true : false;
 global.dev = argv.dev ? true : false;
 global.isLeader = argv.leader ? true : false;
 global.keosd = argv.keosd ? true : false;
@@ -857,7 +860,7 @@ let dbOption = {
   useNewUrlParser: true
 }
 let dbUrl = moduleConfig.crossDbUrl + global.index;
-if (!global.dev) {
+if (!global.replica) {
   const awsDBOption = {
     // used for mongo replicaSet
     replicaSet: "s0",
@@ -882,6 +885,7 @@ let modelOps = new ModelOps(global.syncLogger, db);
 
 async function main() {
   if (global.argv.init && global.argv.c && global.argv.w && global.argv.o) {
+    global.syncLogger.info("storeman agent begin to initialize!");
     await initConfig(global.argv.c, global.argv.w, global.argv.o, global.argv.pk);
     global.config = loadConfig();
   }

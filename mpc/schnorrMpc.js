@@ -4,9 +4,9 @@ const Web3 = require("web3");
 const web3Mpc = require("mpc/web3Mpc.js");
 var net = require('net');
 
-const {
-  loadConfig
-} = require('comm/lib');
+// const {
+//   loadConfig
+// } = require('comm/lib');
 
 module.exports = class mpc {
   constructor() {
