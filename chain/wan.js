@@ -1,5 +1,6 @@
 const baseChain = require("chain/base.js");
 const chainSCConfig = require('conf/moduleConfig.js');
+const TimeoutPromise = require('utils/timeoutPromise.js')
 let Contract = require("contract/Contract.js");
 
 class WanChain extends baseChain {
@@ -15,8 +16,9 @@ class WanChain extends baseChain {
   }
 
   getStoremanQuota(crossChain, tokenType, address) {
+    let chainType = this.chainType;
     let getStoremanGroup = this.getTokenScManagerFuncInterface(crossChain, tokenType, 'getStoremanGroup');
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       getStoremanGroup(address, function(err, result) {
         if (err) {
           return reject(err);
@@ -24,7 +26,7 @@ class WanChain extends baseChain {
           return resolve(result);
         }
       });
-    });
+    }, chainSCConfig.promiseTimeout, "ChainType: " + chainType + ' getStoremanQuota timeout');
   }
 
   getQuotaLedgerFunc(crossChain, tokenType, contractFunc) {
@@ -34,8 +36,9 @@ class WanChain extends baseChain {
   }
 
   getErc20StoremanQuota(crossChain, tokenType, tokenOrigAddr, smgAddress) {
+    let chainType = this.chainType;
     let func = this.getQuotaLedgerFunc(crossChain, tokenType, 'queryStoremanGroupQuota');
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       func(tokenOrigAddr, smgAddress, function(err, result) {
         if (err) {
           return reject(err);
@@ -43,17 +46,18 @@ class WanChain extends baseChain {
           return resolve(result);
         }
       });
-    });
+    }, chainSCConfig.promiseTimeout, "ChainType: " + chainType + ' getErc20StoremanQuota timeout');
   }
 
   getStoremanGroups(crossChain) {
     let log = this.log;
+    let chainType = this.chainType;
     let self = this;
     let abi = chainSCConfig.crossInfoDict[crossChain].COIN.smgAdminAbi;
     let contractAddr = chainSCConfig.crossInfoDict[crossChain].COIN.smgAdminAddr;
     let topic = [];
 
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       try {
       self.getScEvent(contractAddr, topic, 0, 'latest', async (err, logs) => {
         if (err) {
@@ -88,16 +92,17 @@ class WanChain extends baseChain {
         reject(err);
       }
 
-    });
+    }, chainSCConfig.promiseTimeout, "ChainType: " + chainType + ' getStoremanGroups timeout');
   }
 
   async getErc20StoremanGroupsOfMutiTokens(crossChain, tokens) {
     let log = this.log;
+    let chainType = this.chainType;
     let self = this;
     let erc20StoremanGroups = [];
 
     let multiTokens = tokens.map((token) => {
-      return new Promise(async (resolve, reject) => {
+      return new TimeoutPromise(async (resolve, reject) => {
         let storeman;
         try {
           storeman = await self.getErc20StoremanGroups(crossChain, token.tokenOrigAddr);
@@ -106,7 +111,7 @@ class WanChain extends baseChain {
         }
         erc20StoremanGroups = erc20StoremanGroups.concat(storeman);
         resolve();
-      });
+      }, chainSCConfig.promiseTimeout, "ChainType: " + chainType + ' getErc20StoremanGroupsOfMutiTokens timeout');
     })
     try {
       await Promise.all(multiTokens);
@@ -119,6 +124,7 @@ class WanChain extends baseChain {
 
   async getErc20StoremanGroups(crossChain, tokenAddr) {
     let log = this.log;
+    let chainType = this.chainType;
     let self = this;
     let abi = chainSCConfig.crossInfoDict[crossChain].ERC20.smgAdminAbi;
     let topic = [null, this.encodeTopic('address', tokenAddr)];
@@ -132,7 +138,7 @@ class WanChain extends baseChain {
 
     let storemanGroup = [];
     let getMultiStoremanEvent = addrs.map((contractAddr) => {
-      return new Promise((resolve, reject) => {
+      return new TimeoutPromise((resolve, reject) => {
         self.getScEvent(contractAddr, topic, 0, 'latest', async (err, logs) => {
           if (err) {
             log.error(err);
@@ -162,7 +168,7 @@ class WanChain extends baseChain {
             resolve(storemanGroup);
           }
         })
-      });
+      }, chainSCConfig.promiseTimeout, "ChainType: " + chainType + ' getErc20StoremanGroups timeout');
     })
 
     try {
@@ -176,11 +182,12 @@ class WanChain extends baseChain {
 
   getRegErc20Tokens(crossChain) {
     let log = this.log;
+    let chainType = this.chainType;
     let self = this;
     let abi = chainSCConfig.crossInfoDict[crossChain].ERC20.tokenManagerAbi;
     let contractAddr = chainSCConfig.crossInfoDict[crossChain].ERC20.tokenManagerAddr;
 
-    return new Promise((resolve, reject) => {
+    return new TimeoutPromise((resolve, reject) => {
       self.getScEvent(contractAddr, [], 0, 'latest', async (err, logs) => {
         if (err) {
           log.error(err);
@@ -213,7 +220,7 @@ class WanChain extends baseChain {
           resolve(regEvents);
         }
       });
-    });
+    }, chainSCConfig.promiseTimeout, "ChainType: " + chainType + ' getRegErc20Tokens timeout');
   }
 }
 
