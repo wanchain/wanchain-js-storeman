@@ -210,12 +210,14 @@ async function init() {
       tokenList[crossChain].storemanOri = global.config.crossTokens[crossChain].CONF.storemanOri;
       tokenList[crossChain].storemanWan = global.config.crossTokens[crossChain].CONF.storemanWan;
 
-      if (!moduleConfig.crossInfoDict[crossChain].CONF.nonceless) {
-        await initNonce(crossChain, tokenList[crossChain].storemanOri);
-        syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", crossChain, tokenList[crossChain].storemanOri, global[crossChain.toLowerCase() + 'LastNonce'][tokenList[crossChain].storemanOri]);
+      if (global.isLeader) {
+        if (!moduleConfig.crossInfoDict[crossChain].CONF.nonceless) {
+          await initNonce(crossChain, tokenList[crossChain].storemanOri);
+          syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", crossChain, tokenList[crossChain].storemanOri, global[crossChain.toLowerCase() + 'LastNonce'][tokenList[crossChain].storemanOri]);
+        }
+        await initNonce('WAN', tokenList[crossChain].storemanWan);
+        syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", 'WAN', tokenList[crossChain].storemanWan,  global['wanLastNonce'][tokenList[crossChain].storemanWan]);
       }
-      await initNonce('WAN', tokenList[crossChain].storemanWan);
-      syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", 'WAN', tokenList[crossChain].storemanWan,  global['wanLastNonce'][tokenList[crossChain].storemanWan]);
 
       if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
         tokenList.storemanAddress.push(global.config.crossTokens[crossChain].CONF.storemanPk);

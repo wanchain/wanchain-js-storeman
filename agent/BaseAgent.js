@@ -147,6 +147,9 @@ module.exports = class BaseAgent {
   }
 
   getNonce() {
+    if (!this.isLeader) {
+      return 0;
+    }
     return new Promise(async (resolve, reject) => {
       try {
         let nonce = 0;
