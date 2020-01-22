@@ -36,7 +36,7 @@ const config = {
     "region": "us-west-2",
     "sender": "monitor@wanchain.org"
   },
-  mpcSignature: true,
+  mpcSignature: global.argv.mpc,
   testnet: testnet,
 
   web3RetryTimes: 30,
@@ -171,7 +171,7 @@ const test_Config = {
     "region": "us-west-2",
     "sender": "monitor@wanchain.org"
   },
-  mpcSignature: true,
+  mpcSignature: global.argv.mpc,
   testnet: testnet,
 
   web3RetryTimes: 30,

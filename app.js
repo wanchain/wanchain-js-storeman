@@ -4,7 +4,7 @@ const optimist = require('optimist');
 const CronJob = require("cron").CronJob;
 
 let argv = optimist
-  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [mpcPort] -dbip [dbIp] -dbport [dbPort] -dbuser [dbUser] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] \
+  .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [mpcPort] -mpcipc [mpcIpc] -dbip [dbIp] -dbport [dbPort] -dbuser [dbUser] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] \
   [--testnet] [--replica] [--dev] [--leader] [--init] [--renew] -period [period] \
   [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password] --keystore [keystore] \
   [--doDebt] --chain [chain] --token [token] --debtor [debtor] --debt [debt] \
@@ -25,6 +25,7 @@ let argv = optimist
   .describe('pk', 'identify storemanGroup public key')
   .describe('mpcip', 'identify mpc ip')
   .describe('mpcPort', 'identify mpc port')
+  .describe('mpcipc', 'identify mpc ipc')
   .describe('dbip', 'identify db ip')
   .describe('dbport', 'identify db port')
   .describe('dbuser', 'identify db user')
@@ -56,7 +57,7 @@ let argv = optimist
   .default('period', '2')
   .string('pk')
   .string('mpcip')
-  .string('mpcport')
+  .string('mpcipc')
   .string('dbip')
   .string('c')
   .string('w')
@@ -77,9 +78,16 @@ let argv = optimist
 
 let pass = true;
 
+if ((argv.mpc && ((!argv.mpcIP || !argv.mpcPort) && (!argv.mpcipc)))
+  || (argv.doDebt && (!argv.chain && !argv.token))
+  || (argv.withdraw && (!argv.chain && !argv.token && !argv.wanReceiver))
+  || (argv.withdraw && (!argv.chain && !argv.token && !argv.oriReceiver))
+  || (argv.init && (!argv.c))) {
+  pass = false;
+}
+
 if (argv.leader) {
-  if ((argv.mpc && (!argv.mpcIP && !argv.mpcPort))
-    || (!argv.password || !argv.keystore)
+  if ((!argv.password || !argv.keystore)
     || (argv.keosd && (!argv.keosdUrl || !argv.wallet || !argv.password))
     || (argv.doDebt && (!argv.chain && !argv.token && !argv.debtor && !argv.debt))
     || (argv.withdraw && (!argv.chain && !argv.token && !argv.wanReceiver))

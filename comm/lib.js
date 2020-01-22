@@ -451,11 +451,11 @@ function writeConfigToFile(argv) {
 
 
       let url;
-      if (argv.mpcIP) {
-        if (argv.mpcIP.indexOf("http://") !== -1) {
+      if (argv.mpcIP || argv.mpcipc) {
+        if (argv.mpcIP) {
           url = 'http://' + argv.mpcIP + ':' + argv.mpcPort;
         } else {
-          url = argv.mpcIP + argv.mpcPort;
+          url = argv.mpcipc;
         }
         config[net].mpcUrl = url;
         global.mpcUrl = url;
