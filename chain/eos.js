@@ -68,6 +68,10 @@ class EosChain extends baseChain {
     return account + ':' + symbol;
   }
 
+  encodeTokenWithSymbol(account, symbol) {
+    return account + ':' + symbol;
+  }
+
   actionDecode(actions) {
     let self = this;
     let log = this.log;
@@ -87,19 +91,25 @@ class EosChain extends baseChain {
         }
         if (name === moduleConfig.crossInfoDict[this.chainType].TOKEN.depositAction[0]) {
           if (action.action_trace.act.data.memo.split(':').length === 5 && action.action_trace.act.data.memo.split(':')[0] === 'inlock') {
-            const { from, to, quantity, memo } = action.action_trace.act.data;
+            // const { from, to, quantity, memo } = action.action_trace.act.data;
+            const { from, to, quantity, memo, amount, symbol } = action.action_trace.act.data;
             obj = {
               ...obj,
               args: {
                 user: from,
                 toHtlcAddr: to,
                 storeman: '0x' + memo.split(':')[3],
-                value: quantity,
                 xHash: '0x' + memo.split(':')[1],
                 wanAddr: '0x' + memo.split(':')[2],
-                tokenOrigAccount: self.encodeToken(account, quantity)
               }
             };
+            if (quantity) {
+              obj.args.value = quantity;
+              obj.args.tokenOrigAccount = self.encodeToken(account, quantity);
+            } else if (amount) {
+              obj.args.value = amount.toString();
+              obj.args.tokenOrigAccount = self.encodeTokenWithSymbol(account, symbol);
+            }
           } else if (global.argv.leader && action.action_trace.act.data.memo.split(':').length === 1 && action.action_trace.act.data.memo.split(':')[0] === moduleConfig.crossInfoDict[this.chainType].TOKEN.withdrawFeeAction) {
             obj.event = action.action_trace.act.data.memo;
             obj = {
@@ -122,6 +132,9 @@ class EosChain extends baseChain {
             };
             if (data.quantity) {
               data.value = data.quantity;
+            };
+            if (data.amount) {
+              data.value = data.amount;
             };
             // if (data.npk) {
             //   data.storeman = '0x' + data.npk;
