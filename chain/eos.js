@@ -70,6 +70,7 @@ class EosChain extends baseChain {
 
   actionDecode(actions) {
     let self = this;
+    let log = this.log;
     let chainType = this.chainType;
     const trx = [];
     actions.map(action => {

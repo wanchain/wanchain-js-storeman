@@ -77,19 +77,26 @@ const config = {
 
   startSyncBlockNum: {
     ETH: 6586000,
-    WAN: 1935000
+    WAN: 1935000,
+    EOS: 101360000
   },
 
   crossInfoDict: {
     ETH: {
       CONF: {
-        enable: true
+        enable: false,
+        schnorrMpc: false,
+        debtOptEnable: false
       },
       COIN: {
         depositFunc: ['eth2wethLock', 'eth2wethRefund', 'eth2wethRevoke'],
         depositEvent: ['ETH2WETHLock', 'ETH2WETHRefund', 'ETH2WETHRevoke'],
         withdrawFunc: ['weth2ethLock', 'weth2ethRefund', 'weth2ethRevoke'],
         withdrawEvent: ['WETH2ETHLock', 'WETH2ETHRefund', 'WETH2ETHRevoke'],
+        debtFunc: [],
+        debtEvent: [],
+        withdrawFeeFunc: '',
+        withdrawFeeEvent: '',
 
         /* on WAN chain */
         wanchainHtlcAddr: '0x7a333ba427fce2e0c6dd6a2d727e5be6beb13ac2',
@@ -109,6 +116,10 @@ const config = {
         depositEvent: ['InboundLockLogger', 'InboundRedeemLogger', 'InboundRevokeLogger'],
         withdrawFunc: ['outboundLock', 'outboundRedeem', 'outboundRevoke'],
         withdrawEvent: ['OutboundLockLogger', 'OutboundRedeemLogger', 'OutboundRevokeLogger'],
+        debtFunc: [],
+        debtEvent: [],
+        withdrawFeeFunc: '',
+        withdrawFeeEvent: '',
 
         /* on WAN chain */
         wanchainHtlcAddr: '0x71d23563729f81fc535cbb772e52660ca5be755e',
@@ -133,7 +144,8 @@ const config = {
         CONFIRM_BLOCK_NUM: 2,
         enable: true,
         nonceless: true,
-        schnorrMpc: true
+        schnorrMpc: true,
+        debtOptEnable: true
       },
       TOKEN: {
         depositFunc: ['inSmgLock', 'inUserRedeem', 'inSmgRevoke'],
@@ -143,7 +155,11 @@ const config = {
         withdrawAction: ['outlock', 'outredeem', 'outrevoke'],
         withdrawEvent: ['OutboundLockLogger', 'OutboundRedeemLogger', 'OutboundRevokeLogger'],
         debtFunc: ['inDebtLock', 'inDebtRedeem', 'inDebtRevoke'],
+        debtAction: ['lockdebt', 'redeemdebt', 'revokedebt'],
         debtEvent: ['DebtLockLogger', 'DebtRedeemLogger', 'DebtRevokeLogger'],
+        withdrawFeeFunc: 'smgWithdrawFee',
+        withdrawFeeAction: 'withdraw',
+        withdrawFeeEvent: 'SmgWithdrawFeeLogger',
 
         /* on WAN chain */
         wanchainHtlcAddr: '0x14caaa533121aa2d5f20253629902132905fe044',
@@ -226,6 +242,10 @@ const test_Config = {
         depositEvent: ['ETH2WETHLock', 'ETH2WETHRefund', 'ETH2WETHRevoke'],
         withdrawFunc: ['weth2ethLock', 'weth2ethRefund', 'weth2ethRevoke'],
         withdrawEvent: ['WETH2ETHLock', 'WETH2ETHRefund', 'WETH2ETHRevoke'],
+        debtFunc: [],
+        debtEvent: [],
+        withdrawFeeFunc: '',
+        withdrawFeeEvent: '',
 
         /* on WAN chain */
         wanchainHtlcAddr: '0xfbaffb655906424d501144eefe35e28753dea037',
@@ -245,6 +265,10 @@ const test_Config = {
         depositEvent: ['InboundLockLogger', 'InboundRedeemLogger', 'InboundRevokeLogger'],
         withdrawFunc: ['outboundLock', 'outboundRedeem', 'outboundRevoke'],
         withdrawEvent: ['OutboundLockLogger', 'OutboundRedeemLogger', 'OutboundRevokeLogger'],
+        debtFunc: [],
+        debtEvent: [],
+        withdrawFeeFunc: '',
+        withdrawFeeEvent: '',
 
         /* on WAN chain */
         wanchainHtlcAddr: '0x27feb1785f61504619a105faa00f57c49cc4d9c3',
@@ -318,6 +342,10 @@ const test_Config = {
         depositEvent: ['ETH2WETHLock', 'ETH2WETHRefund', 'ETH2WETHRevoke'],
         withdrawFunc: ['weth2ethLock', 'weth2ethRefund', 'weth2ethRevoke'],
         withdrawEvent: ['WETH2ETHLock', 'WETH2ETHRefund', 'WETH2ETHRevoke'],
+        debtFunc: [],
+        debtEvent: [],
+        withdrawFeeFunc: '',
+        withdrawFeeEvent: '',
 
         /* on WAN chain */
         wanchainHtlcAddr: '0xfbaffb655906424d501144eefe35e28753dea037',
