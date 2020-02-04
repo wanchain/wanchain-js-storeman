@@ -39,12 +39,14 @@ module.exports = class mpc {
     this.hashX = hashX;
   }
 
-  setSignData(pk, data, extern = "cross") {
+  setSignData(pk, data, extern) {
     this.pk = pk;
     this.signData = {
       pk: pk,
-      data: data,
-      extern: extern
+      data: data
+    }
+    if (extern) {
+      this.signData.extern = extern;
     }
     global.monitorLogger.debug("********************************** mpc signData **********************************", this.signData, "hashX:", this.hashX);
   }
