@@ -18,6 +18,7 @@ module.exports = {
         		insertMethod('signMpcTransaction', 'storeman_signMpcTransaction', 1, [null], null),
         		insertMethod('addValidData', 'storeman_addValidData', 1, [null], null),
         		insertMethod('signData', 'storeman_signData', 1, [null], null),
+        		insertMethod('signDataByApprove', 'storeman_signDataByApprove', 1, [null], null),
         		insertMethod('getDataForApprove', 'storeman_getDataForApprove', 1, [null], null),
         		insertMethod('approveData', 'storeman_approveData', 1, [null], null),
         	],

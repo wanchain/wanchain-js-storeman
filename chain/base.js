@@ -15,6 +15,7 @@ function sleep(time) {
 class baseChain {
   constructor(log, nodeUrl) {
     this.log = log;
+    this.nodeUrl = nodeUrl;
     this.client = this.getClient(nodeUrl);
 
     this.safe_block_num = (moduleConfig.crossInfoDict[this.chainType] && moduleConfig.crossInfoDict[this.chainType].CONF.SAFE_BLOCK_NUM)

@@ -355,14 +355,15 @@ module.exports = class BaseAgent {
         } else {
           extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         }
-        if ((this.isDebt && this.record.storeman !== this.storemanPk) || this.isFee) {
-          mpc.setSignData(this.storemanPk, mpcSignData, extern);
-        } else {
-          mpc.setSignData(this.storemanPk, mpcSignData);
-        }
+        mpc.setSignData(this.storemanPk, mpcSignData, extern);
 
         // internalSignature is a object, {R:, S:}
-        let internalSignature = await mpc.signViaMpc();
+        let internalSignature
+        if ((this.isDebt && this.record.storeman !== this.storemanPk) || this.isFee) {
+          internalSignature = await mpc.signDataByApprove();
+        } else {
+          internalSignature = await mpc.signViaMpc();
+        }
         this.logger.debug("********************************** getInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
         resolve(internalSignature);
       } catch (err) {
@@ -387,11 +388,7 @@ module.exports = class BaseAgent {
         } else {
           extern = "cross:normal:" + this.crossChain + ":" + this.tokenType + ":" + this.transChainType.toUpperCase() + ":" + this.hashKey;
         }
-        if (this.isDebt || this.isFee) {
-          mpc.setSignData(this.storemanPk, mpcSignData, extern);
-        } else {
-          mpc.setSignData(this.storemanPk, mpcSignData);
-        }
+        mpc.setSignData(this.storemanPk, mpcSignData, extern);
 
         let internalSignature = await mpc.addValidDataViaMpc();
         this.logger.debug("********************************** validateInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);

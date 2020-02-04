@@ -105,6 +105,25 @@ module.exports = class mpc {
     });
   }
 
+  signDataByApprove() {
+    return new Promise((resolve, reject) => {
+      try {
+        this.mpcWeb3.storeman.signDataByApprove(this.signData, (err, result) => {
+          if (!err) {
+            global.monitorLogger.debug("********************************** mpc signDataByApprove successfully **********************************", result, "hashX:", this.hashX);
+            resolve(result);
+          } else {
+            global.monitorLogger.error("********************************** mpc signDataByApprove failed **********************************", err, "hashX:", this.hashX);
+            reject(err);
+          }
+        })
+      } catch (err) {
+        global.monitorLogger.error("********************************** mpc signDataByApprove failed **********************************", err, "hashX:", this.hashX);
+        reject(err);
+      }
+    });
+  }
+
   getDataForApprove() {
     return new Promise((resolve, reject) => {
       try {
