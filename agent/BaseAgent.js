@@ -397,8 +397,16 @@ module.exports = class BaseAgent {
           s: null
         });
       } catch (err) {
-        this.logger.error("********************************** validateInternalSign Via Mpc failed ********************************** hashX", this.hashKey, err);
-        reject(err);
+        if (err.hasOwnProperty("message") && (err.message === "has in approved db")) {
+          this.logger.error("********************************** validateInternalSign Via Mpc failed ********************************** hashX", this.hashKey, err);
+          resolve({
+            R: null,
+            s: null
+          });
+        } else {
+          this.logger.error("********************************** validateInternalSign Via Mpc failed ********************************** hashX", this.hashKey, err);
+          reject(err);
+        }
       }
     });
   }
