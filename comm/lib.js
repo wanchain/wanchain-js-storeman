@@ -262,45 +262,66 @@ async function initConfig(crossChain, storemanWan, storemanOri, storemanPk) {
   let storemanWanAddr = storemanWan.toLowerCase();
   let storemanOriAddr = encodeAccount(crossChain, storemanOri.toLowerCase());
   const moduleConfig = require('conf/moduleConfig.js');
+  let times = 0;
+  let retryTimes = moduleConfig.web3RetryTimes;
 
   return new Promise(async (resolve, reject) => {
-    try {
-      let crossTokens = await initCrossTokens(crossChain, storemanWanAddr, storemanOriAddr, storemanPk);
-      if (crossTokens != null) {
-        fs.readFile(configPath, (err, data) => {
-          if (err) {
-            reject(err);
-          }
-
-          var config = data.toString();
-          config = JSON.parse(config);
-
-          var net;
-          if (global.testnet) {
-            net = "testnet";
-          } else {
-            net = "main";
-          }
-
-          config[net].crossTokens[crossChain].CONF.storemanWan = storemanWanAddr;
-          config[net].crossTokens[crossChain].CONF.storemanOri = storemanOri;
-          config[net].crossTokens[crossChain].TOKEN = crossTokens[crossChain];
-          if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
-            config[net].crossTokens[crossChain].CONF.storemanPk = storemanPk;
-          }
-
-          var str = JSON.stringify(config, null, 2);
-          fs.writeFile(configPath, str, (err) => {
+    let initTokens = async function() {
+      try {
+        let crossTokens = await initCrossTokens(crossChain, storemanWanAddr, storemanOriAddr, storemanPk);
+        if (crossTokens != null) {
+          fs.readFile(configPath, (err, data) => {
             if (err) {
               reject(err);
-            } else {
-              resolve(crossTokens);
             }
+
+            var config = data.toString();
+            config = JSON.parse(config);
+
+            var net;
+            if (global.testnet) {
+              net = "testnet";
+            } else {
+              net = "main";
+            }
+
+            config[net].crossTokens[crossChain].CONF.storemanWan = storemanWanAddr;
+            config[net].crossTokens[crossChain].CONF.storemanOri = storemanOri;
+            config[net].crossTokens[crossChain].TOKEN = crossTokens[crossChain];
+            if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
+              config[net].crossTokens[crossChain].CONF.storemanPk = storemanPk;
+            }
+
+            var str = JSON.stringify(config, null, 2);
+            fs.writeFile(configPath, str, (err) => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve(crossTokens);
+              }
+            })
           })
-        })
-      } else {
-        resolve(null);
+        } else {
+          resolve(null);
+        }
+      } catch (err) {
+        if (err) {
+          if (times >= retryTimes) {
+            console.log("initTokens failed", err);
+            reject(err);
+          } else {
+            console.log("initTokens retry", times);
+            times++;
+            initTokens();
+          }
+        } else {
+          reject(err);
+        }
       }
+    }
+
+    try {
+      initTokens();
     } catch (err) {
       reject(err);
     }

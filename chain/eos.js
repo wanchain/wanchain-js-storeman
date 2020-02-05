@@ -401,8 +401,9 @@ class EosChain extends baseChain {
 
   async sendRawTransaction(signedTx, callback) {
     let log = this.log;
+    let chainType = this.chainType;
     try {
-      let nodeUrl = "http://jungle2.cryptolions.io:80";
+      let nodeUrl = global.config.crossTokens[chainType].CONF.bpNodeUrl;
       const rpc = new JsonRpc(nodeUrl, { fetch });
       const api = new Api({ rpc, authorityProvider: rpc, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
       let eos = this.client;
