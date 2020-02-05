@@ -139,7 +139,7 @@ const config = {
     },
     EOS: {
       CONF: {
-        SAFE_BLOCK_NUM: 100,
+        SAFE_BLOCK_NUM: 1000,
         CONFIRM_BLOCK_NUM: 2,
         enable: true,
         nonceless: true,
@@ -288,7 +288,7 @@ const test_Config = {
     },
     EOS: {
       CONF: {
-        SAFE_BLOCK_NUM: 100,
+        SAFE_BLOCK_NUM: 1000,
         CONFIRM_BLOCK_NUM: 2,
         enable: true,
         nonceless: true,
