@@ -163,10 +163,9 @@ module.exports = class BaseAgent {
           await sleep(3);
         }
         this.logger.debug(chainMutex, storemanAddress, "mutexNonce true");
+        this.logger.debug(storemanAddress, 'getNonce:', chainNonce, global[chainNonce][storemanAddress],
+          nonceRenew, global[nonceRenew][storemanAddress], noncePending, global[noncePending][storemanAddress]);
         global[chainMutex][storemanAddress] = true;
-
-        console.log("aaron debug here getNonce", storemanAddress);
-
 
         if (global[nonceRenew][storemanAddress]) {
           nonce = await this.chain.getNonceSync(storemanAddress);
@@ -236,6 +235,9 @@ module.exports = class BaseAgent {
         }
         resolve();
       } catch (err) {
+        if (!this.transChainNonceless) {
+          global[this.transChainType + 'NoncePending'][this.storemanAddress] = true;
+        }
         reject("createTrans: " + err);
       }
     })
