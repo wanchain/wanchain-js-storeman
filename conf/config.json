@@ -1,10 +1,10 @@
 {
   "main": {
     "wanWeb3Url": "http://gwan-mainnet.wandevs.org:26891",
-    "mpcUrl": "http://192.168.1.179:18538",
+    "mpcUrl": "http://192.168.1.179:18537",
     "isLeader": false,
     "wanGasPrice": 180,
-    "wanGasLimit": 470000,
+    "wanGasLimit": 4700000,
     "mailReceiver": "monitor@wanchain.org",
     "issueCollectionPath": "./invalidTrans/",
     "crossTokens": {
@@ -134,22 +134,22 @@
       "EOS": {
         "CONF": {
           "nodeUrl": "https://eos.greymass.com:443",
-          "bpNodeUrl": "https://eos.infstones.io",
+          "bpNodeUrl": "https://api.redpacketeos.com",
           "keyProvider": [],
-          "storemanOri": "aarontestnet",
-          "storemanWan": "0x6a8299deccd420d5b6970d611afb25cc8e910220",
-          "storemanPk": "0x042c672cbf9858cd77e33f7a1660027e549873ce25caffd877f955b5158a50778f7c852bbab6bd76eb83cac51132ccdbb5e6747ef6732abbb2135ed0da1c341619"
+          "storemanOri": "aaronmainnet",
+          "storemanWan": "0xed1baf7289c0acef52db0c18e1198768eb06247e",
+          "storemanPk": "0x042649e5c8b192ab0f0dfb6111d08510d3b0d34371145e1fed69639fcc24eda931db1e6e10c55093e7a9b34ae0bcea1473e15f33ee2b885e6d88b758755c487276"
         },
         "TOKEN": {
           "eosio.token:EOS": {
             "tokenOrigAccount": "0x01800000c2656f73696f2e746f6b656e3a454f53",
-            "ratio": "2",
+            "ratio": "190000",
             "minDeposit": "10000000000000000000",
             "withdrawDelayTime": "259200",
             "name": "Wanchain EOS Crosschain Token",
             "symbol": "0x454f53",
             "decimals": "4",
-            "tokenWanAddr": "0xc8c5ea67d7ccd16f66aa976dcbfaff79fcd3c58c",
+            "tokenWanAddr": "0x81862b7622ced0defb652addd4e0c110205b0040",
             "tokenSymbol": "EOS",
             "tokenType": "TOKEN"
           }
@@ -349,21 +349,9 @@
           "keyProvider": [],
           "storemanOri": "aarontestnet",
           "storemanWan": "0x6a8299deccd420d5b6970d611afb25cc8e910220",
-          "storemanPk": "0x048e5f9dd56767ea165c34c5b449b07ed7d38edc616d136d14ba7411748251e00155e17926c9b82ebebcafdff61013f8df155727962118ee6b839414184355c8e5"
+          "storemanPk": "0x042c672cbf9858cd77e33f7a1660027e549873ce25caffd877f955b5158a50778f7c852bbab6bd76eb83cac51132ccdbb5e6747ef6732abbb2135ed0da1c341619"
         },
         "TOKEN": {
-          "eosio.token:EOS": {
-            "tokenOrigAccount": "0x01800000c2656f73696f2e746f6b656e3a454f53",
-            "ratio": "2",
-            "minDeposit": "10000000000000000000",
-            "withdrawDelayTime": "3600",
-            "name": "Wanchain EOS Crosschain Token",
-            "symbol": "0x454f53",
-            "decimals": "4",
-            "tokenWanAddr": "0xb5982db185465e61c5fe6a8b517f1759af9c73e6",
-            "tokenSymbol": "EOS",
-            "tokenType": "TOKEN"
-          },
           "edcrfvtgbyhn:NS": {
             "tokenOrigAccount": "0x01800000c265646372667674676279686e3a4e53",
             "ratio": "1",
