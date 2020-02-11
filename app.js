@@ -188,9 +188,9 @@ global.agentDict = {
   WAN: WanAgent
 }
 
-global.syncLogger = new Logger("syncLogger", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
-global.monitorLogger = new Logger("storemanAgent", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
-global.mpcLogger = new Logger("storemanAgent-mpc", "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
+global.syncLogger = new Logger("storemanAgent-sync-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
+global.monitorLogger = new Logger("storemanAgent-action-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
+global.mpcLogger = new Logger("storemanAgent-mpc-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
 
 async function init() {
   try {
@@ -259,6 +259,7 @@ async function init() {
       }
     }
     monitorLogger.info(tokenList);
+    global.syncLogger.info("storeman agent init done!", tokenList);
   } catch (err) {
     console.log("init error ", err);
     process.exit();
@@ -894,6 +895,8 @@ db.on('connected', function(err) {
 let modelOps = new ModelOps(global.syncLogger, db);
 
 async function main() {
+  global.syncLogger.info("storeman agent start!", global.argv);
+
   if (global.argv.init && global.argv.c && global.argv.w && global.argv.o) {
     global.syncLogger.info("storeman agent begin to initialize!");
     await initConfig(global.argv.c, global.argv.w, global.argv.o, global.argv.pk);

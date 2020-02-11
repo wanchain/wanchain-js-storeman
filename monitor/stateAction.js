@@ -301,14 +301,14 @@ module.exports = class StateAction {
       storemanRevokeEvent: 'revoke'
     }
 
-    let blockNumMap = {
-      storemanLockTxHash: 'storemanLockTxBlockNumber',
-      storemanRedeemTxHash: 'storemanRedeemTxBlockNumber',
-      storemanRevokeTxHash: 'storemanRevokeTxBlockNumber',
-      walletLockTxHash: 'walletLockTxBlockNumber',
-      walletRedeemTxHash: 'walletRedeemTxBlockNumber',
-      walletRevokeTxHash: 'walletRevokeTxBlockNumber'
-    }
+    // let blockNumMap = {
+    //   storemanLockTxHash: 'storemanLockTxBlockNumber',
+    //   storemanRedeemTxHash: 'storemanRedeemTxBlockNumber',
+    //   storemanRevokeTxHash: 'storemanRevokeTxBlockNumber',
+    //   walletLockTxHash: 'walletLockTxBlockNumber',
+    //   walletRedeemTxHash: 'walletRedeemTxBlockNumber',
+    //   walletRevokeTxHash: 'walletRevokeTxBlockNumber'
+    // }
 
     transOnChain = this.getTransChainType(transHashName);
     if (transOnChain === null) {
@@ -370,11 +370,12 @@ module.exports = class StateAction {
 
       for (var txHash of txHashArray) {
         this.logger.debug("********************************** checkTransOnline checkHash**********************************", this.hashX, transHashName, txHash);
-        if (transOnChain === 'EOS' && this.record[blockNumMap[transHashName]]) {
-          receipt = await chain.getTransactionConfirmSync(txHash, chain.confirm_block_num, this.record[blockNumMap[transHashName]][txHashArray.indexOf(txHash)]);
-        } else {
-          receipt = await chain.getTransactionConfirmSync(txHash, chain.confirm_block_num);
-        }
+        // if (transOnChain === 'EOS' && this.record[blockNumMap[transHashName]]) {
+        //   receipt = await chain.getTransactionConfirmSync(txHash, chain.confirm_block_num, this.record[blockNumMap[transHashName]][txHashArray.indexOf(txHash)]);
+        // } else {
+        //   receipt = await chain.getTransactionConfirmSync(txHash, chain.confirm_block_num);
+        // }
+        receipt = await chain.getTransactionConfirmSync(txHash, chain.confirm_block_num);
         if (receipt !== null) {
           if (receipt.status === '0x1') {
             content = {

@@ -82,7 +82,7 @@ module.exports = class EosAgent extends baseAgent{
           }
         } else {
           if (global.wallet) {
-            self.logger.debug("********************************** signTrans use keosd ********************************** hashX", self.hashKey);
+            self.logger.debug("********************************** signTrans use keosd ********************************** hashX", self.hashKey, global.keosdUrl, global.wallet);
             let wallet = global.wallet;
             let password = this.getChainPassword();
             rawTx = await self.trans.signTransFromKeosd(wallet, password, self.chain);
