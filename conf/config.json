@@ -134,7 +134,7 @@
       "EOS": {
         "CONF": {
           "nodeUrl": "https://eos.greymass.com:443",
-          "bpNodeUrl": "https://api.redpacketeos.com",
+          "bpNodeUrl": "https://api.helloeos.com.cn:443",
           "keyProvider": [],
           "storemanOri": "aaronmainnet",
           "storemanWan": "0xed1baf7289c0acef52db0c18e1198768eb06247e",
@@ -159,7 +159,7 @@
   },
   "testnet": {
     "wanWeb3Url": "http://gwan-testnet.wandevs.org:36891",
-    "mpcUrl": "http://192.168.1.179:18538",
+    "mpcUrl": "http://192.168.1.179:18537",
     "isLeader": false,
     "wanGasPrice": 180,
     "wanGasLimit": 4700000,

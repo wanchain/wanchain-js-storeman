@@ -164,6 +164,8 @@ module.exports = class EosRawTrans {
                     trans.ref_block_prefix= refBlock.ref_block_prefix;
                     trans.actions = await chain.serializeActions(trans.actions);
 
+                    global.monitorLogger.debug("********************************** signTransFromKeosd **********************************", JSON.stringify(trans, null, 4));
+
                     let requireKeys = await chain.getRequiredKeys(trans, pubKeys);
                     console.log("getRequiredKeys:", requireKeys);
 

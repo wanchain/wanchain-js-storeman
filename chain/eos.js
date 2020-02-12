@@ -33,6 +33,7 @@ class EosChain extends baseChain {
     return new TimeoutPromise(async (resolve, reject) => {
       try {
         let result = await eos.rpc.get_info();
+        log.debug("ChainType:", chainType, "get_info result is", result);
         resolve(result);
       } catch (err) {
         reject(err);
@@ -52,7 +53,8 @@ class EosChain extends baseChain {
           resolve(self.chainId);
           return;
         }
-        let chain_id = await eos.rpc.get_info();
+        let chain_info = await eos.rpc.get_info();
+        let chain_id = chain_info.chain_id;
         log.debug("ChainType:", chainType, "getNetWork result is", chain_id);
         self.chainId = chain_id;
         resolve(chain_id);
@@ -409,7 +411,7 @@ class EosChain extends baseChain {
       let eos = this.client;
       eos = api;
       let result = await eos.pushSignedTransaction(signedTx);
-      log.debug("sendRawTransaction result is", result)
+      log.debug("sendRawTransaction result is", nodeUrl, result);
       callback(null, result);
     } catch (err) {
       callback(err, null);
@@ -427,7 +429,7 @@ class EosChain extends baseChain {
         let eos = this.client;
         eos = api;
         let result = await eos.pushSignedTransaction(signedTx);
-        log.debug("sendRawTransaction result is", result)
+        log.debug("sendRawTransactionSync result is", nodeUrl, result)
         resolve(result);
       } catch (err) {
         reject(err);
