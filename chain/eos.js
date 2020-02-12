@@ -28,6 +28,7 @@ class EosChain extends baseChain {
 
   async get_info() {
     let eos = this.client;
+    let log = this.log;
     let chainType = this.chainType;
 
     return new TimeoutPromise(async (resolve, reject) => {
