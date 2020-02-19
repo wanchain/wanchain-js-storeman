@@ -15,7 +15,7 @@ let Contract = require("contract/Contract.js");
 
 let MPC = require("mpc/mpc.js");
 let SchnorrMPC = require("mpc/schnorrMpc.js");
-
+let schnorrTool = require('utils/schnorr/tools.js');
 module.exports = class BaseAgent {
   constructor(crossChain, tokenType, record = null) {
     this.logger = global.monitorLogger;

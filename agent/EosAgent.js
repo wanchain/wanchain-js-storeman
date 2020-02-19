@@ -3,7 +3,7 @@ const baseAgent = require("agent/BaseAgent.js");
 
 // let Eos = require("eosjs");
 let RawTrans = require("trans/EosRawTrans.js");
-let schnorrTool = require('utils/schnorr/tools.js');
+
 const {
   encodeAccount,
   hexAdd0x,
