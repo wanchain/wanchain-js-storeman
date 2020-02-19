@@ -442,6 +442,31 @@ module.exports = class BaseAgent {
     });
   }
 
+  verifyInternalSign(signData, typesArray, internalSignature) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (this.mpcSignature && this.schnorrMpc && this.isLeader) {
+          this.logger.debug("********************************** verifyInternalSign ********************************** hashX", this.hashKey, signData, typesArray);
+          this.mpcSignData = this.encode(signData, typesArray);
+
+          let signCheck = await schnorrTool.verify(internalSignature.R, internalSignature.S, this.mpcSignData, this.storemanPk);
+          if (!signCheck) {
+            this.logger.error("********************************** verifyInternalSign failed ********************************** hashX", this.hashKey, ", internalSignature:", internalSignature, ", mpcSignData:", this.mpcSignData);
+            reject('verifySig fail');
+          } else {
+            this.logger.debug("********************************** verifyInternalSign Success********************************** hashX", this.hashKey, ", internalSignature:", internalSignature, ", mpcSignData:", this.mpcSignData);
+            resolve(signCheck);
+          }
+        } else {
+          resolve();
+        }
+      } catch (err) {
+        this.logger.error("********************************** verifyInternalSign failed ********************************** hashX", this.hashKey, err);
+        reject(err);
+      }
+    });
+  }
+
   signTrans() {
     return new Promise((resolve, reject) => {
       try {

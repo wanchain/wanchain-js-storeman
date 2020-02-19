@@ -3,7 +3,7 @@ const baseAgent = require("agent/BaseAgent.js");
 
 // let Eos = require("eosjs");
 let RawTrans = require("trans/EosRawTrans.js");
-
+let schnorrTool = require('utils/schnorr/tools.js');
 const {
   encodeAccount,
   hexAdd0x,
@@ -117,13 +117,17 @@ module.exports = class EosAgent extends baseAgent{
      
     let internalSignature = await this.internalSignViaMpc(signData);
 
+    await this.verifyInternalSign(signData, [], internalSignature);
+
     if (this.isLeader) {
       let actions = [{
         account: this.contractAddr,
         name: this.crossFunc[0],
         authorization: [{
-          actor: this.storemanAddress,
-          permission: 'active',
+          // actor: this.storemanAddress,
+          // permission: 'active',
+          actor: this.contractAddr,
+          permission: 'outlock',
         }],
         data: {
           // storeman: this.storemanAddress,
