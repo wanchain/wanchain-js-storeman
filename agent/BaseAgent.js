@@ -449,7 +449,7 @@ module.exports = class BaseAgent {
           this.logger.debug("********************************** verifyInternalSign ********************************** hashX", this.hashKey, signData, typesArray);
           this.mpcSignData = this.encode(signData, typesArray);
 
-          let signCheck = await schnorrTool.verify(internalSignature.R, internalSignature.S, this.mpcSignData, this.storemanPk);
+          let signCheck = await schnorrTool.verifySig(internalSignature.R, internalSignature.S, this.mpcSignData, this.storemanPk);
           if (!signCheck) {
             this.logger.error("********************************** verifyInternalSign failed ********************************** hashX", this.hashKey, ", internalSignature:", internalSignature, ", mpcSignData:", this.mpcSignData);
             reject('verifySig fail');
