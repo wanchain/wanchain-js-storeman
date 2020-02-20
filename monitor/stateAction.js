@@ -40,6 +40,9 @@ module.exports = class StateAction {
   }
 
   async updateRecord(content) {
+    if (content.hasOwnProperty('status')) {
+      this.state = content.status;
+    }
     this.logger.debug("********************************** updateRecord ********************************** hashX:", this.hashX, "content:", content);
     await this.modelOps.syncSave(this.hashX, content);
   }
@@ -49,7 +52,7 @@ module.exports = class StateAction {
     let content = {
       status: state,
     };
-    this.state = state;
+    // this.state = state;
     await this.updateRecord(content);
   }
 

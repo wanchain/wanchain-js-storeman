@@ -82,20 +82,21 @@ class EosChain extends baseChain {
     const trx = [];
     actions.map(action => {
       try{
-        const { account, name, authorization, data } = action.action_trace.act;
+        let act = action.hasOwnProperty('action_trace') ? action.action_trace.act : action.act;
+        const { account, name, authorization, data } = act;
         let date = new Date(action.block_time + 'Z'); // "Z" is a zero time offset
         let obj = {
           address: account,
           blockNumber: action.block_num,
-          transactionHash: action.action_trace.trx_id,
+          transactionHash: action.hasOwnProperty('action_trace') ? action.action_trace.trx_id : action.trx_id,
           authorization: authorization,
           timestamp: date.getTime()/1000,
           event: name
         }
         if (name === moduleConfig.crossInfoDict[this.chainType].TOKEN.depositAction[0]) {
-          if (action.action_trace.act.data.memo.split(':').length === 5 && action.action_trace.act.data.memo.split(':')[0] === 'inlock') {
-            // const { from, to, quantity, memo } = action.action_trace.act.data;
-            const { from, to, quantity, memo, amount, symbol } = action.action_trace.act.data;
+          if (act.data.memo.split(':').length === 5 && act.data.memo.split(':')[0] === 'inlock') {
+            // const { from, to, quantity, memo } = act.data;
+            const { from, to, quantity, memo, amount, symbol } = act.data;
             obj = {
               ...obj,
               args: {
@@ -113,8 +114,8 @@ class EosChain extends baseChain {
               obj.args.value = amount.toString();
               obj.args.tokenOrigAccount = self.encodeTokenWithSymbol(account, symbol);
             }
-          } else if (global.argv.leader && action.action_trace.act.data.memo.split(':').length === 1 && action.action_trace.act.data.memo.split(':')[0] === moduleConfig.crossInfoDict[this.chainType].TOKEN.withdrawFeeAction) {
-            obj.event = action.action_trace.act.data.memo;
+          } else if (global.argv.leader && act.data.memo.split(':').length === 1 && act.data.memo.split(':')[0] === moduleConfig.crossInfoDict[this.chainType].TOKEN.withdrawFeeAction) {
+            obj.event = act.data.memo;
             obj = {
               ...obj,
               args: data
@@ -170,7 +171,8 @@ class EosChain extends baseChain {
         moduleConfig.crossInfoDict[chainType].TOKEN.withdrawAction,
         // moduleConfig.crossInfoDict[chainType].TOKEN.withdrawFeeAction, // withdrawFee will in eosio.token inline action
         moduleConfig.crossInfoDict[chainType].TOKEN.debtAction);
-      let filter = action => action.block_num >= fromBlk && action.block_num <= toBlk && (filterFunc.includes(action.action_trace.act.name));
+      let filter = action => (action.hasOwnProperty('action_trace') && action.block_num >= fromBlk && action.block_num <= toBlk && (filterFunc.includes(action.action_trace.act.name))) ||
+                            (action.hasOwnProperty('act') && action.block_num >= fromBlk && action.block_num <= toBlk && (filterFunc.includes(action.act.name)));
 
       let filterGet = async function (filter) {
         try {

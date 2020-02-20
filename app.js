@@ -617,9 +617,9 @@ async function handlerMain(logger, db) {
         toHtlcAddr: {
           $in: [...htlcAddrFilter]
         },
-        // hashX: {
-        //   $in: ['0x9f2d25cbc77f4d3bf42b4949f9c2485e68611586d72c7a85c281b3483c295207']
-        // },
+        hashX: {
+          $nin: Object.keys(handlingList)
+        },
         // storeman: {
         //   $in: tokenList.storemanAddress
         // }
