@@ -9,6 +9,7 @@ let argv = optimist
   [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password] --keystore [keystore] \
   [--doDebt] --chain [chain] --token [token] --debtor [debtor] --debt [debt] \
   [--withdraw] --chain [chain] --token [token] --wanReceiver [wanReceiver] --oriReceiver [oriReceiver]\
+  --oriurl [oriurl] --oribpurl [oribpurl]\
    ")
   .alias('h', 'help')
   .alias('i', 'index')
@@ -53,6 +54,8 @@ let argv = optimist
   .describe('debtor', 'identify debt debtor')
   .describe('wanReceiver', 'identify withdrawFee wanReceiver')
   .describe('oriReceiver', 'identify withdrawFee oriReceiver')
+  .describe('oriurl', 'identify ori chain url')
+  .describe('oribpurl', 'identify ori chain BP url')
   .default('i', 0)
   .default('period', '2')
   .string('pk')
@@ -73,6 +76,8 @@ let argv = optimist
   .string('debtor')
   .string( 'wanReceiver')
   .string('oriReceiver')
+  .string('oriurl')
+  .string('oribpurl')
   .boolean('testnet', 'replica', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr', 'keosd', 'doDebt', 'withdraw')
   .argv;
 

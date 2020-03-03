@@ -482,6 +482,14 @@ function writeConfigToFile(argv) {
         global.mpcUrl = url;
       }
 
+      if (argv.c && argv.oriurl) {
+        config[net].crossTokens[argv.c.toUpperCase()].CONF.nodeUrl = argv.oriurl;
+      }
+
+      if (argv.c && argv.oribpurl) {
+        config[net].crossTokens[argv.c.toUpperCase()].CONF.bpNodeUrl = argv.oribpurl;
+      }
+
       let isLeader = argv.leader ? true : false
       config[net].isLeader = isLeader;
 
