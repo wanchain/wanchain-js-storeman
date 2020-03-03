@@ -280,9 +280,12 @@ class EosChain extends baseChain {
     let chainType = this.chainType;
     let log = this.log;
     let self = this;
+    let eos = this.client;
     let receipt = null;
     let curBlockNum = 0;
     let sleepTime = 30;
+    let last_irreversible_block_num;
+    let chain_info;
 
     return new TimeoutPromise(async (resolve, reject) => {
       try {
@@ -292,14 +295,20 @@ class EosChain extends baseChain {
           return;
         }
 
-        curBlockNum = await self.getBlockNumberSync();
+        chain_info = await eos.rpc.get_info();
+        last_irreversible_block_num = chain_info.last_irreversible_block_num;
+        curBlockNum = chain_info.head_block_num;
         let receiptBlockNumber = receipt.block_num;
 
-        while (receiptBlockNumber + waitBlocks > curBlockNum) {
-          log.info("ChainType:", chainType, "getTransactionConfirmSync was called at block: ", receipt.block_num, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
+        while (receiptBlockNumber + waitBlocks > curBlockNum && receiptBlockNumber > last_irreversible_block_num) {
+          log.info("ChainType:", chainType, "getTransactionConfirmSync was called at block: ", receipt.block_num, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get',
+          "last_irreversible_block_num is ", last_irreversible_block_num);
           await sleep(sleepTime * 1000);
           receipt = await self.getTransactionReceiptSync(txHash, block_num);
-          curBlockNum = await self.getBlockNumberSync();
+
+          chain_info = await eos.rpc.get_info();
+          last_irreversible_block_num = chain_info.last_irreversible_block_num;
+          curBlockNum = chain_info.head_block_num;
           receiptBlockNumber = receipt.block_num;
         }
         if (receipt.trx.receipt.status === 'executed') {

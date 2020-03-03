@@ -140,7 +140,7 @@ const config = {
     EOS: {
       CONF: {
         SAFE_BLOCK_NUM: 1000,
-        CONFIRM_BLOCK_NUM: 2,
+        CONFIRM_BLOCK_NUM: 100,
         enable: true,
         nonceless: true,
         schnorrMpc: true,
