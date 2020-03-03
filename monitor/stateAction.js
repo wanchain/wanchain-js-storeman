@@ -263,6 +263,24 @@ module.exports = class StateAction {
   }
 
   async checkAllowance(nextState, rollState) {
+    //only EOS need to check wallet trans irreversible
+    if(this.record.crossChain === 'EOS' && this.crossDirection === 0) {
+      try {
+        let oriChain = getGlobalChain(this.crossChain);
+        let oriLockTxHash = this.record.walletLockEvent[0].transactionHash;
+        let oriReceipt = await oriChain.getTransactionConfirmSync(oriLockTxHash, oriChain.confirm_block_num);
+        if (oriReceipt !== null && oriReceipt.status === '0x1') {
+          this.logger.debug("The original lock txHash is irreversible for record", this.hashX);
+        } else {
+          this.logger.debug("The original lock txHash still is not irreversible or executed for record", this.hashX);
+          return;
+        }
+      } catch (err) {
+        this.logger.error("Check original lock txHash irreversible failed:", err, this.hashX);
+        return;
+      }
+    }
+
     // only ERC20 outsmglock and Erc20 indebtlock need to do approve
     if(this.record.tokenType === 'COIN' || this.record.crossChain === 'EOS' || this.crossDirection === 0) {
       await this.updateState(nextState);
@@ -288,7 +306,7 @@ module.exports = class StateAction {
           await this.updateState(nextState);
         }
       }).catch(async (err) => {
-        this.logger.error("checkAllowance:", err);
+        this.logger.error("checkAllowance:", err, this.hashX);
         // await this.updateState('checkApprove');
       })
   }
