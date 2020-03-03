@@ -300,9 +300,9 @@ class EosChain extends baseChain {
         curBlockNum = chain_info.head_block_num;
         let receiptBlockNumber = receipt.block_num;
 
-        while (receiptBlockNumber + waitBlocks > curBlockNum && receiptBlockNumber <= last_irreversible_block_num) {
-          log.info("ChainType:", chainType, "getTransactionConfirmSync was called at block: ", receipt.block_num, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get',
-          "last_irreversible_block_num is ", last_irreversible_block_num);
+        while (receiptBlockNumber + waitBlocks > curBlockNum || receiptBlockNumber > last_irreversible_block_num) {
+          log.info("ChainType:", chainType, "getTransactionConfirmSync was called at block: ", receipt.block_num, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after about block', waitBlocks, ', wait some time to re-get',
+          "while last_irreversible_block_num is ", last_irreversible_block_num);
           await sleep(sleepTime * 1000);
           receipt = await self.getTransactionReceiptSync(txHash, block_num);
 
