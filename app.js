@@ -9,7 +9,7 @@ let argv = optimist
   [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password] --keystore [keystore] \
   [--doDebt] --chain [chain] --token [token] --debtor [debtor] --debt [debt] \
   [--withdraw] --chain [chain] --token [token] --wanReceiver [wanReceiver] --oriReceiver [oriReceiver]\
-  --oriurl [oriurl] --oribpurl [oribpurl]\
+  --oriurl [oriurl] --oribpurl [oribpurl] --wanurl [wanurl]\
    ")
   .alias('h', 'help')
   .alias('i', 'index')
@@ -56,6 +56,7 @@ let argv = optimist
   .describe('oriReceiver', 'identify withdrawFee oriReceiver')
   .describe('oriurl', 'identify ori chain url')
   .describe('oribpurl', 'identify ori chain BP url')
+  .describe('wanurl', 'identify wan chain url')
   .default('i', 0)
   .default('period', '2')
   .string('pk')
@@ -78,6 +79,7 @@ let argv = optimist
   .string('oriReceiver')
   .string('oriurl')
   .string('oribpurl')
+  .string('wanurl')
   .boolean('testnet', 'replica', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr', 'keosd', 'doDebt', 'withdraw')
   .argv;
 
@@ -106,8 +108,6 @@ if (argv.help || !pass) {
   optimist.showHelp();
   process.exit(0);
 }
-
-console.log(argv);
 
 global.argv = argv;
 
@@ -199,7 +199,6 @@ global.mpcLogger = new Logger("storemanAgent-mpc-" + global.argv.c, "log/storema
 
 async function init() {
   try {
-    await writeConfigToFile(global.argv)
     global.config = loadConfig();
 
     initChain('WAN');
@@ -911,6 +910,7 @@ let modelOps = new ModelOps(global.syncLogger, db);
 
 async function main() {
   global.syncLogger.info("storeman agent start!", global.argv);
+  await writeConfigToFile(global.argv)
 
   if (global.argv.init && global.argv.c && global.argv.w && global.argv.o) {
     global.syncLogger.info("storeman agent begin to initialize!");

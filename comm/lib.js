@@ -490,6 +490,10 @@ function writeConfigToFile(argv) {
         config[net].crossTokens[argv.c.toUpperCase()].CONF.bpNodeUrl = argv.oribpurl;
       }
 
+      if (argv.wanurl) {
+        config[net].wanWeb3Url = argv.wanurl;
+      }
+
       let isLeader = argv.leader ? true : false
       config[net].isLeader = isLeader;
 
