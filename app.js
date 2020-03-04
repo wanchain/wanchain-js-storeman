@@ -10,6 +10,7 @@ let argv = optimist
   [--doDebt] --chain [chain] --token [token] --debtor [debtor] --debt [debt] \
   [--withdraw] --chain [chain] --token [token] --wanReceiver [wanReceiver] --oriReceiver [oriReceiver]\
   --oriurl [oriurl] --oribpurl [oribpurl] --wanurl [wanurl]\
+  --loglevel [loglevel]\
    ")
   .alias('h', 'help')
   .alias('i', 'index')
@@ -57,8 +58,10 @@ let argv = optimist
   .describe('oriurl', 'identify ori chain url')
   .describe('oribpurl', 'identify ori chain BP url')
   .describe('wanurl', 'identify wan chain url')
+  .describe('loglevel', 'identify agent loglevel')
   .default('i', 0)
   .default('period', '2')
+  .default('loglevel', 'debug')
   .string('pk')
   .string('mpcip')
   .string('mpcipc')
@@ -80,6 +83,7 @@ let argv = optimist
   .string('oriurl')
   .string('oribpurl')
   .string('wanurl')
+  .string('loglevel')
   .boolean('testnet', 'replica', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr', 'keosd', 'doDebt', 'withdraw')
   .argv;
 
@@ -193,9 +197,9 @@ global.agentDict = {
   WAN: WanAgent
 }
 
-global.syncLogger = new Logger("storemanAgent-sync-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
-global.monitorLogger = new Logger("storemanAgent-action-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
-global.mpcLogger = new Logger("storemanAgent-mpc-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", 'debug');
+global.syncLogger = new Logger("storemanAgent-sync-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
+global.monitorLogger = new Logger("storemanAgent-action-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
+global.mpcLogger = new Logger("storemanAgent-mpc-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 
 async function init() {
   try {
