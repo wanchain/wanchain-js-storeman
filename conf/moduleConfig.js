@@ -140,11 +140,12 @@ const config = {
     EOS: {
       CONF: {
         SAFE_BLOCK_NUM: 1000,
-        CONFIRM_BLOCK_NUM: 100,
+        CONFIRM_BLOCK_NUM: 250,
         enable: true,
         nonceless: true,
         schnorrMpc: true,
-        debtOptEnable: true
+        debtOptEnable: true,
+        checkIrreversible: true
       },
       TOKEN: {
         depositFunc: ['inSmgLock', 'inUserRedeem', 'inSmgRevoke'],
@@ -202,7 +203,7 @@ const test_Config = {
   logServerPort: global.dev ? 516 : 515,
 
   SAFE_BLOCK_NUM: 100,
-  CONFIRM_BLOCK_NUM: 2,
+  CONFIRM_BLOCK_NUM: 5,
   INTERVAL_TIME: 5 * 1000,
   MPCREQUEST_TIME: 5 * 1000,
 
@@ -289,11 +290,12 @@ const test_Config = {
     EOS: {
       CONF: {
         SAFE_BLOCK_NUM: 1000,
-        CONFIRM_BLOCK_NUM: 2,
+        CONFIRM_BLOCK_NUM: 250,
         enable: true,
         nonceless: true,
         schnorrMpc: true,
-        debtOptEnable: true
+        debtOptEnable: true,
+        checkIrreversible: true
       },
       TOKEN: {
         depositFunc: ['inSmgLock', 'inUserRedeem', 'inSmgRevoke'],

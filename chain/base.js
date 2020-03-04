@@ -16,16 +16,22 @@ class baseChain {
   constructor(log, nodeUrl) {
     this.log = log;
     this.nodeUrl = nodeUrl;
+    this.setChainType();
+    this.getConfig();
     this.client = this.getClient(nodeUrl);
+  }
 
+  getConfig() {
     this.safe_block_num = (moduleConfig.crossInfoDict[this.chainType] && moduleConfig.crossInfoDict[this.chainType].CONF.SAFE_BLOCK_NUM)
     ? moduleConfig.crossInfoDict[this.chainType].CONF.SAFE_BLOCK_NUM
     : moduleConfig.SAFE_BLOCK_NUM;
     this.confirm_block_num = (moduleConfig.crossInfoDict[this.chainType] && moduleConfig.crossInfoDict[this.chainType].CONF.CONFIRM_BLOCK_NUM)
     ? moduleConfig.crossInfoDict[this.chainType].CONF.CONFIRM_BLOCK_NUM
     : moduleConfig.CONFIRM_BLOCK_NUM;
+    this.checkIrreversible = (moduleConfig.crossInfoDict[this.chainType] && moduleConfig.crossInfoDict[this.chainType].CONF.checkIrreversible)
+    ? moduleConfig.crossInfoDict[this.chainType].CONF.checkIrreversible
+    : false;
   }
-
   /**
    * Change all bigNumber fields in a json to string.
    * @param {object} json .
@@ -569,6 +575,10 @@ class baseChain {
         }
       }
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenInfo timeout');
+  }
+
+  checkTransIrreversibleSync(txHash) {
+    return true;
   }
 
 }

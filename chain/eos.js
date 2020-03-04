@@ -8,9 +8,20 @@ const { Api, JsonRpc, RpcError } = require('eosjs');
 const fetch = require('node-fetch');
 const { TextEncoder, TextDecoder } = require('util');
 
+function sleep(time) {
+  return new Promise(function(resolve, reject) {
+    setTimeout(function() {
+      resolve();
+    }, time);
+  })
+}
+
 class EosChain extends baseChain {
   constructor(log, nodeUrl) {
     super(log, nodeUrl);
+  }
+
+  setChainType() {
     this.chainType = 'EOS';
   }
 
@@ -301,7 +312,7 @@ class EosChain extends baseChain {
         let receiptBlockNumber = receipt.block_num;
 
         while (receiptBlockNumber + waitBlocks > curBlockNum || receiptBlockNumber > last_irreversible_block_num) {
-          log.info("ChainType:", chainType, "getTransactionConfirmSync was called at block: ", receipt.block_num, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after about block', waitBlocks, ', wait some time to re-get',
+          log.debug("ChainType:", chainType, "getTransactionConfirmSync was called at block: ", receipt.block_num, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after about block', waitBlocks, ', wait some time to re-get',
           "while last_irreversible_block_num is ", last_irreversible_block_num);
           await sleep(sleepTime * 1000);
           receipt = await self.getTransactionReceiptSync(txHash, block_num);
@@ -320,6 +331,35 @@ class EosChain extends baseChain {
         resolve(null);
       }
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTransactionConfirmSync timeout')
+  }
+
+  checkTransIrreversibleSync(txHash) {
+    let chainType = this.chainType;
+    let log = this.log;
+    let self = this;
+    let eos = this.client;
+    let receipt = null;
+
+    return new TimeoutPromise(async (resolve, reject) => {
+      try {
+        receipt = await self.getTransactionReceiptSync(txHash);
+        if (receipt === null) {
+          reject('something is wrong while checkTransIrreversibleSync, the trans is not found' + txHash);
+          return;
+        }
+
+        let chain_info = await eos.rpc.get_info();
+        if (receipt.block_num <= chain_info.last_irreversible_block_num) {
+          resolve(true);
+        } else {
+          log.debug("ChainType:", chainType, "checkTransIrreversibleSync was called for txHash: ", txHash, 'on block', receipt.block_num,
+          "while last_irreversible_block_num is ", chain_info.last_irreversible_block_num, ', wait some time to re-check');
+          resolve(false);
+        }
+      } catch (err) {
+        reject('something is wrong while checkTransIrreversibleSync:' + err);
+      }
+    }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' checkTransIrreversibleSync timeout')
   }
 
   async packTrans(actions) {

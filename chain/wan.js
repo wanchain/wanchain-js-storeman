@@ -6,9 +6,12 @@ let Contract = require("contract/Contract.js");
 class WanChain extends baseChain {
   constructor(log, nodeUrl) {
     super(log, nodeUrl);
-    this.chainType = 'WAN';
   }
 
+  setChainType() {
+    this.chainType = 'WAN';
+  }
+  
   getTokenScManagerFuncInterface(crossChain, tokenType, contractFunc) {
     let scAbi = moduleConfig.crossInfoDict[crossChain][tokenType]["tokenManagerAbi"];
     let contractAddr = moduleConfig.crossInfoDict[crossChain][tokenType]["tokenManagerAddr"];

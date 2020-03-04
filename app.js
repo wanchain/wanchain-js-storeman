@@ -223,14 +223,14 @@ async function init() {
       tokenList[crossChain].storemanOri = global.config.crossTokens[crossChain].CONF.storemanOri;
       tokenList[crossChain].storemanWan = global.config.crossTokens[crossChain].CONF.storemanWan;
 
-      if (global.isLeader) {
+      // if (global.isLeader) {
         if (!moduleConfig.crossInfoDict[crossChain].CONF.nonceless) {
           await initNonce(crossChain, tokenList[crossChain].storemanOri);
           syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", crossChain, tokenList[crossChain].storemanOri, global[crossChain.toLowerCase() + 'LastNonce'][tokenList[crossChain].storemanOri]);
         }
         await initNonce('WAN', tokenList[crossChain].storemanWan);
         syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", 'WAN', tokenList[crossChain].storemanWan,  global['wanLastNonce'][tokenList[crossChain].storemanWan]);
-      }
+      // }
 
       if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
         tokenList.storemanAddress.push(global.config.crossTokens[crossChain].CONF.storemanPk);
@@ -423,6 +423,16 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
               return;
             } else {
               content = [result[0].hashX, content[1]];
+            }
+          }
+          if (crossAgent.chain.checkIrreversible) {
+            let irreversible = await crossAgent.chain.checkTransIrreversibleSync(decodeEvent.transactionHash);
+            if (irreversible) {
+              syncLogger.info("The txHash %s is irreversible for record %s, this trans will be saved!", decodeEvent.transactionHash, content[0]);
+            } else {
+              syncLogger.debug("The txHash %s still is not irreversible or executed for record %s", decodeEvent.transactionHash, content[0]);
+              resolve();
+              return;
             }
           }
           await modelOps.syncSave(...content);
