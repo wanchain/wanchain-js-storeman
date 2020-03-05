@@ -280,7 +280,11 @@ class EosChain extends baseChain {
     return new TimeoutPromise(async (resolve, reject) => {
       try {
         let result = await eos.rpc.history_get_transaction(txHash, block_num);
-        resolve(result);
+        if (result && result.error) {
+          reject(result.error);
+        } else {
+          resolve(result);
+        }
       } catch (err) {
         reject(err);
       }
@@ -327,8 +331,8 @@ class EosChain extends baseChain {
         }
         resolve(receipt);
       } catch (err) {
-        log.error(err);
-        resolve(null);
+        reject(err);
+        // resolve(null);
       }
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTransactionConfirmSync timeout')
   }
