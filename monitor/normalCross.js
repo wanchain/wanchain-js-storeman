@@ -121,7 +121,6 @@ module.exports = class NormalCross extends StateAction{
       let timestampDate = new Date(timestamp).toString();
       let nowData = new Date().toString();
 
-      console.log("aaron debug here checkhashtimeout,", "HTLCtime:", HTLCtime, "HTLC2time:", timestamp, "nowData:", Date.now())
       // beforeHTLC2time, revoke maybe fail because of late walletRedeemEvent
       if (state === "waitingIntervention") {
         if (HTLC2time <= Date.now()) {

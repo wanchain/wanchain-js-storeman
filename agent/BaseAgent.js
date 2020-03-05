@@ -226,7 +226,7 @@ module.exports = class BaseAgent {
           this.build = this.buildWithdrawFeeData;
         }
 
-        this.logger.debug("********************************** setData **********************************", JSON.stringify(this.data, null, 4), "hashX", this.hashKey);
+        this.logger.info("********************************** setData **********************************", JSON.stringify(this.data, null, 4), "hashX", this.hashKey);
         this.trans.setData(this.data);
         if (this.tokenType === 'COIN' && this.crossDirection === 1 && action === 'lock'){
           this.trans.setValue(this.amount.toString(16));
@@ -259,7 +259,7 @@ module.exports = class BaseAgent {
   }
 
   async sendTrans(callback) {
-    this.logger.debug("********************************** sendTransaction ********************************** hashX", this.hashKey);
+    this.logger.info("********************************** sendTransaction ********************************** hashX", this.hashKey);
     let self = this;
     try {
       let rawTx;
@@ -268,16 +268,16 @@ module.exports = class BaseAgent {
         if(this.mpcSignature && !this.schnorrMpc) {
           let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
           rawTx = await mpc.signViaMpc();
-          this.logger.debug("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, rawTx);
+          this.logger.info("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, rawTx);
         } else {
-          this.logger.debug("********************************** sendTransaction get signature ********************************** hashX", this.hashKey, this.trans);
+          this.logger.info("********************************** sendTransaction get signature ********************************** hashX", this.hashKey, this.trans);
           rawTx = await this.signTrans();
-          this.logger.debug("********************************** sendTransaction get signature successfully ********************************** hashX", this.hashKey, rawTx);
+          this.logger.info("********************************** sendTransaction get signature successfully ********************************** hashX", this.hashKey, rawTx);
         }
 
         let result = await this.chain.sendRawTransactionSync(rawTx);
-        self.logger.debug("sendRawTransactionSync result: hashX, result: ", self.hashKey, result);
-        self.logger.debug("********************************** sendTransaction success ********************************** hashX", self.hashKey);
+        self.logger.info("sendRawTransactionSync result: hashX, result: ", self.hashKey, result);
+        self.logger.info("********************************** sendTransaction success ********************************** hashX", self.hashKey);
         let content = self.build(self.hashKey, result);
         callback(null, content);
 
@@ -300,7 +300,7 @@ module.exports = class BaseAgent {
   }
 
   validateTrans() {
-    this.logger.debug("********************************** validateTrans ********************************** hashX", this.hashKey);
+    this.logger.info("********************************** validateTrans ********************************** hashX", this.hashKey);
     return new Promise(async (resolve, reject) => {
       try {
         let chainId = await this.chain.getNetworkId();
@@ -319,7 +319,7 @@ module.exports = class BaseAgent {
     return new Promise(async (resolve, reject) => {
       if (this.mpcSignature && this.schnorrMpc) {
         try {
-          this.logger.debug("********************************** internalSignViaMpc ********************************** hashX", this.hashKey, signData, typesArray);
+          this.logger.info("********************************** internalSignViaMpc ********************************** hashX", this.hashKey, signData, typesArray);
           this.mpcSignData = this.encode(signData, typesArray);
           let internalSignature;
           if (this.isLeader) {
@@ -345,7 +345,7 @@ module.exports = class BaseAgent {
   getInternalSign(mpcSignData) {
     return new Promise(async (resolve, reject) => {
       try {
-        this.logger.debug("********************************** getInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
+        this.logger.info("********************************** getInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
         // let mpc = new SchnorrMPC(mpcSignData, this.storemanPk, this.hashKey);
         let mpc = new SchnorrMPC();
         mpc.setHashX(this.hashKey);
@@ -366,7 +366,7 @@ module.exports = class BaseAgent {
         } else {
           internalSignature = await mpc.signViaMpc();
         }
-        this.logger.debug("********************************** getInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
+        this.logger.info("********************************** getInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
         resolve(internalSignature);
       } catch (err) {
         this.logger.error("********************************** getInternalSign Via Mpc failed ********************************** hashX", this.hashKey, err);
@@ -378,7 +378,7 @@ module.exports = class BaseAgent {
   validateInternalSign(mpcSignData) {
     return new Promise(async (resolve, reject) => {
       try {
-        this.logger.debug("********************************** validateInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
+        this.logger.info("********************************** validateInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
         // let mpc = new SchnorrMPC(mpcSignData, this.storemanPk, this.hashKey);
         let mpc = new SchnorrMPC();
         mpc.setHashX(this.hashKey);
@@ -393,7 +393,7 @@ module.exports = class BaseAgent {
         mpc.setSignData(this.storemanPk, mpcSignData, extern);
 
         let internalSignature = await mpc.addValidDataViaMpc();
-        this.logger.debug("********************************** validateInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
+        this.logger.info("********************************** validateInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
         resolve({
           R: null,
           s: null
@@ -416,7 +416,7 @@ module.exports = class BaseAgent {
   approveInternalSign(mpcSignData) {
     return new Promise(async (resolve, reject) => {
       try {
-        this.logger.debug("********************************** approveInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
+        this.logger.info("********************************** approveInternalSign Via Mpc ********************************** hashX", this.hashKey, mpcSignData);
         let mpc = new SchnorrMPC();
         mpc.setHashX(this.hashKey);
         let extern;
@@ -430,7 +430,7 @@ module.exports = class BaseAgent {
         mpc.setSignData(this.storemanPk, mpcSignData, extern);
 
         let internalSignature = await mpc.approveData();
-        this.logger.debug("********************************** approveInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
+        this.logger.info("********************************** approveInternalSign Via Mpc Success********************************** hashX", this.hashKey, internalSignature);
         resolve({
           R: null,
           s: null
@@ -446,7 +446,7 @@ module.exports = class BaseAgent {
     return new Promise(async (resolve, reject) => {
       try {
         if (this.mpcSignature && this.schnorrMpc && this.isLeader) {
-          this.logger.debug("********************************** verifyInternalSign ********************************** hashX", this.hashKey, signData, typesArray);
+          this.logger.info("********************************** verifyInternalSign ********************************** hashX", this.hashKey, signData, typesArray);
           this.mpcSignData = this.encode(signData, typesArray);
 
           let signCheck = await schnorrTool.verifySig(internalSignature.R, internalSignature.S, this.mpcSignData, this.storemanPk);
@@ -454,7 +454,7 @@ module.exports = class BaseAgent {
             this.logger.error("********************************** verifyInternalSign failed ********************************** hashX", this.hashKey, ", internalSignature:", internalSignature, ", mpcSignData:", this.mpcSignData);
             reject('verifySig fail');
           } else {
-            this.logger.debug("********************************** verifyInternalSign Success********************************** hashX", this.hashKey, ", internalSignature:", internalSignature, ", mpcSignData:", this.mpcSignData);
+            this.logger.info("********************************** verifyInternalSign Success********************************** hashX", this.hashKey, ", internalSignature:", internalSignature, ", mpcSignData:", this.mpcSignData);
             resolve(signCheck);
           }
         } else {

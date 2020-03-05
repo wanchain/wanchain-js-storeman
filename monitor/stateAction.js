@@ -43,12 +43,12 @@ module.exports = class StateAction {
     if (content.hasOwnProperty('status')) {
       this.state = content.status;
     }
-    this.logger.debug("********************************** updateRecord ********************************** hashX:", this.hashX, "content:", content);
+    this.logger.info("********************************** updateRecord ********************************** hashX:", this.hashX, "content:", content);
     await this.modelOps.syncSave(this.hashX, content);
   }
 
   async updateState(state) {
-    this.logger.debug("********************************** updateState ********************************** hashX:", this.hashX, "status:", state);
+    this.logger.info("********************************** updateState ********************************** hashX:", this.hashX, "status:", state);
     let content = {
       status: state,
     };
@@ -80,7 +80,7 @@ module.exports = class StateAction {
             let action = this.stateDict[self.state].action;
             if (typeof(self[action]) === "function") {
               let paras = this.stateDict[self.state].paras;
-              self.logger.debug("********************************** takeAction ********************************** hashX:", self.hashX, action, paras)
+              self.logger.info("********************************** takeAction ********************************** hashX:", self.hashX, action, paras)
               await self[action](...paras);
             }
           }
@@ -179,7 +179,6 @@ module.exports = class StateAction {
       }
     }
 
-    console.log("aaron debug here crossChain", this.crossChain);
     if (!Array.isArray(actionArray)) {
       // schnorr-mpc, follow storeman agent don't need do revoke action
       if ((['redeem', 'revoke'].indexOf(actionArray) !== -1) && !global.isLeader && moduleConfig.crossInfoDict[this.crossChain].CONF.schnorrMpc && moduleConfig.mpcSignature) {
@@ -216,7 +215,7 @@ module.exports = class StateAction {
       for (var action of actionArray) {
         let actionOnChain = this.getActionChainType(action);
         let newAgent = new global.agentDict[actionOnChain](this.crossChain, this.tokenType, this.record);
-        this.logger.debug("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
+        this.logger.info("********************************** sendTrans begin ********************************** hashX:", this.hashX, "action:", action);
         await newAgent.initAgentTransInfo(action);
 
         await newAgent.createTrans(action);
@@ -230,7 +229,7 @@ module.exports = class StateAction {
             Object.assign(result, content);
           }
         }
-        this.logger.debug("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
+        this.logger.info("********************************** sendTrans done ********************************** hashX:", this.hashX, "action:", action);
 
         // schnorr-mpc, follow storeman agent only need to approve withdrawFee action
         if (this.record.isFee && !global.isLeader) {
@@ -256,7 +255,7 @@ module.exports = class StateAction {
         result.status = rollState[1];
         await this.updateFailReason(action, err);
       }
-      this.logger.debug("sendTransaction faild, action:", action, result);
+      this.logger.error("sendTransaction faild, action:", action, result);
     }
 
     await this.updateRecord(result);

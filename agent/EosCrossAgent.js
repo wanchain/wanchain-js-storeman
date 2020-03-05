@@ -211,9 +211,6 @@ module.exports = class EosCrossAgent {
    }
 
   getLockData() { 
-    if (this.hashKey === "0x1ea9d4f60387e3705e1735faa326084c023f3de776329fbfb71a6b05e63b37fb") {
-      console.log("aaron debug here", this.amount);
-    }
     this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
     this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenAddr-', this.tokenAddr, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
     if (this.transChainType !== 'wan') {
@@ -446,7 +443,6 @@ module.exports = class EosCrossAgent {
     let hashX = args.xHash;
     let storeman;
 
-    console.log("aaron debug event", eventName,chainType, this.crossInfoInst.withdrawAction, this.crossInfoInst.depositAction);
     try {
       if (!((eventName === this.crossInfoInst.depositAction[2] && chainType !== 'wan') ||
         (eventName === this.crossInfoInst.withdrawEvent[2] && chainType === 'wan'))) {

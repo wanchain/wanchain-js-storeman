@@ -166,7 +166,6 @@ class WanChain extends baseChain {
             if (logs !== null) {
               let contract = new Contract(abi, contractAddr);
               // let sign = contract.getEventSignature("StoremanGroupRegistrationLogger");
-              // console.log("aaron debug here", sign);
               parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
             }
 

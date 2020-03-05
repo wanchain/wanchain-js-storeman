@@ -132,8 +132,6 @@ module.exports = class Debt extends StateAction{
       let timestampDate = new Date(timestamp).toString();
       let nowData = new Date().toString();
 
-      console.log("aaron debug here checkhashtimeout,", "HTLCtime:", HTLCtime, "HTLC2time:", timestamp, "nowData:", Date.now())
-
       if (HTLCtime <= Date.now()) {
         this.logger.debug("********************************** checkHashTimeout ********************************** hashX", this.hashX, "timestampDate:", timestampDate, "HTLCtimeDate:", HTLCtimeDate, "nowData:", nowData);
         if (record.walletRedeemEvent.length !== 0) {

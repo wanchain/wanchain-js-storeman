@@ -355,20 +355,11 @@ function backupIssueFile(issueCollectionPath) {
 function decodeAccount(chain, account) {
   let crossAccount = new crossChainAccount(chain.toLowerCase());
   return crossAccount.decodeAccount(account).account;
-  // if (account === "0x0f000101656f73696f2e746f6b656e0000000000" || account === "0x010003656f73696f2e746f6b656e") {
-  //   return 'eosio.token';
-  // } else if (account === "0x0b00010268746c63656f73000000000000000000" || account === "0x01000368746c63656f73") {
-  //   return 'htlceos';
-  // } else if (account === "0x0800010474657374000000000000000000000000") {
-  //   return 'aaron';
-  // }
 }
 
 function encodeAccount(chain, account) {
   let crossAccount = new crossChainAccount(chain.toLowerCase());
   return crossAccount.encodeAccount(account);
-  // return '0x0c00010373746f72656d616e0000000000000000';
-  return '0x010003656f73696f2e746f6b656e';
 }
 
 function eosToFloat(str) 

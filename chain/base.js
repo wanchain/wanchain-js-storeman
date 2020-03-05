@@ -408,7 +408,7 @@ class baseChain {
       let receiptBlockNumber = receipt.blockNumber;
 
       while (receiptBlockNumber + waitBlocks > curBlockNum) {
-        log.info("ChainType:", chainType, "getTransactionReceipt was called at block: ", receipt.blockNumber, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
+        log.debug("ChainType:", chainType, "getTransactionReceipt was called at block: ", receipt.blockNumber, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
         await sleep(sleepTime * 1000);
         receipt = await this.getTransactionReceiptSync(txHash);
         curBlockNum = await this.getBlockNumberSync();
@@ -441,7 +441,7 @@ class baseChain {
         let receiptBlockNumber = receipt.blockNumber;
 
         while (receiptBlockNumber + waitBlocks > curBlockNum) {
-          log.info("ChainType:", chainType, "getTransactionReceipt was called at block: ", receipt.blockNumber, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
+          log.debug("ChainType:", chainType, "getTransactionReceipt was called at block: ", receipt.blockNumber, 'curBlockNumber is ', curBlockNum, 'while ConfirmBlocks should after ', waitBlocks, ', wait some time to re-get');
           await sleep(sleepTime * 1000);
           receipt = await self.getTransactionReceiptSync(txHash);
           curBlockNum = await self.getBlockNumberSync();

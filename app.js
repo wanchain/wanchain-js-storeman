@@ -229,10 +229,10 @@ async function init() {
       // if (global.isLeader) {
         if (!moduleConfig.crossInfoDict[crossChain].CONF.nonceless) {
           await initNonce(crossChain, tokenList[crossChain].storemanOri);
-          syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", crossChain, tokenList[crossChain].storemanOri, global[crossChain.toLowerCase() + 'LastNonce'][tokenList[crossChain].storemanOri]);
+          syncLogger.info("CrossChain:" , crossChain, ", Nonce of chain", crossChain, tokenList[crossChain].storemanOri, global[crossChain.toLowerCase() + 'LastNonce'][tokenList[crossChain].storemanOri]);
         }
         await initNonce('WAN', tokenList[crossChain].storemanWan);
-        syncLogger.debug("CrossChain:" , crossChain, ", Nonce of chain", 'WAN', tokenList[crossChain].storemanWan,  global['wanLastNonce'][tokenList[crossChain].storemanWan]);
+        syncLogger.info("CrossChain:" , crossChain, ", Nonce of chain", 'WAN', tokenList[crossChain].storemanWan,  global['wanLastNonce'][tokenList[crossChain].storemanWan]);
       // }
 
       if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
@@ -280,7 +280,7 @@ async function update() {
   global.storemanRenew = true;
   global.configMutex = true;
 
-  global.syncLogger.debug("Storeman agent renew config begin");
+  global.syncLogger.info("Storeman agent renew config begin");
 
   for (let crossChain in global.config.crossTokens) {
     try {
@@ -296,14 +296,14 @@ async function update() {
         }
         crossTokens = await initConfig(crossChain, storemanWan, storemanOri, storemanPk);
         if (crossTokens === null) {
-          global.syncLogger.debug("Storeman agent renew config: couldn't find any tokens that the storeman is in charge of. ", crossChain, storemanWan, storemanOri, storemanPk);
+          global.syncLogger.error("Storeman agent renew config: couldn't find any tokens that the storeman is in charge of. ", crossChain, storemanWan, storemanOri, storemanPk);
         }
         console.log(crossTokens);
       } else {
-        global.syncLogger.debug("Storeman agent should be initialized with storemanWanAddr storemanOriAddr at the first time!");
+        global.syncLogger.error("Storeman agent should be initialized with storemanWanAddr storemanOriAddr at the first time!");
       }
     } catch (err) {
-      global.syncLogger.debug("Storeman agent update error, plz check the global.config and try again.", err);
+      global.syncLogger.error("Storeman agent update error, plz check the global.config and try again.", err);
     }
   }
 
@@ -311,7 +311,7 @@ async function update() {
 
   // global.storemanRenew = false;
   global.configMutex = false;
-  global.syncLogger.debug("Storeman agent renew config end. ");
+  global.syncLogger.info("Storeman agent renew config end. ");
 }
 
 async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
@@ -400,11 +400,8 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
           resolve();
           return;
         } else {
-          console.log("aaron debug here decodeEvent", decodeEvent.args);
           content = crossAgent.getDecodeEventDbData(chainType, crossChain, tokenType, decodeEvent, event, lockedTime);
         }
-
-        console.log("aaron debug here content", content);
 
         if (content !== null) {
           if(content[1].hasOwnProperty("walletRevokeEvent")) {
@@ -458,7 +455,7 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
 }
 
 async function syncChain(chainType, crossChain, logger) {
-  logger.debug("********************************** syncChain **********************************", chainType, crossChain);
+  logger.info("********************************** syncChain **********************************", chainType, crossChain);
 
   let blockNumber = 0;
   let chain = getGlobalChain(chainType);
@@ -507,7 +504,7 @@ async function syncChain(chainType, crossChain, logger) {
             if (tokenType === 'CONF') {
               continue;
             }
-            logger.debug("blockSync range: From ", from, " to ", to, " remain ", range, ", FromBlk:", blkIndex, ", ToBlk:", blkEnd, chainType, crossChain, tokenType);
+            logger.info("blockSync range: From ", from, " to ", to, " remain ", range, ", FromBlk:", blkIndex, ", ToBlk:", blkEnd, chainType, crossChain, tokenType);
             let scAddr;
 
             while (global.configMutex) {
@@ -657,7 +654,7 @@ async function handlerMain(logger, db) {
           $in: tokenList.storemanAddress
         }
       }
-      console.log("aaron debug here handlerMain option", option);
+
       let history = await modelOps.getEventHistory(option);
       logger.debug('history length is ', history.length);
       logger.debug('handlingList length is ', Object.keys(handlingList).length);
@@ -692,7 +689,7 @@ async function syncMpcRequest(logger, db) {
 
       let mpcApproveDatas = [];
       mpcApproveDatas = await mpc.getDataForApprove();
-      logger.debug("********************************** syncMpcRequest start **********************************");
+      logger.info("********************************** syncMpcRequest start **********************************");
 
       let multiDataApproves = [...mpcApproveDatas].map((approveData) => {
         return new Promise(async (resolve, reject) => {
@@ -721,7 +718,7 @@ async function syncMpcRequest(logger, db) {
                 };
                 let result = await modelOps.getEventHistory(option);
                 if (result.length === 0) {
-                  logger.debug("********************************** syncMpcRequest get one valid data **********************************", approveData);
+                  logger.info("********************************** syncMpcRequest get one valid data **********************************", approveData);
                   let content = crossAgent.decodeSignatureData(approveData);
                   if (content !== null) {
                     await modelOps.syncSave(...content);
@@ -739,7 +736,7 @@ async function syncMpcRequest(logger, db) {
         if (mpcApproveDatas !== null) {
           await Promise.all(multiDataApproves);
         }
-        logger.debug("********************************** syncMpcRequest done **********************************");
+        logger.info("********************************** syncMpcRequest done **********************************");
       } catch (err) {
         logger.error("splitEvent", err);
         return Promise.reject(err);

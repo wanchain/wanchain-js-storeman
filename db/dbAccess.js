@@ -64,7 +64,7 @@ class DbAccess {
               log.error("syncUpdateDocument retry failed",err);
               reject(err);
             } else {
-              log.debug("syncUpdateDocument retry succeeded ");
+              log.info("syncUpdateDocument retry succeeded ");
               resolve();
             }
           });
