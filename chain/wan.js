@@ -217,40 +217,6 @@ class WanChain extends baseChain {
                 }
               }
             }
-
-            // for (let i of regLogs) {
-            //   let tokenOrigParam;
-            //   if (i && i.args.hasOwnProperty('tokenOrigAccount')) {
-            //     tokenOrigParam = 'tokenOrigAccount';
-            //   } else if (i && i.args.hasOwnProperty('tokenOrigAddr')) {
-            //     tokenOrigParam = 'tokenOrigAddr';
-            //   } else {
-            //     continue;
-            //   }
-            //   if (i && i.event === 'StoremanGroupRegistrationLogger' && i.args[tokenOrigParam] === tokenAddr) {
-            //     if (storemanOri && i.args.smgWanAddr)
-            //     storemanGroup.push(i.args);
-            //   }
-            // }
-
-            // for (let i of unRegLog) {
-            //   let tokenOrigParam;
-            //   if (i && i.args.hasOwnProperty('tokenOrigAccount')) {
-            //     tokenOrigParam = 'tokenOrigAccount';
-            //   } else if (i && i.args.hasOwnProperty('tokenOrigAddr')) {
-            //     tokenOrigParam = 'tokenOrigAddr';
-            //   } else {
-            //     continue;
-            //   }
-            //   if (i && i.event === 'StoremanGroupApplyUnRegistrationLogger' && i.args[tokenOrigParam] === tokenAddr) {
-            //     for (let index = 0; index < storemanGroup.length; index++) {
-            //       if ((storemanGroup[index][tokenOrigParam] === i.args[tokenOrigParam] && storemanGroup[index].smgWanAddr === i.args.smgWanAddr)) {
-            //         storemanGroup.splice(index, 1);
-            //         break;
-            //       }
-            //     }
-            //   }
-            // }
             resolve(storemanGroup);
           }
         })

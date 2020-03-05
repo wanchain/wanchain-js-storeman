@@ -105,22 +105,7 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
             resolve(null);
             return;
           }
-          // if (moduleConfig.crossInfoDict[crossChain].COIN) {
-          //   let oriStoremanGroups = await wanChain.getStoremanGroups(crossChain);
-          //   for (let storeman of oriStoremanGroups) {
-          //     if (storeman.smgAddress === storemanWan && storeman.smgOriginalChainAddress === storemanOri) {
-          //       crossTokens[crossChain]['0x'] = {
-          //         "origHtlc": moduleConfig.crossInfoDict[crossChain].COIN.originalChainHtlcAddr,
-          //         "wanHtlc": moduleConfig.crossInfoDict[crossChain].COIN.wanchainHtlcAddr,
-          //         "tokenType": "COIN",
-          //         "tokenSymbol": crossChain
-          //       };
-          //       empty = false;
-          //       break;
-          //     }
-          //   }
-          // }
-  
+
           if (moduleConfig.crossInfoDict[crossChain].TOKEN) {
             let oriTokens = await wanChain.getRegTokenTokens(crossChain);
 
@@ -151,28 +136,6 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
             } catch (err) {
               return Promise.reject(err);
             }
-
-            // let oriTokenStoremanGroups = await wanChain.getTokenStoremanGroupsOfMutiTokens(crossChain, oriTokens);
-            // // console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
-  
-            // for (let storeman of oriTokenStoremanGroups) {
-            //   if (storeman.storemanGroup === storemanPk) {
-            //   // if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAccount === storemanOri) {
-            //     for (let token of oriTokens) {
-            //       if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
-            //       // if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
-            //         let chain = getGlobalChain('WAN');
-            //         let tokenInfo = await chain.getTokenInfo(token.tokenWanAddr);
-            //         Object.assign(token, tokenInfo);
-            //         chain.bigNumber2String(token, 10);
-            //         crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
-            //         // crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
-            //         empty = false;
-            //         // break;
-            //       }
-            //     }
-            //   }
-            // }
           }
         } else {
           if (moduleConfig.crossInfoDict[crossChain].COIN) {
@@ -221,28 +184,6 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
             } catch (err) {
               return Promise.reject(err);
             }
-
-            // let oriTokenStoremanGroups = await wanChain.getTokenStoremanGroupsOfMutiTokens(crossChain, oriTokens);
-            // // console.log("oriTokenStoremanGroups", oriTokenStoremanGroups);
-  
-            // for (let storeman of oriTokenStoremanGroups) {
-            //   if (storeman.smgWanAddr === storemanWan && storeman.smgOrigAddr === storemanOri) {
-            //     for (let token of oriTokens) {
-            //       if (token.tokenOrigAddr === storeman.tokenOrigAddr) {
-            //       // if (token.tokenOrigAccount === storeman.tokenOrigAccount) {
-            //         let chain = getGlobalChain('WAN');
-            //         let tokenInfo = await chain.getTokenInfo(token.tokenWanAddr);
-            //         Object.assign(token, tokenInfo);
-            //         chain.bigNumber2String(token, 10);
-            //         crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAddr)] = token;
-            //         // crossTokens[crossChain][decodeAccount(crossChain, token.tokenOrigAccount)] = token;
-            //         empty = false;
-            //         // break;
-            //       }
-            //     }
-            //   }
-            // }
-
           }
         }
 

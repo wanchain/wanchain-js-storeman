@@ -112,29 +112,6 @@ module.exports = class BaseAgent {
   encodeValue(value, decimals) {
     return value;
   }
-  // getContract() {
-  //   if (this.contract.contractAddr) {
-  //     if (this.  ) {
-  //       console.log("this.chainType", this.transChainType);
-  //       this.depositLockEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[0]);
-  //       this.depositRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[1]);
-  //       this.depositRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.depositEvent[2]);
-  //       this.withdrawLockEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[0]);
-  //       this.withdrawRedeemEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[1]);
-  //       this.withdrawRevokeEvent = this.contract.getEventSignature(this.crossInfoInst.withdrawEvent[2]);
-      
-      
-  //       console.log("this.depositLockEvent", this.depositLockEvent);
-  //       console.log("this.depositRedeemEvent", this.depositRedeemEvent);
-  //       console.log("this.depositRevokeEvent", this.depositRevokeEvent);
-  //       console.log("this.withdrawLockEvent", this.withdrawLockEvent);
-  //       console.log("this.withdrawRedeemEvent", this.withdrawRedeemEvent);
-  //       console.log("this.withdrawRevokeEvent", this.withdrawRevokeEvent);
-  //     }
-  //   } else {
-      
-  //   }
-  // }
 
   getContractInfo() {
     let abi = this.crossInfoInst.originalChainHtlcAbi;
@@ -715,12 +692,6 @@ module.exports = class BaseAgent {
         content = {
           storemanRevokeEvent: event
         };
-      // withdrawFee doesn't need record event
-      // } else if (eventName === this.withdrawFeeEvent) {
-      //   this.logger.debug("********************************** 7: found storeman withdrawFee transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
-      //   content = {
-      //     withdrawFeeEvent: event
-      //   };
       }
       return [hashX, content];
     } catch (err) {
