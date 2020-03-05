@@ -428,7 +428,7 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
           if (crossAgent.chain.checkIrreversible) {
             let irreversible = await crossAgent.chain.checkTransIrreversibleSync(decodeEvent.transactionHash);
             if (irreversible) {
-              syncLogger.info("The txHash %s is irreversible for record %s, this trans will be saved!", decodeEvent.transactionHash, content[0]);
+              syncLogger.debug("The txHash %s is irreversible for record %s, this trans will be saved!", decodeEvent.transactionHash, content[0]);
             } else {
               syncLogger.debug("The txHash %s still is not irreversible or executed for record %s", decodeEvent.transactionHash, content[0]);
               resolve();
