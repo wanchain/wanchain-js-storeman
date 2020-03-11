@@ -432,8 +432,8 @@ module.exports = class StateAction {
 
   async getStoremanQuota() {
     // let storemanGroupAddr = global.config.storemanWan;
-    // let storemanGroupAddr = moduleConfig.crossInfoDict[this.crossChain].CONF.schnorrMpc ? global.config.crossTokens[this.crossChain].CONF.storemanPk : global.config.crossTokens[this.crossChain].CONF.storemanWan;
-    let storemanGroupAddr = this.record.storeman;
+    let storemanGroupAddr = moduleConfig.crossInfoDict[this.crossChain].CONF.schnorrMpc ? global.config.crossTokens[this.crossChain].CONF.storemanPk : global.config.crossTokens[this.crossChain].CONF.storemanWan;
+    // let storemanGroupAddr = this.record.storeman;
     let storemanQuotaInfo;
     let chain = getGlobalChain('WAN');
 
