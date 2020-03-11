@@ -88,7 +88,7 @@ module.exports = class StateAction {
         }
         resolve();
       } catch (err) {
-        self.logger.error("There is takeAction error", err);
+        self.logger.error("There is takeAction error", err, this.hashX);
         reject(err);
       }
     })
@@ -245,8 +245,8 @@ module.exports = class StateAction {
       result.transRetried = 0;
       result.status = nextState[0];
     } catch (err) {
-      this.logger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX, ", will retry, this record already transRetried:", this.record.transRetried, ", max retryTimes:", retryTimes );
-      this.logger.error("sendTransaction faild,  err is", err);
+      this.logger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX, ", will retry, this record already transRetried:", this.record.transRetried, ", max retryTimes:", retryTimes);
+      this.logger.error("sendTransaction faild,  err is", err, this.hashX);
       if (this.record.transRetried < retryTimes) {
         result.transRetried = this.record.transRetried + 1;
         result.status = rollState[0];
@@ -255,7 +255,7 @@ module.exports = class StateAction {
         result.status = rollState[1];
         await this.updateFailReason(action, err);
       }
-      this.logger.error("sendTransaction faild, action:", action, result);
+      this.logger.error("sendTransaction faild, action:", action, result, this.hashX);
     }
 
     await this.updateRecord(result);
@@ -413,7 +413,7 @@ module.exports = class StateAction {
       }
       await this.updateRecord(content);
     } catch (err) {
-      this.logger.error("checkTransOnline:", err);
+      this.logger.error("checkTransOnline:", err, this.hashX);
     }
   }
 

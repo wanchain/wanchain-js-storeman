@@ -233,7 +233,7 @@ const test_Config = {
   crossInfoDict: {
     ETH: {
       CONF: {
-        enable: false,
+        enable: true,
         schnorrMpc: false,
         debtOptEnable: false
       },
@@ -291,7 +291,7 @@ const test_Config = {
       CONF: {
         SAFE_BLOCK_NUM: 1000,
         CONFIRM_BLOCK_NUM: 250,
-        enable: true,
+        enable: false,
         nonceless: true,
         schnorrMpc: true,
         debtOptEnable: true,

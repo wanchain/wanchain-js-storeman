@@ -176,4 +176,8 @@ module.exports = class EthAgent extends baseAgent{
   getDecodeEventToHtlcAddr(decodeEvent) {
     return decodeEvent.address;
   }
+
+  getDecodeFromAddress(decodeEvent) {
+    return decodeEvent.args.user;
+  }
 }

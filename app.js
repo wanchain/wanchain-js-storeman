@@ -326,7 +326,7 @@ async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
 
   let i = 0;
   let end;
-  logger.info("events length: ", events.length);
+  logger.info("events length: ", chain.chainType, events.length);
 
   if (chain.chainType === 'EOS') {
     return events; // EOS has timestamp already
