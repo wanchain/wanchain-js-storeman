@@ -13,8 +13,8 @@ module.exports = class mpc {
     this.sendTxArgs = {
       From: trans.from,
       To: trans.to,
-      Gas: '0x' + trans.gasLimit.toString(16),
-      GasPrice: '0x' + trans.gasPrice.toString(16),
+      Gas: trans.gasLimit.toString(16),
+      GasPrice: trans.gasPrice.toString(16),
       Nonce: '0x' + trans.nonce.toString(16),
       Value: '0x' + trans.value.toString(16),
       Data: trans.data,
@@ -57,7 +57,7 @@ module.exports = class mpc {
   addValidMpcTx() {
     return new Promise((resolve, reject) => {
       try {
-        global.monitorLogger.debug(this.mpcWeb3.storeman);
+        // global.monitorLogger.debug(this.mpcWeb3.storeman);
         this.mpcWeb3.storeman.addValidMpcTx(this.sendTxArgs, (err, result) => {
           if (!err) {
             global.monitorLogger.debug("********************************** mpc addValidMpcTx successfully **********************************", result, "hashX:", this.hashX);
