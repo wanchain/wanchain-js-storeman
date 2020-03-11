@@ -169,13 +169,14 @@
       "ETH": {
         "CONF": {
           "nodeUrl": "http://52.34.91.48:36892",
-          "maxEthGasPrice": 50,
+          "maxGasPrice": 50,
           "gasPriceDelta": 10,
-          "ethGasLimit": 470000,
+          "gasLimit": 470000,
           "approveTokenAllowance": 40000,
           "tokenAllowanceThreshold": 500,
           "storemanOri": "0x41623962c5d44565de623d53eb677e0f300467d2",
-          "storemanWan": "0x06daa9379cbe241a84a65b217a11b38fe3b4b063"
+          "storemanWan": "0x06daa9379cbe241a84a65b217a11b38fe3b4b063",
+          "storemanPk": ""
         },
         "TOKEN": {
           "0x": {
@@ -184,82 +185,17 @@
             "tokenType": "COIN",
             "tokenSymbol": "ETH"
           },
-          "0xe78f31a33435dd8a43d1c57ae5c89f786369ab35": {
-            "tokenOrigAddr": "0xe78f31a33435dd8a43d1c57ae5c89f786369ab35",
-            "tokenWanAddr": "0x1423ceb28dac1416e1031ff2430ffd72efe37dfd",
-            "ratio": "100000",
+          "0x35d957f150953a056aaf6465fd26379278324848": {
+            "tokenOrigAddr": "0x35d957f150953a056aaf6465fd26379278324848",
+            "tokenWanAddr": "0x8609c37af9d75c6a405702a5f06af504b304fc60",
+            "ratio": "2000",
             "minDeposit": "10000000000000000000",
             "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
             "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
             "withdrawDelayTime": "259200",
-            "tokenHash": "0xb7009cb3192f38f35e9155ee5fa48d418a8c50eca74a772c3ddddc8673c443ab",
+            "tokenHash": "0x5736f8446ed18cf0b0804f0323db5244784325ff346500444d8a447394561e5d",
             "tokenType": "TOKEN",
-            "tokenSymbol": "TUSD",
-            "decimals": "18"
-          },
-          "0x1fb259a06e4468f8ecffea8d1ec5e4842e2ee610": {
-            "tokenOrigAddr": "0x1fb259a06e4468f8ecffea8d1ec5e4842e2ee610",
-            "tokenWanAddr": "0xf8ade0629562095e788e4b841de5fd93c176964f",
-            "ratio": "5000",
-            "minDeposit": "10000000000000000000",
-            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
-            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
-            "withdrawDelayTime": "259200",
-            "tokenHash": "0x270ff002d89f37e42b3fc16db5c23a24b25bec359d689064f507cd0b60c55008",
-            "tokenType": "TOKEN",
-            "tokenSymbol": "CVC",
-            "decimals": "8"
-          },
-          "0x4e8fbe941547971dfa23cb50728eea985fe23f7f": {
-            "tokenOrigAddr": "0x4e8fbe941547971dfa23cb50728eea985fe23f7f",
-            "tokenWanAddr": "0x8536f2852e729119597f1d97947f1af47d1d1fe1",
-            "ratio": "40000",
-            "minDeposit": "10000000000000000000",
-            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
-            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
-            "withdrawDelayTime": "259200",
-            "tokenHash": "0x7cdbb2c8099388b5f28404eacef382dad94559a89144a636dc58a7741df6760b",
-            "tokenType": "TOKEN",
-            "tokenSymbol": "GUSD",
-            "decimals": "2"
-          },
-          "0x6f2ccb2a1f800705fd70fd77f821078ec9d19f07": {
-            "tokenOrigAddr": "0x6f2ccb2a1f800705fd70fd77f821078ec9d19f07",
-            "tokenWanAddr": "0xaa8c6e86dcb07c7a209d7c0d4613e0cb21731289",
-            "ratio": "50000",
-            "minDeposit": "10000000000000000000",
-            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
-            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
-            "withdrawDelayTime": "259200",
-            "tokenHash": "0x6e86585777fda34613d763f73dd019ed000bf43e7e7216dc85d80a0c52214cd7",
-            "tokenType": "TOKEN",
-            "tokenSymbol": "USDC",
-            "decimals": "6"
-          },
-          "0x54950025d1854808b09277fe082b54682b11a50b": {
-            "tokenOrigAddr": "0x54950025d1854808b09277fe082b54682b11a50b",
-            "tokenWanAddr": "0x67f3de547c7f3bc77095686a9e7fe49397e59cdf",
-            "ratio": "15000000",
-            "minDeposit": "10000000000000000000",
-            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
-            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
-            "withdrawDelayTime": "259200",
-            "tokenHash": "0xe6bb4913c8cfb38d44a01360bb7874c58812e14b9154543bb67783e611e0475b",
-            "tokenType": "TOKEN",
-            "tokenSymbol": "MKR",
-            "decimals": "18"
-          },
-          "0xed2aeed9a1921a5e5bd6f5a3390b1c41a063c8ff": {
-            "tokenOrigAddr": "0xed2aeed9a1921a5e5bd6f5a3390b1c41a063c8ff",
-            "tokenWanAddr": "0x973c8a6096107189afaf816b7a3b7abd36cabfe3",
-            "ratio": "5000",
-            "minDeposit": "10000000000000000000",
-            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
-            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
-            "withdrawDelayTime": "259200",
-            "tokenHash": "0x1a4af1b20c7c5117130534f8e9b0517827b1996c0769b4c7720d98966d488110",
-            "tokenType": "TOKEN",
-            "tokenSymbol": "RVT",
+            "tokenSymbol": "LRC",
             "decimals": "18"
           },
           "0x01be23585060835e02b77ef475b0cc51aa1e0709": {
@@ -275,17 +211,17 @@
             "tokenSymbol": "LINK",
             "decimals": "18"
           },
-          "0x35d957f150953a056aaf6465fd26379278324848": {
-            "tokenOrigAddr": "0x35d957f150953a056aaf6465fd26379278324848",
-            "tokenWanAddr": "0x8609c37af9d75c6a405702a5f06af504b304fc60",
-            "ratio": "2000",
+          "0x54950025d1854808b09277fe082b54682b11a50b": {
+            "tokenOrigAddr": "0x54950025d1854808b09277fe082b54682b11a50b",
+            "tokenWanAddr": "0x67f3de547c7f3bc77095686a9e7fe49397e59cdf",
+            "ratio": "15000000",
             "minDeposit": "10000000000000000000",
             "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
             "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
             "withdrawDelayTime": "259200",
-            "tokenHash": "0x5736f8446ed18cf0b0804f0323db5244784325ff346500444d8a447394561e5d",
+            "tokenHash": "0xe6bb4913c8cfb38d44a01360bb7874c58812e14b9154543bb67783e611e0475b",
             "tokenType": "TOKEN",
-            "tokenSymbol": "LRC",
+            "tokenSymbol": "MKR",
             "decimals": "18"
           },
           "0xd5cc1810197238b06f0f333b1cb2046e0c6ece9a": {
@@ -314,6 +250,45 @@
             "tokenSymbol": "ZRX",
             "decimals": "18"
           },
+          "0xdbf193627ee704d38495c2f5eb3afc3512eafa4c": {
+            "tokenOrigAddr": "0xdbf193627ee704d38495c2f5eb3afc3512eafa4c",
+            "tokenWanAddr": "0xda16e66820a3c64c34f2b35da3f5e1d1742274cb",
+            "ratio": "20000",
+            "minDeposit": "10000000000000000000",
+            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
+            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
+            "withdrawDelayTime": "259200",
+            "tokenHash": "0x0cfee48dd8c8e32ad342c0f4ee723df9c2818d02734e28897ad0295bb458d4bc",
+            "tokenType": "TOKEN",
+            "tokenSymbol": "DAI",
+            "decimals": "18"
+          },
+          "0x4e8fbe941547971dfa23cb50728eea985fe23f7f": {
+            "tokenOrigAddr": "0x4e8fbe941547971dfa23cb50728eea985fe23f7f",
+            "tokenWanAddr": "0x8536f2852e729119597f1d97947f1af47d1d1fe1",
+            "ratio": "40000",
+            "minDeposit": "10000000000000000000",
+            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
+            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
+            "withdrawDelayTime": "259200",
+            "tokenHash": "0x7cdbb2c8099388b5f28404eacef382dad94559a89144a636dc58a7741df6760b",
+            "tokenType": "TOKEN",
+            "tokenSymbol": "GUSD",
+            "decimals": "2"
+          },
+          "0x28c96b26f6df3cf57a0a4e8fef02e9295e9ca458": {
+            "tokenOrigAddr": "0x28c96b26f6df3cf57a0a4e8fef02e9295e9ca458",
+            "tokenWanAddr": "0x56948c162aaa6cce3f196b93903318502989f573",
+            "ratio": "100",
+            "minDeposit": "10000000000000000000",
+            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
+            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
+            "withdrawDelayTime": "259200",
+            "tokenHash": "0x5268a310fc43ef81eba2d4a0d159dee18bd3bfd2e671c25c3eeb28e5cc8c90ba",
+            "tokenType": "TOKEN",
+            "tokenSymbol": "USDT",
+            "decimals": "6"
+          },
           "0xe4ec63112339903ff06182f5c4e7600de93f7b1a": {
             "tokenOrigAddr": "0xe4ec63112339903ff06182f5c4e7600de93f7b1a",
             "tokenWanAddr": "0x7afa6108e55105c4326b8128b69e4aaed57129ed",
@@ -327,18 +302,57 @@
             "tokenSymbol": "EURS",
             "decimals": "2"
           },
-          "0xdbf193627ee704d38495c2f5eb3afc3512eafa4c": {
-            "tokenOrigAddr": "0xdbf193627ee704d38495c2f5eb3afc3512eafa4c",
-            "tokenWanAddr": "0xda16e66820a3c64c34f2b35da3f5e1d1742274cb",
-            "ratio": "20000",
+          "0xed2aeed9a1921a5e5bd6f5a3390b1c41a063c8ff": {
+            "tokenOrigAddr": "0xed2aeed9a1921a5e5bd6f5a3390b1c41a063c8ff",
+            "tokenWanAddr": "0x973c8a6096107189afaf816b7a3b7abd36cabfe3",
+            "ratio": "5000",
             "minDeposit": "10000000000000000000",
             "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
             "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
             "withdrawDelayTime": "259200",
-            "tokenHash": "0x0cfee48dd8c8e32ad342c0f4ee723df9c2818d02734e28897ad0295bb458d4bc",
+            "tokenHash": "0x1a4af1b20c7c5117130534f8e9b0517827b1996c0769b4c7720d98966d488110",
             "tokenType": "TOKEN",
-            "tokenSymbol": "DAI",
+            "tokenSymbol": "RVT",
             "decimals": "18"
+          },
+          "0xe78f31a33435dd8a43d1c57ae5c89f786369ab35": {
+            "tokenOrigAddr": "0xe78f31a33435dd8a43d1c57ae5c89f786369ab35",
+            "tokenWanAddr": "0x1423ceb28dac1416e1031ff2430ffd72efe37dfd",
+            "ratio": "100000",
+            "minDeposit": "10000000000000000000",
+            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
+            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
+            "withdrawDelayTime": "259200",
+            "tokenHash": "0xb7009cb3192f38f35e9155ee5fa48d418a8c50eca74a772c3ddddc8673c443ab",
+            "tokenType": "TOKEN",
+            "tokenSymbol": "TUSD",
+            "decimals": "18"
+          },
+          "0x6f2ccb2a1f800705fd70fd77f821078ec9d19f07": {
+            "tokenOrigAddr": "0x6f2ccb2a1f800705fd70fd77f821078ec9d19f07",
+            "tokenWanAddr": "0xaa8c6e86dcb07c7a209d7c0d4613e0cb21731289",
+            "ratio": "50000",
+            "minDeposit": "10000000000000000000",
+            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
+            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
+            "withdrawDelayTime": "259200",
+            "tokenHash": "0x6e86585777fda34613d763f73dd019ed000bf43e7e7216dc85d80a0c52214cd7",
+            "tokenType": "TOKEN",
+            "tokenSymbol": "USDC",
+            "decimals": "6"
+          },
+          "0x1fb259a06e4468f8ecffea8d1ec5e4842e2ee610": {
+            "tokenOrigAddr": "0x1fb259a06e4468f8ecffea8d1ec5e4842e2ee610",
+            "tokenWanAddr": "0xf8ade0629562095e788e4b841de5fd93c176964f",
+            "ratio": "5000",
+            "minDeposit": "10000000000000000000",
+            "origHtlc": "0x149f1650f0ff097bca88118b83ed58fb1cfc68ef",
+            "wanHtlc": "0x27feb1785f61504619a105faa00f57c49cc4d9c3",
+            "withdrawDelayTime": "259200",
+            "tokenHash": "0x270ff002d89f37e42b3fc16db5c23a24b25bec359d689064f507cd0b60c55008",
+            "tokenType": "TOKEN",
+            "tokenSymbol": "CVC",
+            "decimals": "8"
           }
         }
       },
