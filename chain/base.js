@@ -525,6 +525,7 @@ class baseChain {
       });
     } catch (err) {
       log.debug("ChainType:", chainType, 'getTokenAllowance at tokenScAddr', tokenScAddr, 'with owner ', owner, 'spender', spender, 'failed, and error is ', err);
+      reject(err);
     }      
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTokenAllowance timeout');
   }
