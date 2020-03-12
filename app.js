@@ -98,7 +98,7 @@ if ((argv.mpc && ((!argv.mpcIP || !argv.mpcPort) && (!argv.mpcipc)))
 }
 
 if (argv.leader) {
-  if ((!argv.password || !argv.keystore)
+  if ( (argv.schnorr && (!argv.password || !argv.keystore))
     || (argv.keosd && (!argv.keosdUrl || !argv.wallet || !argv.password))
     || (argv.doDebt && (!argv.chain && !argv.token && !argv.debtor && !argv.debt))
     || (argv.withdraw && (!argv.chain && !argv.token && !argv.wanReceiver))
