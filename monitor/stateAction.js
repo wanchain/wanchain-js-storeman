@@ -279,7 +279,7 @@ module.exports = class StateAction {
     // let newAgent = new global.agentDict[this.crossChain.toUpperCase()](this.crossChain, this.tokenType, this.record);
     let chain = getGlobalChain(this.crossChain);
     // await chain.getTokenAllowance(newAgent.tokenAddr, global.config.storemanOri, newAgent.contractAddr, moduleConfig.tokenAbi)
-    await chain.getTokenAllowance(this.record.tokenAddr, global.config.storemanOri, moduleConfig.crossInfoDict[this.crossChain][this.tokenType].originalChainHtlcAddr, moduleConfig.tokenAbi)
+    await chain.getTokenAllowance(this.record.tokenAddr, global.config.crossTokens[this.crossChain].CONF.storemanOri, moduleConfig.crossInfoDict[this.crossChain][this.tokenType].originalChainHtlcAddr, moduleConfig.tokenAbi)
       .then(async (result) => {
         if (result < Math.max(getWeiFromEther(web3.toBigNumber(moduleConfig.tokenAllowanceThreshold)), web3.toBigNumber(this.record.value))) {
           await this.updateState(rollState);
