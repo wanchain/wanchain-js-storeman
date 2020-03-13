@@ -351,6 +351,8 @@ module.exports = class StateAction {
           return;
         }
         if (transConfirmed >= confirmTimes && this.record.transRetried < retryTimes) {
+          this.logger.warn("checkTransOnline confirm time exceed confirmTimes, will retry, this record already transRetried:", this.record.transRetried, ", max retryTimes:", retryTimes, eventName, this.hashX);
+
           content = {
             status: rollState[0],
             transConfirmed: 0,
@@ -362,6 +364,7 @@ module.exports = class StateAction {
           {
             global[transOnChain.toLowerCase() + 'NonceRenew'][storemanAddr] = true;
             global.nonce[this.hashX + 'NonceRenew'] = true;
+            this.logger.warn("checkTransOnline confirm time exceed confirmTimes, set NonceRenew true", eventName, this.hashX);
           }
 
           await this.updateRecord(content);

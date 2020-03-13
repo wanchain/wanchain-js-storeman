@@ -80,7 +80,7 @@ module.exports = class WanAgent extends baseAgent{
     let amount;
     let gas;
     let gasPrice;
-    let nonce;
+    let nonce = 0;
 
     return new Promise(async (resolve, reject) => {
       try {
@@ -92,13 +92,13 @@ module.exports = class WanAgent extends baseAgent{
 
         gas = this.config.wanGasLimit;
         gasPrice = this.getWeiFromGwei(web3.toBigNumber(this.config.wanGasPrice));
-        nonce = await this.getNonce(action);
+        // nonce = await this.getNonce(action);
         this.logger.info("transInfo is: crossDirection- %s, transChainType- %s,\n from- %s, to- %s, gas- %s, gasPrice- %s, nonce- %s, amount- %s, \n hashX- %s", this.crossDirection, this.transChainType, from, to, gas, gasPrice, nonce, amount, this.hashKey);
         resolve([from, to, gas, gasPrice, nonce, amount]);
       } catch (err) {
-        if (!this.transChainNonceless) {
-          global[this.transChainType + 'NoncePending'][this.storemanAddress] = true;
-        }
+        // if (!this.transChainNonceless) {
+        //   global[this.transChainType + 'NoncePending'][this.storemanAddress] = true;
+        // }
         this.logger.error("getTransInfo failed", err);
         reject(err);
       }

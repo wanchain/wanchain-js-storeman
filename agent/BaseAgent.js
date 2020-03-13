@@ -141,29 +141,56 @@ module.exports = class BaseAgent {
         }
         this.logger.debug(chainMutex, storemanAddress, "mutexNonce true");
         this.logger.debug(storemanAddress, 'getNonce:', chainNonce, global[chainNonce][storemanAddress],
-          nonceRenew, global[nonceRenew][storemanAddress], noncePending, global[noncePending][storemanAddress]);
+          nonceRenew, global[nonceRenew][storemanAddress], noncePending, global[noncePending][storemanAddress], "at hashX: ", this.hashKey);
         global[chainMutex][storemanAddress] = true;
 
-        if (!global.nonce[this.hashKey + action] || (global.nonce[this.hashKey + 'NonceRenew'] && global[nonceRenew][storemanAddress])) {
+        // if (global[nonceRenew][storemanAddress]) {
+        //   nonce = await this.chain.getNonceSync(storemanAddress);
+        //   nonce = parseInt(nonce, 16);
+        //   global[nonceRenew][storemanAddress] = false;
+        //   this.logger.warn("getNonce reset NonceRenew false at hashX: ", this.hashKey);
+        // } else if (global[noncePending][storemanAddress]) {
+        //   nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
+        //   nonce = parseInt(nonce, 16);
+        //   global[noncePending][storemanAddress] = false;
+        // } else {
+        //   nonce = global[chainNonce][storemanAddress];
+        // }
+
+        if (!global.nonce[this.hashKey + action]) {
           if (global[nonceRenew][storemanAddress]) {
             nonce = await this.chain.getNonceSync(storemanAddress);
             nonce = parseInt(nonce, 16);
             global[nonceRenew][storemanAddress] = false;
-          // } else if (global[noncePending][storemanAddress]) {
-          //   nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
-          //   nonce = parseInt(nonce, 16);
-          //   global[noncePending][storemanAddress] = false;
+            this.logger.warn("getNonce reset NonceRenew false at new trans with hashX: ", this.hashKey);
           } else {
             nonce = global[chainNonce][storemanAddress];
           }
-
-          global.nonce[this.hashKey + action] = nonce;
-          if (nonce >= global[chainNonce][storemanAddress]) {
-            global[chainNonce][storemanAddress] = nonce;
-            global[chainNonce][storemanAddress]++;
-          }
         } else {
-          nonce = global.nonce[this.hashKey + action];
+          if (global.nonce[this.hashKey + 'NonceRenew'] && global[nonceRenew][storemanAddress]) {
+            nonce = await this.chain.getNonceSync(storemanAddress);
+            nonce = parseInt(nonce, 16);
+            global[nonceRenew][storemanAddress] = false;
+            this.logger.warn("getNonce reset NonceRenew false at hashX: ", this.hashKey, "oldNonce is ", global.nonce[this.hashKey + action], "while renew nonce is", nonce);
+            delete global.nonce[this.hashKey + 'NonceRenew'];
+          } else if (global.nonce[this.hashKey + 'NoncePending']) {
+            nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
+            nonce = parseInt(nonce, 16);
+            nonce = Math.max(nonce, global.nonce[this.hashKey + action]);
+            global[noncePending][storemanAddress] = false;
+            this.logger.warn("getNonce reset NoncePending false at hashX: ", this.hashKey, "oldNonce is ", global.nonce[this.hashKey + action], "while renew nonce is", nonce);
+            delete global.nonce[this.hashKey + 'NoncePending'];
+          } else {
+            // this will happen, a new trans begin when some trans try to renew, the new trans will use the hole-nonce
+            nonce = global.nonce[this.hashKey + action];
+          }
+        }
+
+        global.nonce[this.hashKey + action] = nonce;
+
+        if (nonce >= global[chainNonce][storemanAddress]) {
+          global[chainNonce][storemanAddress] = nonce;
+          global[chainNonce][storemanAddress]++;
         }
 
         this.logger.debug(chainMutex, storemanAddress, "mutexNonce false");
@@ -186,6 +213,7 @@ module.exports = class BaseAgent {
   }
 
   async createTrans(action) {
+    let nonceFlag = false;
     return new Promise(async (resolve, reject) => {
       try {
         if (action === 'approveZero') {
@@ -208,17 +236,27 @@ module.exports = class BaseAgent {
           this.build = this.buildWithdrawFeeData;
         }
 
+        if (!this.transChainNonceless) {
+          let nonce = await this.getNonce(action);
+          nonceFlag = true;
+          this.trans.setNonce(nonce);
+          this.logger.info("********************************** setNonce **********************************", nonce, "hashX", this.hashKey);
+        }
         this.logger.info("********************************** setData **********************************", JSON.stringify(this.data, null, 4), "hashX", this.hashKey);
         this.trans.setData(this.data);
         if (this.tokenType === 'COIN' && this.crossDirection === 1 && action === 'lock'){
+          this.logger.info("********************************** setValue **********************************", this.amount.toString(16), "hashX", this.hashKey);
           this.trans.setValue(this.amount.toString(16));
         } else {
+          this.logger.info("********************************** setValue **********************************", 0, "hashX", this.hashKey);
           this.trans.setValue(0);
         }
         resolve();
       } catch (err) {
-        if (!this.transChainNonceless) {
+        if (!this.transChainNonceless && nonceFlag) {
           global[this.transChainType + 'NoncePending'][this.storemanAddress] = true;
+          global.nonce[this.hashKey + 'NoncePending'] = true;
+          this.logger.warn("createTrans failed, set NoncePending true", this.hashKey, err);
         }
         reject("createTrans: " + err);
       }
@@ -233,6 +271,8 @@ module.exports = class BaseAgent {
         } else {
           if (!this.transChainNonceless) {
             global[this.transChainType + 'NoncePending'][this.storemanAddress] = true;
+            global.nonce[this.hashKey + 'NoncePending'] = true;
+            this.logger.warn("sendTransSync failed, set NoncePending true", this.hashKey, err);
           }
           reject(err);
         }

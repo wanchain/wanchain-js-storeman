@@ -18,6 +18,10 @@ module.exports = class EthRawTrans {
 		this.txParams.gasLimit = '0x' + this.txParams.gasLimit.toString(16);
 	}
 
+	setNonce(nonce){
+		this.txParams.nonce = nonce;
+	}
+
 	setData(data){
 		this.data = data;
 		this.txParams.data = data;
