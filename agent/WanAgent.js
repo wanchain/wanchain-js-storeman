@@ -92,7 +92,7 @@ module.exports = class WanAgent extends baseAgent{
 
         gas = this.config.wanGasLimit;
         gasPrice = this.getWeiFromGwei(web3.toBigNumber(this.config.wanGasPrice));
-        nonce = await this.getNonce();
+        nonce = await this.getNonce(action);
         this.logger.info("transInfo is: crossDirection- %s, transChainType- %s,\n from- %s, to- %s, gas- %s, gasPrice- %s, nonce- %s, amount- %s, \n hashX- %s", this.crossDirection, this.transChainType, from, to, gas, gasPrice, nonce, amount, this.hashKey);
         resolve([from, to, gas, gasPrice, nonce, amount]);
       } catch (err) {

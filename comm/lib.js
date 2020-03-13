@@ -60,7 +60,7 @@ async function initNonce(chainType, address) {
       resolve();
       return;
     }
-
+    global.nonce = {};
     try {
       let chainName = chainType.toLowerCase() + "Chain";
       global[chainType.toLowerCase() + 'NonceRenew'] = {};

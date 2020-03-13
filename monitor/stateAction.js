@@ -349,6 +349,7 @@ module.exports = class StateAction {
           if (!moduleConfig.crossInfoDict[transOnChain] || !moduleConfig.crossInfoDict[transOnChain].CONF.nonceless)
           {
             global[transOnChain.toLowerCase() + 'NonceRenew'][storemanAddr] = true;
+            global.nonce[this.hashX + 'NonceRenew'] = true;
           }
 
           await this.updateRecord(content);
