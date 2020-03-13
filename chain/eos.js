@@ -331,8 +331,9 @@ class EosChain extends baseChain {
         }
         resolve(receipt);
       } catch (err) {
-        reject(err);
-        // resolve(null);
+        log.error(err);
+        resolve(null);
+        // reject(err);
       }
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getTransactionConfirmSync timeout')
   }

@@ -144,32 +144,31 @@ module.exports = class BaseAgent {
           nonceRenew, global[nonceRenew][storemanAddress], noncePending, global[noncePending][storemanAddress]);
         global[chainMutex][storemanAddress] = true;
 
-        if (global[nonceRenew][storemanAddress]) {
-          nonce = await this.chain.getNonceSync(storemanAddress);
-          nonce = parseInt(nonce, 16);
-          global[nonceRenew][storemanAddress] = false;
-        // } else if (global[noncePending][storemanAddress]) {
-        //   nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
-        //   nonce = parseInt(nonce, 16);
-        //   global[noncePending][storemanAddress] = false;
-        } else {
-          nonce = global[chainNonce][storemanAddress];
-        }
+        if (!global.nonce[this.hashKey + action] || (global.nonce[this.hashKey + 'NonceRenew'] && global[nonceRenew][storemanAddress])) {
+          if (global[nonceRenew][storemanAddress]) {
+            nonce = await this.chain.getNonceSync(storemanAddress);
+            nonce = parseInt(nonce, 16);
+            global[nonceRenew][storemanAddress] = false;
+          // } else if (global[noncePending][storemanAddress]) {
+          //   nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
+          //   nonce = parseInt(nonce, 16);
+          //   global[noncePending][storemanAddress] = false;
+          } else {
+            nonce = global[chainNonce][storemanAddress];
+          }
 
-        this.logger.debug(chainMutex, storemanAddress, "mutexNonce false");
-        global[chainMutex][storemanAddress] = false;
-
-        if (!global.nonce[this.hashKey + action] || global.nonce[this.hashKey + 'NonceRenew']) {
           global.nonce[this.hashKey + action] = nonce;
           if (nonce >= global[chainNonce][storemanAddress]) {
             global[chainNonce][storemanAddress] = nonce;
             global[chainNonce][storemanAddress]++;
           }
-          resolve(nonce);
         } else {
-          resolve(global.nonce[this.hashKey + action]);
+          nonce = global.nonce[this.hashKey + action];
         }
 
+        this.logger.debug(chainMutex, storemanAddress, "mutexNonce false");
+        global[chainMutex][storemanAddress] = false;
+        resolve(nonce);
       } catch (err) {
         this.logger.error("getNonce failed", storemanAddress, err);
         this.logger.debug(chainMutex, storemanAddress, "mutexNonce false");

@@ -314,7 +314,7 @@ module.exports = class StateAction {
 
     transOnChain = this.getTransChainType(transHashName);
     if (transOnChain === null) {
-      let content = {
+      content = {
         status: rollState[1],
         transConfirmed: 0
       }
@@ -334,15 +334,27 @@ module.exports = class StateAction {
         if (event.length !== 0) {
           content = {
             status: nextState,
-            transConfirmed: 0
+            transConfirmed: 0,
+            transRetried: 0
           }
           await this.updateRecord(content);
           return;
         }
-        if (transConfirmed > confirmTimes) {
+        if (this.record.transRetried >= retryTimes) {
+          content = {
+            status: rollState[1],
+            transConfirmed: 0,
+            transRetried: 0
+          }
+          await this.updateFailReason(actionMap[eventName], "exceed retryTimes");
+          await this.updateRecord(content);
+          return;
+        }
+        if (transConfirmed >= confirmTimes && this.record.transRetried < retryTimes) {
           content = {
             status: rollState[0],
-            transConfirmed: 0
+            transConfirmed: 0,
+            transRetried: this.record.transRetried + 1
           }
 
           let storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanWan;
@@ -383,14 +395,16 @@ module.exports = class StateAction {
           if (receipt.status === '0x1') {
             content = {
               status: nextState,
-              transConfirmed: 0
+              transConfirmed: 0,
+              transRetried: 0
             }
             break;
           } else {
             if (txHashArray.indexOf(txHash) === (txHashArray.length - 1)) {
               content = {
                 status: rollState[1],
-                transConfirmed: 0
+                transConfirmed: 0,
+                transRetried: 0
               }
               let failReason = 'txHash receipt is 0x0! Cannot find ' + eventName;
               await this.updateFailReason(actionMap[eventName], failReason);
@@ -402,12 +416,12 @@ module.exports = class StateAction {
               content = {
                 transConfirmed: transConfirmed + 1
               }
-            } else {
-              content = {
-                status: rollState[1],
-                transConfirmed: 0
-              }
-              await this.updateFailReason(actionMap[eventName], "exceed retryTimes");
+            // } else {
+            //   content = {
+            //     status: rollState[1],
+            //     transConfirmed: 0
+            //   }
+            //   await this.updateFailReason(actionMap[eventName], "exceed retryTimes");
             }
           }
         }
