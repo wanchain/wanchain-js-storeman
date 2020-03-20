@@ -99,7 +99,7 @@ class ModelOps {
       return blockNumber;
     } catch (err) {
       // this.logger.error(err);
-      return Promise.reject(err);
+      return await Promise.reject(err);
     }
   }
 
@@ -139,7 +139,7 @@ class ModelOps {
       let result = await this.dbAccess.syncFindDocument(this.eventModel, option);
       return result;
     } catch (err) {
-      return Promise.reject(err);
+      return await Promise.reject(err);
     }
   }
 }

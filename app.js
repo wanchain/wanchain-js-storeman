@@ -266,7 +266,7 @@ async function init() {
         tokenList[crossChain][tokenType].lockedTime = await tokenList[crossChain][tokenType].wanCrossAgent.getLockedTime();
       }
     }
-    monitorLogger.info(tokenList);
+    // monitorLogger.info(tokenList);
     global.syncLogger.info("storeman agent init done!", tokenList);
   } catch (err) {
     console.log("init error ", err);
@@ -298,7 +298,6 @@ async function update() {
         if (crossTokens === null) {
           global.syncLogger.error("Storeman agent renew config: couldn't find any tokens that the storeman is in charge of. ", crossChain, storemanWan, storemanOri, storemanPk);
         }
-        console.log(crossTokens);
       } else {
         global.syncLogger.error("Storeman agent should be initialized with storemanWanAddr storemanOriAddr at the first time!");
       }
@@ -307,10 +306,11 @@ async function update() {
     }
   }
 
+  global.configMutex = false;
   await init();
 
   // global.storemanRenew = false;
-  global.configMutex = false;
+
   global.syncLogger.info("Storeman agent renew config end. ");
 }
 
@@ -321,7 +321,7 @@ async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
     events = await chain.getScEventSync(scAddr, topics, fromBlk, toBlk, moduleConfig.web3RetryTimes);
   } catch (err) {
     logger.error("getScEvents", err);
-    return Promise.reject(err);
+    return await Promise.reject(err);
   }
 
   let i = 0;
@@ -368,7 +368,7 @@ async function getScEvents(logger, chain, scAddr, topics, fromBlk, toBlk) {
       await Promise.all(multiEvents);
     } catch (err) {
       logger.error("getScEvents", err);
-      return Promise.reject(err);
+      return await Promise.reject(err);
     }
     i += cntPerTime;
   }
@@ -450,7 +450,7 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
     syncLogger.debug("********************************** splitEvent done **********************************", chainType, crossChain, tokenType);
   } catch (err) {
     global.syncLogger.error("splitEvent", err);
-    return Promise.reject(err);
+    return await Promise.reject(err);
   }
 }
 
@@ -739,7 +739,7 @@ async function syncMpcRequest(logger, db) {
         logger.info("********************************** syncMpcRequest done **********************************");
       } catch (err) {
         logger.error("splitEvent", err);
-        return Promise.reject(err);
+        return await Promise.reject(err);
       }
     } catch (err) {
       logger.error("syncMpcRequest failed:", err);
@@ -936,7 +936,6 @@ async function main() {
     });
     renewJob.start();
   }
-
 
   syncMain(global.syncLogger, db);
 

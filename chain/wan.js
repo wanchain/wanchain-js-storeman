@@ -134,7 +134,7 @@ class WanChain extends baseChain {
       await Promise.all(multiTokens);
     } catch (err) {
       log.error("getTokenStoremanGroupsOfMutiTokens", err);
-      return Promise.reject(err);
+      return await Promise.reject(err);
     }
     return tokenStoremanGroups;
   }
@@ -227,7 +227,7 @@ class WanChain extends baseChain {
       await Promise.all(getMultiStoremanEvent);
     } catch (err) {
       log.error("getTokenStoremanGroups", err);
-      return Promise.reject(err);
+      return await Promise.reject(err);
     }
     return storemanGroup;
   }
