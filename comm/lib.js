@@ -94,7 +94,8 @@ async function initCrossTokens(crossChain, storemanWan, storemanOri, storemanPk)
       //     continue;
       //   }
         crossTokens[crossChain] = {};
-        if (!moduleConfig.crossInfoDict[crossChain].CONF.enable) {
+        // if (!moduleConfig.crossInfoDict[crossChain].CONF.enable) {
+        if (crossChain !== global.crossChain) {
           resolve(crossTokens);
           return;
           // continue;

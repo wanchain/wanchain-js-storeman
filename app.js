@@ -93,7 +93,12 @@ if ((argv.mpc && ((!argv.mpcIP || !argv.mpcPort) && (!argv.mpcipc)))
   || (argv.doDebt && (!argv.chain && !argv.token))
   || (argv.withdraw && (!argv.chain && !argv.token && !argv.wanReceiver))
   || (argv.withdraw && (!argv.chain && !argv.token && !argv.oriReceiver))
-  || (argv.init && (!argv.c))) {
+  // || (argv.init && (!argv.c))) {
+  || (!argv.c)) {
+  pass = false;
+}
+
+if (argv.init && (!argv.c || !argv.w || !argv.o)) {
   pass = false;
 }
 
@@ -121,6 +126,7 @@ if (argv.index) {
   global.index = '';
 }
 
+global.crossChain = argv.c;
 global.storemanPk = argv.pk;
 global.mpcIP = argv.mpcIP;
 global.mpcPort = argv.mpcPort;
@@ -216,7 +222,8 @@ async function init() {
     tokenList.storemanAddress = [];
 
     for (let crossChain in global.config.crossTokens) {
-      if (!moduleConfig.crossInfoDict[crossChain].CONF.enable) {
+      // if (!moduleConfig.crossInfoDict[crossChain].CONF.enable) {
+      if (crossChain !== global.crossChain) {
         continue;
       }
 
@@ -548,7 +555,8 @@ async function syncMain(logger, db) {
         //   if (tokenType === 'CONF') {
         //     continue;
         //   }
-          if (moduleConfig.crossInfoDict[crossChain].CONF.enable) {
+          // if (moduleConfig.crossInfoDict[crossChain].CONF.enable) {
+          if (crossChain === global.crossChain) {
             await Promise.all([
               syncChain(crossChain, crossChain, logger),
               syncChain('WAN', crossChain, logger)
