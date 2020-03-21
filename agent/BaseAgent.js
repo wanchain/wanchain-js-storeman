@@ -141,7 +141,8 @@ module.exports = class BaseAgent {
         }
         this.logger.debug(chainMutex, storemanAddress, "mutexNonce true");
         this.logger.debug(storemanAddress, 'getNonce:', chainNonce, global[chainNonce][storemanAddress],
-          nonceRenew, global[nonceRenew][storemanAddress], noncePending, global[noncePending][storemanAddress], "at hashX: ", this.hashKey);
+          nonceRenew, global[nonceRenew][storemanAddress], noncePending, global[noncePending][storemanAddress],
+          "at hashX: ", this.hashKey, "while current nonce is", global.nonce[this.hashKey + action], 'for action', action);
         global[chainMutex][storemanAddress] = true;
 
         // if (global[nonceRenew][storemanAddress]) {
@@ -162,7 +163,7 @@ module.exports = class BaseAgent {
             nonce = await this.chain.getNonceSync(storemanAddress);
             nonce = parseInt(nonce, 16);
             global[nonceRenew][storemanAddress] = false;
-            this.logger.warn("getNonce reset NonceRenew false at new trans with hashX: ", this.hashKey);
+            this.logger.warn("getNonce reset NonceRenew false at new trans with hashX: ", this.hashKey, "while renew nonce is", nonce);
           } else {
             nonce = global[chainNonce][storemanAddress];
           }
