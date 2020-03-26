@@ -22,6 +22,10 @@ module.exports = class EthRawTrans {
 		this.txParams.nonce = nonce;
 	}
 
+	setGasPrice(gasPrice){
+		this.txParams.gasPrice = '0x' + gasPrice.toString(16);
+	}
+
 	setData(data){
 		this.data = data;
 		this.txParams.data = data;

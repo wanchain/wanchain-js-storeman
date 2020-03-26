@@ -128,13 +128,15 @@ module.exports = class BaseAgent {
       return 0;
     }
     return new Promise(async (resolve, reject) => {
+      let nonce = 0;
+      let chainNonce = this.transChainType + 'LastNonce';
+      let nonceRenew = this.transChainType + 'NonceRenew';
+      let noncePending = this.transChainType + 'NoncePending';
+      let usedNonce = this.transChainType + 'UsedNonce';
+      let storemanAddress = this.storemanAddress;
+      this.logger.debug("getNonce begin!", storemanAddress)
+
       try {
-        let nonce = 0;
-        let chainNonce = this.transChainType + 'LastNonce';
-        let nonceRenew = this.transChainType + 'NonceRenew';
-        let noncePending = this.transChainType + 'NoncePending';
-        let storemanAddress = this.storemanAddress;
-        this.logger.debug("getNonce begin!", storemanAddress)
         let chainMutex = this.transChainType + 'Mutex';
         while (global[chainMutex][storemanAddress]) {
           await sleep(3);
@@ -145,25 +147,21 @@ module.exports = class BaseAgent {
           "at hashX: ", this.hashKey, "while current nonce is", global.nonce[this.hashKey + action], 'for action', action);
         global[chainMutex][storemanAddress] = true;
 
-        // if (global[nonceRenew][storemanAddress]) {
-        //   nonce = await this.chain.getNonceSync(storemanAddress);
-        //   nonce = parseInt(nonce, 16);
-        //   global[nonceRenew][storemanAddress] = false;
-        //   this.logger.warn("getNonce reset NonceRenew false at hashX: ", this.hashKey);
-        // } else if (global[noncePending][storemanAddress]) {
-        //   nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
-        //   nonce = parseInt(nonce, 16);
-        //   global[noncePending][storemanAddress] = false;
-        // } else {
-        //   nonce = global[chainNonce][storemanAddress];
-        // }
-
+        // when a trans failed time exceed the retry times, the nonce will be released
+        let pendingNonce = Array.from(global[noncePending][storemanAddress]).sort();
         if (!global.nonce[this.hashKey + action]) {
-          if (global[nonceRenew][storemanAddress]) {
+          if (pendingNonce.length > 0) {
+            nonce = pendingNonce[0];
+          } else if (global[nonceRenew][storemanAddress]) {
             nonce = await this.chain.getNonceSync(storemanAddress);
             nonce = parseInt(nonce, 16);
             global[nonceRenew][storemanAddress] = false;
+            // this will happened when agent restart, some trans start statemachine with state confirming, and failed ant then retry
+            if (global[usedNonce][storemanAddress].hasOwnProperty(nonce)) {
+              nonce = global[chainNonce][storemanAddress];
+            }
             this.logger.warn("getNonce reset NonceRenew false at new trans with hashX: ", this.hashKey, "while renew nonce is", nonce);
+            delete global.nonce[this.hashKey + 'NonceRenew'];
           } else {
             nonce = global[chainNonce][storemanAddress];
           }
@@ -175,11 +173,14 @@ module.exports = class BaseAgent {
             this.logger.warn("getNonce reset NonceRenew false at hashX: ", this.hashKey, "oldNonce is ", global.nonce[this.hashKey + action], "while renew nonce is", nonce);
             delete global.nonce[this.hashKey + 'NonceRenew'];
           } else if (global.nonce[this.hashKey + 'NoncePending']) {
+            // the trans may failed because mpc failed/ underprice/ lower nonce
             nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
             nonce = parseInt(nonce, 16);
+            // to avoid lower nonce issue, if it's lower nonce, update nonce
             nonce = Math.max(nonce, global.nonce[this.hashKey + action]);
-            global[noncePending][storemanAddress] = false;
-            this.logger.warn("getNonce reset NoncePending false at hashX: ", this.hashKey, "oldNonce is ", global.nonce[this.hashKey + action], "while renew nonce is", nonce);
+            if (nonce !== global.nonce[this.hashKey + action]) {
+              this.logger.warn("getNonce reset NoncePending false at hashX: ", this.hashKey, "oldNonce is ", global.nonce[this.hashKey + action], "while renew nonce is", nonce);
+            }
             delete global.nonce[this.hashKey + 'NoncePending'];
           } else {
             // this will happen, a new trans begin when some trans try to renew, the new trans will use the hole-nonce
@@ -187,8 +188,30 @@ module.exports = class BaseAgent {
           }
         }
 
-        global.nonce[this.hashKey + action] = nonce;
+        // reset gasprice to 110% to cover the queue trans, to avoid underprice issue
+        if (global[usedNonce][storemanAddress].hasOwnProperty(nonce)
+        && global[usedNonce][storemanAddress][nonce].hashX !== this.hashKey) {
+          let gasPrice = parseInt(this.trans.txParams.gasPrice, 16);
+          let gasAddDelta = this.chain.client.toBigNumber(global[usedNonce][storemanAddress][nonce].gasPrice).mul(110).div(100);
+          gasPrice = Math.max(gasPrice, gasAddDelta);
 
+          this.logger.warn("getNonce reset gasprice for usedNonce", nonce, "at hashX: ", this.hashKey, "oldGasPrice is ", parseInt(this.trans.txParams.gasPrice, 16), "while renew gasPrice is", gasPrice);
+          this.trans.setGasPrice(gasPrice);
+        }
+
+        global.nonce[this.hashKey + action] = nonce;
+        // usedNonce is used to avoid underprice issue
+        global[usedNonce][storemanAddress][nonce] = {
+          'hashX': this.hashKey,
+          'action': action,
+          'gasPrice': this.trans.txParams.gasPrice
+        }
+
+        // released nonce need to be delete after it's been used
+        if (global[noncePending][storemanAddress].has(nonce)) {
+          this.logger.warn("getNonce reset noncePending pool ", storemanAddress, "to release the nonce", nonce, "to hashX: ", this.hashKey);
+          global[noncePending][storemanAddress].delete(nonce);
+        }
         if (nonce >= global[chainNonce][storemanAddress]) {
           global[chainNonce][storemanAddress] = nonce;
           global[chainNonce][storemanAddress]++;
@@ -255,7 +278,6 @@ module.exports = class BaseAgent {
         resolve();
       } catch (err) {
         if (!this.transChainNonceless && nonceFlag) {
-          global[this.transChainType + 'NoncePending'][this.storemanAddress] = true;
           global.nonce[this.hashKey + 'NoncePending'] = true;
           this.logger.warn("createTrans failed, set NoncePending true", this.hashKey, err);
         }
@@ -271,7 +293,6 @@ module.exports = class BaseAgent {
           resolve(result);
         } else {
           if (!this.transChainNonceless) {
-            global[this.transChainType + 'NoncePending'][this.storemanAddress] = true;
             global.nonce[this.hashKey + 'NoncePending'] = true;
             this.logger.warn("sendTransSync failed, set NoncePending true", this.hashKey, err);
           }
@@ -329,7 +350,7 @@ module.exports = class BaseAgent {
         let chainId = await this.chain.getNetworkId();
         let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
 
-        mpc.addValidMpcTx();
+        await mpc.addValidMpcTx();
         resolve();
       } catch (err) {
         this.logger.error("********************************** validateTrans failed ********************************** hashX", this.hashKey, err);

@@ -245,12 +245,24 @@ module.exports = class StateAction {
       result.transRetried = 0;
       result.status = nextState[0];
     } catch (err) {
+      let actionMap = {
+        storemanLockEvent: 'lock',
+        storemanRedeemEvent: 'redeem',
+        storemanRevokeEvent: 'revoke',
+        walletLockEvent: 'lock',
+        walletRedeemEvent: 'redeem',
+        walletRevokeEvent: 'revoke',
+        withdrawFeeEvent: 'withdrawFee'
+      }
+      let action = actionMap[eventName];
       this.logger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX, ", will retry, this record already transRetried:", this.record.transRetried, ", max retryTimes:", retryTimes);
       this.logger.error("sendTransaction faild,  err is", err, this.hashX);
       if (this.record.transRetried < retryTimes) {
         result.transRetried = this.record.transRetried + 1;
         result.status = rollState[0];
       } else {
+        this.addPendingNonce(action);
+
         result.transRetried = 0;
         result.status = rollState[1];
         await this.updateFailReason(action, err);
@@ -300,7 +312,11 @@ module.exports = class StateAction {
     let actionMap = {
       storemanLockEvent: 'lock',
       storemanRedeemEvent: 'redeem',
-      storemanRevokeEvent: 'revoke'
+      storemanRevokeEvent: 'revoke',
+      walletLockEvent: 'lock',
+      walletRedeemEvent: 'redeem',
+      walletRevokeEvent: 'revoke',
+      withdrawFeeEvent: 'withdrawFee'
     }
 
     // let blockNumMap = {
@@ -337,6 +353,8 @@ module.exports = class StateAction {
             transConfirmed: 0,
             transRetried: 0
           }
+          this.clearUsedNonce(actionMap[eventName]);
+
           await this.updateRecord(content);
           return;
         }
@@ -401,6 +419,7 @@ module.exports = class StateAction {
               transConfirmed: 0,
               transRetried: 0
             }
+            this.clearUsedNonce(actionMap[eventName]);
             break;
           } else {
             if (txHashArray.indexOf(txHash) === (txHashArray.length - 1)) {
@@ -488,6 +507,58 @@ module.exports = class StateAction {
       }
     } else {
       return true;
+    }
+  }
+
+  // clear the used nonce when one trans success/failed
+  clearUsedNonce(action) {
+    let transOnChain = this.getActionChainType(action);
+    if (!moduleConfig.crossInfoDict[transOnChain] || !moduleConfig.crossInfoDict[transOnChain].CONF.nonceless) {
+      if (global.nonce[this.hashX + action]) {
+        let nonce = global.nonce[this.hashX + action];
+        let usedNonce = transOnChain.toLowerCase() + 'UsedNonce';
+        let storemanAddr;
+        if (transOnChain !== 'WAN') {
+          storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanOri;
+        } else {
+          storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanWan;
+        }
+  
+        if (global[usedNonce][storemanAddr].hasOwnProperty(nonce)
+        && global[usedNonce][storemanAddr][nonce].hashX === this.hashX
+        && global[usedNonce][storemanAddr][nonce].action === action) {
+          delete global[usedNonce][storemanAddr][nonce];
+        }
+
+        this.logger.debug("getNonce reset usedNonce pool ", storemanAddr, "to clear the nonce", global.nonce[this.hashX + action], "for hashX: ", this.hashX);
+
+        delete global.nonce[this.hashX + action];
+        delete global.nonce[this.hashX + "NoncePending"];
+        delete global.nonce[this.hashX + 'NonceRenew'];
+      }
+    }
+  }
+
+  // add the pending nonce when one trans failed times exceed the retry timess
+  addPendingNonce(action) {
+    let transOnChain = this.getActionChainType(action);
+    if (!moduleConfig.crossInfoDict[transOnChain] || !moduleConfig.crossInfoDict[transOnChain].CONF.nonceless) {
+      if (global.nonce[this.hashX + action]) {
+        let storemanAddr;
+        if (transOnChain !== 'WAN') {
+          storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanOri;
+        } else {
+          storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanWan;
+        }
+        this.logger.warn("getNonce reset noncePending pool ", storemanAddr, "to add the nonce", global.nonce[this.hashX + action], "for hashX: ", this.hashX);
+
+        global[transOnChain.toLowerCase() + 'NoncePending'][storemanAddr].add(global.nonce[this.hashX + action]);
+        delete global[transOnChain.toLowerCase() + 'UsedNonce'][storemanAddr][global.nonce[this.hashX + action]];
+
+        delete global.nonce[this.hashX + action];
+        delete global.nonce[this.hashX + "NoncePending"];
+        delete global.nonce[this.hashX + 'NonceRenew'];
+      }
     }
   }
 }

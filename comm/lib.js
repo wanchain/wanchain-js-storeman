@@ -67,10 +67,12 @@ async function initNonce(chainType, address) {
       global[chainType.toLowerCase() + 'NoncePending'] = {};
       global[chainType.toLowerCase() + 'Mutex'] = {};
       global[chainType.toLowerCase() + 'LastNonce'] = {};
+      global[chainType.toLowerCase() + 'UsedNonce'] = {};
 
       global[chainType.toLowerCase() + 'NonceRenew'][address] = false;
-      global[chainType.toLowerCase() + 'NoncePending'][address] = false;
+      global[chainType.toLowerCase() + 'NoncePending'][address] = new Set();
       global[chainType.toLowerCase() + 'Mutex'][address] = false;
+      global[chainType.toLowerCase() + 'UsedNonce'][address] = {};
 
       let nonce = await global[chainName].getNonceIncludePendingSync(address);
       global[chainType.toLowerCase() + 'LastNonce'][address] = parseInt(nonce, 16);
