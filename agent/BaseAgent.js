@@ -203,8 +203,10 @@ module.exports = class BaseAgent {
             // this will happen, a new trans begin when some trans try to renew, the new trans will use the hole-nonce
             if (pendingNonce.length > 0) {
               nonce = pendingNonce[0];
+              nonce = Math.min(nonce, global.nonce[this.hashKey + action]);
+            } else {
+              nonce = global.nonce[this.hashKey + action];
             }
-            nonce = Math.min(nonce, global.nonce[this.hashKey + action]);
           }
         }
 
