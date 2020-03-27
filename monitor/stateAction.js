@@ -369,7 +369,12 @@ module.exports = class StateAction {
             transRetried: this.record.transRetried + 1
           }
 
-          let storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanWan;
+          let storemanAddr;
+          if (transOnChain !== 'WAN') {
+            storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanOri;
+          } else {
+            storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanWan;
+          }
           if (!moduleConfig.crossInfoDict[transOnChain] || !moduleConfig.crossInfoDict[transOnChain].CONF.nonceless)
           {
             global[transOnChain.toLowerCase() + 'NonceRenew'][storemanAddr] = true;

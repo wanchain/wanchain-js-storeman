@@ -177,6 +177,10 @@ module.exports = class BaseAgent {
             nonce = await this.chain.getNonceSync(storemanAddress);
             nonce = parseInt(nonce, 16);
             global[nonceRenew][storemanAddress] = false;
+            if (global[usedNonce][storemanAddress].hasOwnProperty(nonce) &&
+            global.nonce[global[usedNonce][storemanAddress][nonce].hashX + global[usedNonce][storemanAddress][nonce].action] === nonce) {
+              nonce = global.nonce[this.hashKey + action];
+            }
             this.logger.warn("getNonce reset NonceRenew false at hashX: ", this.hashKey, "oldNonce is ", global.nonce[this.hashKey + action], "while renew nonce is", nonce);
             delete global.nonce[this.hashKey + 'NonceRenew'];
           } else if (global.nonce[this.hashKey + 'NoncePending']) {
