@@ -211,7 +211,7 @@ class baseChain {
       client.eth.getTransactionCount(address, function(err, result) {
         if (!err) {
           nonce = '0x' + result.toString(16);
-          log.debug("ChainType:", chainType, 'getNonce ', nonce, ' successfully on address ', address);
+          log.debug("ChainType:", chainType, 'getNonce ', result, nonce, ' successfully on address ', address);
         }
         callback(err, nonce);
       });
@@ -233,7 +233,7 @@ class baseChain {
             reject(err);
           } else {
             nonce = '0x' + result.toString(16);
-            log.debug("ChainType:", chainType, 'getNonceSync ', nonce, ' successfully on address ', address);
+            log.debug("ChainType:", chainType, 'getNonceSync ', result, nonce, ' successfully on address ', address);
             resolve(nonce);
           }
         });
@@ -253,7 +253,7 @@ class baseChain {
       client.eth.getTransactionCount(address, optional, function(err, result) {
         if (!err) {
           nonce = '0x' + result.toString(16);
-          log.debug("ChainType:", chainType, 'getNonceIncludePending ', nonce, ' successfully on address ', address);
+          log.debug("ChainType:", chainType, 'getNonceIncludePending ', result, nonce, ' successfully on address ', address);
         }
         callback(err, nonce);
       });
@@ -275,7 +275,7 @@ class baseChain {
             reject(err);
           } else {
             nonce = '0x' + result.toString(16);
-            log.debug("ChainType:", chainType, 'getNonceIncludePendingSync ', nonce, ' successfully on address ', address);
+            log.debug("ChainType:", chainType, 'getNonceIncludePendingSync ', result, nonce, ' successfully on address ', address);
             resolve(nonce);
           }
         });

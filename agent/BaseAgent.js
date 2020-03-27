@@ -129,6 +129,7 @@ module.exports = class BaseAgent {
     }
     return new Promise(async (resolve, reject) => {
       let nonce = 0;
+      let nonceOnChain = 0;
       let chainNonce = this.transChainType + 'LastNonce';
       let nonceRenew = this.transChainType + 'NonceRenew';
       let noncePending = this.transChainType + 'NoncePending';
@@ -155,8 +156,9 @@ module.exports = class BaseAgent {
           if (pendingNonce.length > 0) {
             nonce = pendingNonce[0];
           } else if (global[nonceRenew][storemanAddress]) {
-            nonce = await this.chain.getNonceSync(storemanAddress);
-            nonce = parseInt(nonce, 16);
+            nonceOnChain = await this.chain.getNonceSync(storemanAddress);
+            nonce = parseInt(nonceOnChain, 16);
+
             global[nonceRenew][storemanAddress] = false;
             // this will happened when agent restart, some trans start statemachine with state confirming, and failed ant then retry, 
             // nonceRenew will be set true, new trans will get the hole nonce unless this nonce was already taken by others
@@ -174,8 +176,8 @@ module.exports = class BaseAgent {
           }
         } else {
           if (global.nonce[this.hashKey + 'NonceRenew'] && global[nonceRenew][storemanAddress]) {
-            nonce = await this.chain.getNonceSync(storemanAddress);
-            nonce = parseInt(nonce, 16);
+            nonceOnChain = await this.chain.getNonceSync(storemanAddress);
+            nonce = parseInt(nonceOnChain, 16);
             global[nonceRenew][storemanAddress] = false;
             if (global[usedNonce][storemanAddress].hasOwnProperty(nonce) &&
             global.nonce[global[usedNonce][storemanAddress][nonce].hashX + global[usedNonce][storemanAddress][nonce].action] === nonce) {
@@ -185,8 +187,8 @@ module.exports = class BaseAgent {
             delete global.nonce[this.hashKey + 'NonceRenew'];
           } else if (global.nonce[this.hashKey + 'NoncePending']) {
             // the trans may failed because mpc failed/ underprice/ lower nonce
-            nonce = await this.chain.getNonceIncludePendingSync(storemanAddress);
-            nonce = parseInt(nonce, 16);
+            nonceOnChain = await this.chain.getNonceIncludePendingSync(storemanAddress);
+            nonce = parseInt(nonceOnChain, 16);
             // to avoid lower nonce issue, if it's lower nonce, update nonce
             nonce = Math.max(nonce, global.nonce[this.hashKey + action]);
             if (global[usedNonce][storemanAddress].hasOwnProperty(nonce) &&
@@ -203,6 +205,14 @@ module.exports = class BaseAgent {
               nonce = pendingNonce[0];
             }
             nonce = Math.min(nonce, global.nonce[this.hashKey + action]);
+          }
+        }
+
+        if (nonceOnChain && Object.keys(global[usedNonce][storemanAddress]).length !== 0) {
+          for (let key of Object.keys(global[usedNonce][storemanAddress])) {
+            if (key < parseInt(nonceOnChain, 16)) {
+              delete global[usedNonce][storemanAddress][key];
+            }
           }
         }
 
