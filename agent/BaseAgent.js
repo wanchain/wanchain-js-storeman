@@ -144,6 +144,7 @@ module.exports = class BaseAgent {
         this.logger.debug(chainMutex, storemanAddress, "mutexNonce true");
         this.logger.debug(storemanAddress, 'getNonce:', chainNonce, global[chainNonce][storemanAddress],
           nonceRenew, global[nonceRenew][storemanAddress], noncePending, global[noncePending][storemanAddress],
+          usedNonce, Object.keys(global[usedNonce][storemanAddress]),
           "at hashX: ", this.hashKey, "while current nonce is", global.nonce[this.hashKey + action], 'for action', action);
         global[chainMutex][storemanAddress] = true;
 
@@ -156,11 +157,16 @@ module.exports = class BaseAgent {
             nonce = await this.chain.getNonceSync(storemanAddress);
             nonce = parseInt(nonce, 16);
             global[nonceRenew][storemanAddress] = false;
-            // this will happened when agent restart, some trans start statemachine with state confirming, and failed ant then retry
-            if (global[usedNonce][storemanAddress].hasOwnProperty(nonce)) {
+            // this will happened when agent restart, some trans start statemachine with state confirming, and failed ant then retry, 
+            // nonceRenew will be set true, new trans will get the hole nonce unless this nonce was already taken by others
+            if (global[usedNonce][storemanAddress].hasOwnProperty(nonce) &&
+              global.nonce[global[usedNonce][storemanAddress][nonce].hashX + global[usedNonce][storemanAddress][nonce].action] === nonce) {
               nonce = global[chainNonce][storemanAddress];
+              this.logger.warn("getNonce reset NonceRenew false at new trans with hashX: ", this.hashKey, "while renew nonce is", nonce);
+            } else {
+              this.logger.warn("getNonce reset NonceRenew false at new trans with hashX: ", this.hashKey,
+              "to replace the old hashX: ", global[usedNonce][storemanAddress][nonce].hashX, "while the used nonce is", nonce);
             }
-            this.logger.warn("getNonce reset NonceRenew false at new trans with hashX: ", this.hashKey, "while renew nonce is", nonce);
             delete global.nonce[this.hashKey + 'NonceRenew'];
           } else {
             nonce = global[chainNonce][storemanAddress];
@@ -178,9 +184,9 @@ module.exports = class BaseAgent {
             nonce = parseInt(nonce, 16);
             // to avoid lower nonce issue, if it's lower nonce, update nonce
             nonce = Math.max(nonce, global.nonce[this.hashKey + action]);
-            if (nonce !== global.nonce[this.hashKey + action]) {
+            // if (nonce !== global.nonce[this.hashKey + action]) {
               this.logger.warn("getNonce reset NoncePending false at hashX: ", this.hashKey, "oldNonce is ", global.nonce[this.hashKey + action], "while renew nonce is", nonce);
-            }
+            // }
             delete global.nonce[this.hashKey + 'NoncePending'];
           } else {
             // this will happen, a new trans begin when some trans try to renew, the new trans will use the hole-nonce
@@ -195,11 +201,15 @@ module.exports = class BaseAgent {
           let gasAddDelta = this.chain.client.toBigNumber(global[usedNonce][storemanAddress][nonce].gasPrice).mul(110).div(100);
           gasPrice = Math.max(gasPrice, gasAddDelta);
 
-          this.logger.warn("getNonce reset gasprice for usedNonce", nonce, "at hashX: ", this.hashKey, "oldGasPrice is ", parseInt(this.trans.txParams.gasPrice, 16), "while renew gasPrice is", gasPrice);
+          this.logger.warn("getNonce reset gasprice for usedNonce", nonce, "at hashX: ", this.hashKey,
+          "to replace the old hashX: ", global[usedNonce][storemanAddress][nonce].hashX,
+          "oldGasPrice is ", parseInt(this.trans.txParams.gasPrice, 16),
+          "while renew gasPrice is", gasPrice);
           this.trans.setGasPrice(gasPrice);
         }
 
         global.nonce[this.hashKey + action] = nonce;
+        this.logger.debug("getNonce success at hashX: ", this.hashKey, "while nonce is", nonce, 'for action', action);
         // usedNonce is used to avoid underprice issue
         global[usedNonce][storemanAddress][nonce] = {
           'hashX': this.hashKey,

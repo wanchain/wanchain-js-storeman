@@ -25,6 +25,16 @@ function getWeiFromEther(ether) {
   return web3.toWei(ether, 'ether');
 }
 
+let actionMap = {
+  storemanLockEvent: 'lock',
+  storemanRedeemEvent: 'redeem',
+  storemanRevokeEvent: 'revoke',
+  walletLockEvent: 'lock',
+  walletRedeemEvent: 'redeem',
+  walletRevokeEvent: 'revoke',
+  withdrawFeeEvent: 'withdrawFee'
+}
+
 module.exports = class StateAction {
   constructor(record, logger, db) {
     this.record = record;
@@ -174,6 +184,7 @@ module.exports = class StateAction {
           status: nextState[1],
           transConfirmed: 0
         }
+        this.clearUsedNonce(actionMap[eventName]);
         await this.updateRecord(content);
         return;
       }
@@ -245,15 +256,6 @@ module.exports = class StateAction {
       result.transRetried = 0;
       result.status = nextState[0];
     } catch (err) {
-      let actionMap = {
-        storemanLockEvent: 'lock',
-        storemanRedeemEvent: 'redeem',
-        storemanRevokeEvent: 'revoke',
-        walletLockEvent: 'lock',
-        walletRedeemEvent: 'redeem',
-        walletRevokeEvent: 'revoke',
-        withdrawFeeEvent: 'withdrawFee'
-      }
       let action = actionMap[eventName];
       this.logger.error("sendTransaction faild, action:", action, ", and record.hashX:", this.hashX, ", will retry, this record already transRetried:", this.record.transRetried, ", max retryTimes:", retryTimes);
       this.logger.error("sendTransaction faild,  err is", err, this.hashX);
@@ -308,16 +310,6 @@ module.exports = class StateAction {
     let content = {};
     let transOnChain;
     let transConfirmed;
-
-    let actionMap = {
-      storemanLockEvent: 'lock',
-      storemanRedeemEvent: 'redeem',
-      storemanRevokeEvent: 'revoke',
-      walletLockEvent: 'lock',
-      walletRedeemEvent: 'redeem',
-      walletRevokeEvent: 'revoke',
-      withdrawFeeEvent: 'withdrawFee'
-    }
 
     // let blockNumMap = {
     //   storemanLockTxHash: 'storemanLockTxBlockNumber',
@@ -530,7 +522,7 @@ module.exports = class StateAction {
           delete global[usedNonce][storemanAddr][nonce];
         }
 
-        this.logger.debug("getNonce reset usedNonce pool ", storemanAddr, "to clear the nonce", global.nonce[this.hashX + action], "for hashX: ", this.hashX);
+        this.logger.debug("clearUsedNonce for getNonce : reset usedNonce pool ", storemanAddr, "to clear the nonce", global.nonce[this.hashX + action], "for hashX: ", this.hashX);
 
         delete global.nonce[this.hashX + action];
         delete global.nonce[this.hashX + "NoncePending"];
@@ -550,9 +542,10 @@ module.exports = class StateAction {
         } else {
           storemanAddr = global.config.crossTokens[this.crossChain].CONF.storemanWan;
         }
-        this.logger.warn("getNonce reset noncePending pool ", storemanAddr, "to add the nonce", global.nonce[this.hashX + action], "for hashX: ", this.hashX);
-
+        this.logger.warn("addPendingNonce for getNonce : reset noncePending pool ", storemanAddr, "to add the nonce", global.nonce[this.hashX + action], "for hashX: ", this.hashX);
         global[transOnChain.toLowerCase() + 'NoncePending'][storemanAddr].add(global.nonce[this.hashX + action]);
+
+        this.logger.debug("addPendingNonce for getNonce : reset usedNonce pool ", storemanAddr, "to clear the nonce", global.nonce[this.hashX + action], "for hashX: ", this.hashX);
         delete global[transOnChain.toLowerCase() + 'UsedNonce'][storemanAddr][global.nonce[this.hashX + action]];
 
         delete global.nonce[this.hashX + action];
