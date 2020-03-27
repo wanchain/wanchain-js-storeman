@@ -145,6 +145,7 @@ module.exports = class BaseAgent {
         this.logger.debug(storemanAddress, 'getNonce:', chainNonce, global[chainNonce][storemanAddress],
           nonceRenew, global[nonceRenew][storemanAddress], noncePending, global[noncePending][storemanAddress],
           usedNonce, Object.keys(global[usedNonce][storemanAddress]),
+          "transNonceRenew", global.nonce[this.hashKey + 'NonceRenew'], "transNoncePending", global.nonce[this.hashKey + 'NoncePending'],
           "at hashX: ", this.hashKey, "while current nonce is", global.nonce[this.hashKey + action], 'for action', action);
         global[chainMutex][storemanAddress] = true;
 
