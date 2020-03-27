@@ -189,6 +189,10 @@ module.exports = class BaseAgent {
             nonce = parseInt(nonce, 16);
             // to avoid lower nonce issue, if it's lower nonce, update nonce
             nonce = Math.max(nonce, global.nonce[this.hashKey + action]);
+            if (global[usedNonce][storemanAddress].hasOwnProperty(nonce) &&
+            global.nonce[global[usedNonce][storemanAddress][nonce].hashX + global[usedNonce][storemanAddress][nonce].action] === nonce) {
+              nonce = global.nonce[this.hashKey + action];
+            }
             // if (nonce !== global.nonce[this.hashKey + action]) {
               this.logger.warn("getNonce reset NoncePending false at hashX: ", this.hashKey, "oldNonce is ", global.nonce[this.hashKey + action], "while renew nonce is", nonce);
             // }
