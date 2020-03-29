@@ -423,6 +423,7 @@ module.exports = class StateAction {
               transConfirmed: 0,
               transRetried: 0
             }
+            this.clearUsedNonce(actionMap[eventName]);
             break;
           } else {
             if (txHashArray.indexOf(txHash) === (txHashArray.length - 1)) {
@@ -431,11 +432,11 @@ module.exports = class StateAction {
                 transConfirmed: 0,
                 transRetried: 0
               }
+              this.clearUsedNonce(actionMap[eventName]);
               let failReason = 'txHash receipt is 0x0! Cannot find ' + eventName;
               await this.updateFailReason(actionMap[eventName], failReason);
             }
           }
-          this.clearUsedNonce(actionMap[eventName]);
         } else {
           if (txHashArray.indexOf(txHash) === (txHashArray.length - 1)) {
             if (this.record.transConfirmed < confirmTimes) {
