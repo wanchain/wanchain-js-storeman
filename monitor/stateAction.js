@@ -52,6 +52,12 @@ module.exports = class StateAction {
   async updateRecord(content) {
     if (content.hasOwnProperty('status')) {
       this.state = content.status;
+      // need to release the nonce from usedNonce to pendingNonce, for fail status
+      if (this.state === 'transIgnored') {
+        this.addPendingNonce('lock');
+      } else if (this.state === 'transIgnored') {
+        this.addPendingNonce('redeem');
+      }
     }
     this.logger.info("********************************** updateRecord ********************************** hashX:", this.hashX, "content:", content);
     await this.modelOps.syncSave(this.hashX, content);
@@ -184,7 +190,7 @@ module.exports = class StateAction {
           status: nextState[1],
           transConfirmed: 0
         }
-        this.clearUsedNonce(actionMap[eventName]);
+        this.addPendingNonce(actionMap[eventName]);
         await this.updateRecord(content);
         return;
       }
@@ -356,6 +362,7 @@ module.exports = class StateAction {
             transConfirmed: 0,
             transRetried: 0
           }
+          this.addPendingNonce(actionMap[eventName]);
           await this.updateFailReason(actionMap[eventName], "exceed retryTimes");
           await this.updateRecord(content);
           return;
@@ -416,7 +423,6 @@ module.exports = class StateAction {
               transConfirmed: 0,
               transRetried: 0
             }
-            this.clearUsedNonce(actionMap[eventName]);
             break;
           } else {
             if (txHashArray.indexOf(txHash) === (txHashArray.length - 1)) {
@@ -429,6 +435,7 @@ module.exports = class StateAction {
               await this.updateFailReason(actionMap[eventName], failReason);
             }
           }
+          this.clearUsedNonce(actionMap[eventName]);
         } else {
           if (txHashArray.indexOf(txHash) === (txHashArray.length - 1)) {
             if (this.record.transConfirmed < confirmTimes) {
