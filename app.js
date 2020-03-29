@@ -407,7 +407,8 @@ async function splitEvent(chainType, crossChain, tokenType, events) {
           resolve();
           return;
         } else {
-          content = crossAgent.getDecodeEventDbData(chainType, crossChain, tokenType, decodeEvent, event, lockedTime);
+          crossAgent.setModelOps(modelOps);
+          content = await crossAgent.getDecodeEventDbData(chainType, crossChain, tokenType, decodeEvent, event, lockedTime);
         }
 
         if (content !== null) {

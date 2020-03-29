@@ -94,6 +94,10 @@ module.exports = class BaseAgent {
     }
   }
 
+  setModelOps(modelOps) {
+    this.modelOps = modelOps;
+  }
+
   setKey(key) {
     this.key = key;
   }
@@ -686,7 +690,7 @@ module.exports = class BaseAgent {
     }
   }
 
-  getDecodeEventDbData(chainType, crossChain, tokenType, decodeEvent, event, lockedTime) {
+  async getDecodeEventDbData(chainType, crossChain, tokenType, decodeEvent, event, lockedTime) {
     let content = {};
     let args = this.getDecodeCrossHashX(decodeEvent.args);
     let eventName = decodeEvent.event;
@@ -706,6 +710,11 @@ module.exports = class BaseAgent {
 
     let hashX = args.xHash;
     let storeman;
+
+    let option = {
+      hashX : hashX
+    };
+    let recordInDb = await this.modelOps.getEventHistory(option);
 
     try {
       //Event: wallet revoke(in/out), [ schnorr: wallet redeem(out), storeman redeem(in/out), storeman revoke(in) ]don't have storeman
@@ -756,18 +765,24 @@ module.exports = class BaseAgent {
           content.isDebt = true;
           this.isDebt = true;
         }
-        this.logger.debug("********************************** 1: found new wallet lock transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+        if (recordInDb.length === 0 || recordInDb[0].walletLockEvent.length === 0) {
+          this.logger.debug("********************************** 1: found new wallet lock transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+        }
       } else if ((eventName === this.depositEvent[0] && chainType === 'WAN') ||
         (eventName === this.withdrawEvent[0] && chainType !== 'WAN') ||
         (eventName === this.debtEvent[0] && chainType === 'WAN')) {
-        this.logger.debug("********************************** 2: found storeman lock transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+          if (recordInDb.length === 0 || recordInDb[0].storemanLockEvent.length === 0) {
+            this.logger.debug("********************************** 2: found storeman lock transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+          }
         content = {
           storemanLockEvent: event
         };
       } else if ((eventName === this.depositEvent[1] && chainType === 'WAN') ||
         (eventName === this.withdrawEvent[1] && chainType !== 'WAN') ||
         (eventName === this.debtEvent[1] && chainType === 'WAN')) {
-        this.logger.debug("********************************** 3: found wallet redeem transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+          if (recordInDb.length === 0 || recordInDb[0].walletRedeemEvent.length === 0) {
+            this.logger.debug("********************************** 3: found wallet redeem transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+          }
         content = {
           x: args.x,
           walletRedeemEvent: event
@@ -775,21 +790,27 @@ module.exports = class BaseAgent {
       } else if ((eventName === this.depositEvent[1] && chainType !== 'WAN') ||
         (eventName === this.withdrawEvent[1] && chainType === 'WAN') ||
         (eventName === this.debtEvent[1] && chainType !== 'WAN')) {
-        this.logger.debug("********************************** 4: found storeman redeem transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+          if (recordInDb.length === 0 || recordInDb[0].storemanRedeemEvent.length === 0) {
+            this.logger.debug("********************************** 4: found storeman redeem transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+          }
         content = {
           storemanRedeemEvent: event
         };
       } else if ((eventName === this.depositEvent[2] && chainType !== 'WAN') ||
         (eventName === this.withdrawEvent[2] && chainType === 'WAN') ||
         (eventName === this.debtEvent[2] && chainType !== 'WAN')) {
-        this.logger.debug("********************************** 5: found wallet revoke transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+          if (recordInDb.length === 0 || recordInDb[0].walletRevokeEvent.length === 0) {
+            this.logger.debug("********************************** 5: found wallet revoke transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+          }
         content = {
           walletRevokeEvent: event,
         };
       } else if ((eventName === this.depositEvent[2] && chainType === 'WAN') ||
         (eventName === this.withdrawEvent[2] && chainType !== 'WAN') ||
         (eventName === this.debtEvent[2] && chainType === 'WAN')) {
-        this.logger.debug("********************************** 6: found storeman revoke transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+          if (recordInDb.length === 0 || recordInDb[0].storemanRevokeEvent.length === 0) {
+            this.logger.debug("********************************** 6: found storeman revoke transaction ********************************** hashX", hashX, " on Chain:", chainType, " isDebt:", this.isDebt);
+          }
         content = {
           storemanRevokeEvent: event
         };
