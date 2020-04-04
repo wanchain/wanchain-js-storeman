@@ -5,6 +5,7 @@ let password = 'PW5HzVg1haAHL5cBPC47TKfLUCZ8svNF27rQPmH6JFp8vQS9MBmAD';
 
 wallet = 'aaron';
 password = 'PW5Jv45rNbTgfb7ui7ew4Rv81hsQwhuaQpfEtCzGy2YWG6arUk5xy';
+password = 'PW5J9o1BoUtnETLfvGzHW5izvQiVjuBPbWN1g5Uk11wuDQse2YQCh';
 
 // keosd --plugin eosio::wallet_api_plugin --http-server-address 0.0.0.0:9999
 
@@ -231,13 +232,13 @@ try {
   keosd.unlock(wallet, password, (err, result) => {
     if (err) {
       console.log("unlock.error:", err);
-      reject(err);
+      // reject(err);
     } else {
       console.log("unlock:", result);
       keosd.get_public_keys(async (err, pubKeys) => {
         if (err) {
           console.log("get_public_keys.error:", err);
-          reject(err);
+          // reject(err);
         } else {
           console.log("get_public_keys:", pubKeys);
           try {
@@ -327,6 +328,7 @@ try {
               trans.ref_block_num= refBlock.block_num & 0xffff;
               trans.ref_block_prefix= refBlock.ref_block_prefix;
               trans.actions = await api.serializeActions(trans.actions);
+              console.log("transaction is:", trans);
 
               let requireKeys = await api.rpc.getRequiredKeys({transaction: trans, availableKeys: pubKeys});
               console.log("getRequiredKeys:", requireKeys);
@@ -337,7 +339,7 @@ try {
                 keosd.sign_transaction(trans, requireKeys, chainId, async (err, signTx) => {
                   if (err) {
                     console.log("sign_transaction.error:", err);
-                    reject(err);
+                    // reject(err);
                   } else {
                     console.log("sign_transaction:", signTx);
                     signed_tx = {
