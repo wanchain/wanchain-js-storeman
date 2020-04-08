@@ -10,29 +10,33 @@ var net = require('net');
 
 module.exports = class mpc {
   constructor() {
-    // this.pk = pk;
-    // this.hashX = hashX;
-    // this.data = this.encode(mpcSignData);
-    // this.signData = {
-    //   pk: this.pk,
-    //   data: data
-    // }
-    // global.monitorLogger.debug("********************************** mpc signData **********************************", this.signData, "hashX:", this.hashX);
-
-    this.mpcWeb3 = new Web3();
-
-    // let config = global.config;
-    // if (config.mpcUrl.indexOf("http://") !== -1) {
-    //   this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(config.mpcUrl));
+    // this.mpcWeb3 = new Web3();
+    // if (global.mpcUrl.indexOf("http://") !== -1) {
+    //   this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(global.mpcUrl));
     // } else {
-    //   this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(config.mpcUrl, net));
+    //   this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(global.mpcUrl, net));
     // }
-    if (global.mpcUrl.indexOf("http://") !== -1) {
-      this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(global.mpcUrl));
-    } else {
-      this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(global.mpcUrl, net));
-    }
+    this.mpcWeb3 = this.getClient(global.mpcUrl);
     web3Mpc.extend(this.mpcWeb3);
+  }
+
+  getClient(nodeUrl) {
+    let client;
+    if (nodeUrl.indexOf("http://") !== -1) {
+      client = new Web3()
+      client.setProvider(new Web3.providers.HttpProvider(nodeUrl));
+    } else {
+      if (global.ipcSchnorrClient && global.ipcSchnorrClient.isConnected()) {
+        console.log("use existed client");
+        client = global.ipcSchnorrClient;
+      } else {
+        console.log("create new client");
+        client = new Web3()
+        client.setProvider(new Web3.providers.IpcProvider(nodeUrl, net));
+        global.ipcSchnorrClient = client;
+      }
+    }
+    return client;
   }
 
   setHashX(hashX) {
