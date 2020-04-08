@@ -9,7 +9,38 @@ var net = require('net');
 // } = require('comm/lib');
 
 module.exports = class mpc {
-  constructor(trans, chainType, chainId, hashX) {
+  constructor() {
+    // let config = global.config;
+    // this.mpcWeb3 = new Web3();
+    // if (config.mpcUrl.indexOf("http://") !== -1) {
+    //   this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(config.mpcUrl));
+    // } else {
+    //   this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(config.mpcUrl, net));
+    // }
+    this.mpcWeb3 = this.getClient(global.mpcUrl);
+    web3Mpc.extend(this.mpcWeb3);
+  }
+
+  getClient(nodeUrl) {
+    let client;
+    if (nodeUrl.indexOf("http://") !== -1) {
+      client = new Web3()
+      client.setProvider(new Web3.providers.HttpProvider(nodeUrl));
+    } else {
+      if (global.ipcClient && global.ipcClient.isConnected()) {
+        console.log("use existed client");
+        client = global.ipcClient;
+      } else {
+        console.log("create new client");
+        client = new Web3()
+        client.setProvider(new Web3.providers.IpcProvider(nodeUrl, net));
+        global.ipcClient = client;
+      }
+    }
+    return client;
+  }
+
+  setTx(trans, chainType, chainId) {
     this.sendTxArgs = {
       From: trans.from,
       To: trans.to,
@@ -21,17 +52,12 @@ module.exports = class mpc {
       ChainType: chainType,
       ChainID: '0x' + chainId.toString(16)
     };
-    this.hashX = hashX;
-    global.monitorLogger.debug(this.sendTxArgs);
 
-    let config = global.config;
-    this.mpcWeb3 = new Web3();
-    if (config.mpcUrl.indexOf("http://") !== -1) {
-      this.mpcWeb3.setProvider(new Web3.providers.HttpProvider(config.mpcUrl));
-    } else {
-      this.mpcWeb3.setProvider(new Web3.providers.IpcProvider(config.mpcUrl, net));
-    }
-    web3Mpc.extend(this.mpcWeb3);
+    global.monitorLogger.debug(this.sendTxArgs);
+  }
+
+  setHashX(hashX) {
+    this.hashX = hashX;
   }
 
   signViaMpc() {

@@ -243,7 +243,10 @@ module.exports = class BaseAgent {
       if (this.isLeader) {
         let chainId = await this.chain.getNetworkId();
         if(this.mpcSignature && !this.schnorrMpc) {
-          let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
+          let mpc = new MPC();
+          mpc.setHashX(this.hashKey);
+          mpc.setTx(this.trans.txParams, this.chain.chainType, chainId);
+
           rawTx = await mpc.signViaMpc();
           this.logger.info("********************************** sendTransaction signViaMpc ********************************** hashX", this.hashKey, rawTx);
         } else {
@@ -281,7 +284,9 @@ module.exports = class BaseAgent {
     return new Promise(async (resolve, reject) => {
       try {
         let chainId = await this.chain.getNetworkId();
-        let mpc = new MPC(this.trans.txParams, this.chain.chainType, chainId, this.hashKey);
+        let mpc = new MPC();
+        mpc.setHashX(this.hashKey);
+        mpc.setTx(this.trans.txParams, this.chain.chainType, chainId);
 
         mpc.addValidMpcTx();
         resolve();

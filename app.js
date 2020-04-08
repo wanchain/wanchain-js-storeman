@@ -954,7 +954,9 @@ async function main() {
         await withdrawFee(global.monitorLogger);
       }
     } else {
-      syncMpcRequest(global.mpcLogger, db);
+      if (moduleConfig.mpcSignature) {
+        syncMpcRequest(global.mpcLogger, db);
+      }
     }
   }
 
