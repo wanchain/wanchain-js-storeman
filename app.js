@@ -173,14 +173,11 @@ global.config = loadConfig();
 
 const mongoose = require('mongoose');
 const ModelOps = require('db/modelOps');
-// const TokenCrossAgent = require("agent/Erc20CrossAgent.js");
-// const EthCrossAgent = require("agent/EthCrossAgent.js");
-// const EosCrossAgent = require("agent/EosCrossAgent.js");
 
 const EthAgent = require("agent/EthAgent.js");
 const EosAgent = require("agent/EosAgent.js");
 const WanAgent = require("agent/WanAgent.js");
-// const StateAction = require("monitor/monitor.js");
+
 const NormalCross = require("monitor/normalCross.js");
 const Debt = require("monitor/debt.js");
 const WithdrawFee = require("monitor/withdrawFee.js");
@@ -194,10 +191,6 @@ global.storemanRenew = false;
 let firstSyncDone = false;
 
 global.agentDict = {
-  // ETH: {
-  //   COIN: EthCrossAgent,
-  //   Token: TokenCrossAgent
-  // },
   ETH: EthAgent,
   EOS: EosAgent,
   WAN: WanAgent
