@@ -1,7 +1,7 @@
 "use strict"
 
 let ethTx = require('ethereumjs-tx');
-let keyStore = require("utils/keyStore.js");
+let keyStore = require("../utils/keyStore.js");
 
 module.exports = class EthRawTrans {
 	constructor(from, to, gas, gasPrice, nonce, value) {

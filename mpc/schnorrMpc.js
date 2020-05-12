@@ -76,8 +76,13 @@ module.exports = class mpc {
       try {
         this.mpcWeb3.storeman.signData(this.signData, (err, result) => {
           if (!err) {
-            global.monitorLogger.debug("********************************** mpc signData successfully **********************************", result, "hashX:", this.hashX);
-            resolve(result);
+              if(result.ResultType == 0){
+                  global.monitorLogger.debug("********************************** mpc signData successfully **********************************", result, "hashX:", this.hashX);
+                  resolve(result);
+                  //todo write incentive data to metric contract
+              }else{
+                  //todo write slash proof
+              }
           } else {
             global.monitorLogger.error("********************************** mpc signData failed **********************************", err, "hashX:", this.hashX);
             reject(err);

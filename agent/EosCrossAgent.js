@@ -1,5 +1,11 @@
 "use strict"
-
+const {
+    loadConfig,
+    getGlobalChain,
+    generateKey,
+    sha256,
+    sleep
+} = require('comm/lib');
 const {
   getGlobalChain,
   encodeAccount,

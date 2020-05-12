@@ -1,6 +1,6 @@
 "use strict"
 
-const EthRawTrans = require('trans/EthRawTrans.js');
+const EthRawTrans = require('./EthRawTrans.js');
 let wanUtil = require('wanchain-util');
 
 module.exports = class WanRawTrans extends EthRawTrans {
