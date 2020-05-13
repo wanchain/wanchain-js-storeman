@@ -667,7 +667,7 @@ const metricAbi = [
 const abiMap = {
     "CreateGpk": createGpkAbi,
     "Mortgage": mortgageAbi,
-    "Metric":metricAbi
+    "Metric": metricAbi
 };
 
 let metricCfg = {};

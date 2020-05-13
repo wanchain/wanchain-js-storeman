@@ -27,9 +27,9 @@
     "node-fetch": "^2.6.0",
     "optimist": "^0.6.1",
     "request": "^2.88.0",
-    "solc": "^0.4.24",
+    "solc": "^0.4.26",
     "wanchain-util": "^1.2.0",
-    "web3": "^0.20",
+    "web3": "^0.20.7",
     "winston": "^3.0.0",
     "winston-daily-rotate-file": "^3.3.2",
     "winston-syslog": "^2.0.0"

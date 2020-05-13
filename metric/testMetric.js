@@ -2,10 +2,10 @@
 
 const {getIncntSlshWriter} = require('./incntSlshWriter');
 
-const xHashInct  = '0xec4916dd28fc4c10d78e287ca5d9cc51ee1ae73cbfde08c6b37324cbfaac8bc5';
-const xRNW       = '0x0000000000000000000000000000000000000000000000000000000000000002';
+const xHashInct = '0xec4916dd28fc4c10d78e287ca5d9cc51ee1ae73cbfde08c6b37324cbfaac8bc5';
+const xRNW = '0x0000000000000000000000000000000000000000000000000000000000000002';
 
-function test(){
+function test() {
     // let isw = getIncntSlshWriter();
     // isw.run();
 
@@ -36,8 +36,8 @@ function test(){
         SSlsh: null
     }
 
-    global.incntSlshWriter.handleInctSlsh(xHashInct,incSr);
-    global.incntSlshWriter.handleInctSlsh(xRNW,slshSr);
+    global.incntSlshWriter.handleInctSlsh(xHashInct, incSr);
+    global.incntSlshWriter.handleInctSlsh(xRNW, slshSr);
 
 }
 

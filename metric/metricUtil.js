@@ -1,7 +1,7 @@
 "use strict"
 const {metricCfg, abiMap} = require('./conf/metric');
 const Web3 = require('web3');
-
+let web3 = new Web3();
 async function getCommonData() {
     let from;
     let to;
@@ -14,40 +14,64 @@ async function getCommonData() {
         try {
             from = metricCfg.selfAddress;
             to = metricCfg.contractAddress.metric;
-            gas = metricCfg.gasLimit;
-            gasPrice = metricCfg.gasPrice;
+            //gas = metricCfg.gasLimit;
+            gas = web3.toBigNumber(metricCfg.gasLimit);
+            //gasPrice = metricCfg.gasPrice;
+            gasPrice = web3.toBigNumber(metricCfg.gasPrice);
             amount = 0x0;
-            // nonce = await getNonceByWeb3(from);
-            resolve([from,to,gas,gasPrice,nonce,amount]);
+            nonce = await getNonceByWeb3(from);
+            resolve([from, to, gas, gasPrice, nonce, amount]);
         } catch (err) {
-            console.log("getCommonData failed", err);
+            //console.log("getCommonData failed", err);
+            console.log("getCommonData failed");
             reject(err);
         }
     });
 }
 
 async function getNonceByWeb3(addr, includePendingOrNot = true) {
-    let web3 = new Web3(metricCfg.wanNodeURL);
+    console.log(">>>>>>>>>>>>>>Entering getNonceByWeb3");
+    console.log(">>>>>>>>>>>>>>metricCfg.wanNodeURL",metricCfg.wanNodeURL);
+
+    let web3 = new Web3(new Web3.providers.HttpProvider(metricCfg.wanNodeURL));
+    console.log(">>>>>>>>>>>>>web3.version.api ",web3.version.api);
     let nonce;
     return new Promise(function (resolve, reject) {
-        if (includePendingOrNot) {
-            web3.eth.getTransactionCount(addr, 'pending', function (err, result) {
-                if (!err) {
-                    nonce = '0x' + result.toString(16);
-                    resolve(nonce);
-                } else {
+
+        try{
+            if (includePendingOrNot) {
+
+                try{
+                    web3.eth.getTransactionCount(addr, 'pending', function (err, result) {
+                        if (!err) {
+                            nonce = '0x' + result.toString(16);
+                            resolve(nonce);
+                        } else {
+                            reject(err);
+                        }
+                    })
+                }catch(err){
+                    reject(err)
+                }
+
+            } else {
+                try{
+                    web3.eth.getTransactionCount(addr, function (err, result) {
+                        if (!err) {
+                            nonce = '0x' + result.toString(16);
+                            resolve(nonce);
+                        } else {
+                            reject(err);
+                        }
+                    })
+                }catch(err){
                     reject(err);
                 }
-            })
-        } else {
-            web3.eth.getTransactionCount(addr, function (err, result) {
-                if (!err) {
-                    nonce = '0x' + result.toString(16);
-                    resolve(nonce);
-                } else {
-                    reject(err);
-                }
-            })
+
+            }
+        }catch(err){
+            console.log("Entering getNonceByWeb3 try catch");
+           reject(err);
         }
     })
 };

@@ -30,36 +30,44 @@ class IncntSlshWriter {
 
 
     enQueue(xHash, signedResult) {
-        this.lockMutex(this.mutexMetric);
+        this.lockMutex();
         this.tasks.unshift({xHash: xHash, signedResult: signedResult});
-        this.unlockMutex(this.mutexMetric);
+        this.unlockMutex();
     }
 
     popQueue() {
-        this.lockMutex(this.mutexMetric);
-        let task = this.tasks.pop();
-        this.unlockMutex(this.mutexMetric);
+        let task = null;
+        //this.lockMutex(this.mutexMetric);
+        this.lockMutex();
+        if (this.tasks.length > 0){
+            task = this.tasks.pop();
+        }
+        this.unlockMutex();
         return task;
     }
 
-    lockMutex(mutex) {
+    lockMutex() {
         while (this.mutexMetric) {
             sleep(3);
-        }
-        ;
+        };
         this.mutexMetric = true
     }
 
-    unlockMutex(mutex) {
+    unlockMutex() {
         this.mutexMetric = false;
     }
 
     run() {
         setInterval(() => {
+            console.log("--------------------------------setInterval :: popQueue---------------------");
             let task = this.popQueue();
-            this.procSignedResult(task).catch((err) => {
-                this.enQueue(task);
-            })
+            if (task != null){
+                console.log("task :",task);
+                this.procSignedResult(task).catch((err) => {
+                    console.log("--------------------------------setInterval :: enQueue---------------------");
+                    this.enQueue(task.xHash,task.signedResult);
+                })
+            }
         }, 1000)
     }
 
@@ -90,24 +98,35 @@ class IncntSlshWriter {
                             let mt = new MetricTrans(...commoneInfo);
                             mt.setData(oneProofData);
 
-                            console.log("metricCfg.keystore.pwd",metricCfg.keystore.pwd);
-                            console.log("metricCfg.keystore.path",metricCfg.keystore.path);
+                            console.log("metricCfg.keystore.pwd", metricCfg.keystore.pwd);
+                            console.log("metricCfg.keystore.path", metricCfg.keystore.path);
 
                             // get privateKey
-                            let prvKey = KeyStore.getPrivateKeyByKsPath(metricCfg.selfAddress,metricCfg.keystore.pwd, metricCfg.keystore.path);
+                            let prvKey = KeyStore.getPrivateKeyByKsPath(metricCfg.selfAddress, metricCfg.keystore.pwd, metricCfg.keystore.path);
                             //let signedRawTx = mt.signFromKeystore(metricCfg.keystore.pwd, metricCfg.keystore.path);
                             let signedRawTx = mt.sign(prvKey);
-                            console.log("<<<<<<<<signedRawTx is "+signedRawTx);
+                            console.log("<<<<<<<<signedRawTx is " + signedRawTx);
                             //todo handle error.
-                            mt.sendSignedRawTrans(signedRawTx);
-                            resolve();
-
+                            mt.sendSignedRawTrans(signedRawTx)
+                                .then((result)=>{
+                                    console.log("---------------------------sendTrans successfully------------ txHash",result);
+                                    resolve(result);
+                                })
+                                .catch((err)=>{
+                                    console.log("---------------------------sendTrans failed------------ err", err);
+                                    reject(err);
+                                });
+                            //resolve();
                         })
                         .catch((err) => {
+                            console.log("--------------------------------error procSignedResult :: getCommonData---------------------");
+                            reject(err);
                             throw err;
                         });
 
+
                 } catch (err) {
+                    console.log("--------------------------------error procSignedResult :: try catch---------------------");
                     reject(err);
                     console.log(err);
                 }

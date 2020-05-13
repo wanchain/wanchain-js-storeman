@@ -4,11 +4,12 @@ const {metricCfg, abiMap} = require('./conf/metric');
 
 let Contract = require("../contract/Contract");
 
-module.exports = class MetricContract extends Contract{
-    constructor(abi, address){
+module.exports = class MetricContract extends Contract {
+    constructor(abi, address) {
         //console.log(">>>>>Abi:",abi);
         super(abi, address);
     }
+
     // -1: internal error
     // 0: success
     // 1: rNW
@@ -22,10 +23,10 @@ module.exports = class MetricContract extends Contract{
     // 4.	wrRSlshPolyCM 	wrRSlshPolyData
     // 5.	wrSSlshShare 		wrSSlshPolyPln
 
-    buildData(task){
+    buildData(task) {
 
-        console.log("xHash = "+ task.xHash);
-        console.log("signedResult = "+ task.signedResult);
+        console.log("xHash = " + task.xHash);
+        console.log("signedResult = " + task.signedResult);
 
         let xHash = task.xHash;
         let signedResult = task.signedResult;
@@ -36,18 +37,18 @@ module.exports = class MetricContract extends Contract{
 
         let retData = [];
         console.log("begin build functionNames and parameters.");
-        switch(signedResult.ResultType){
+        switch (signedResult.ResultType) {
             case 0:
                 functionNames.push("wrInct");
-                parameters.push([signedResult.GrpId,xHash,signedResult.IncntData]);
+                parameters.push([signedResult.GrpId, xHash, signedResult.IncntData]);
                 break;
             case 1:
                 functionNames.push("wrRNW");
-                parameters.push([signedResult.GrpId,xHash,signedResult.RNW]);
+                parameters.push([signedResult.GrpId, xHash, signedResult.RNW]);
                 break;
             case 2:
                 functionNames.push("wrSNW");
-                parameters.push([signedResult.GrpId,xHash,signedResult.SNW]);
+                parameters.push([signedResult.GrpId, xHash, signedResult.SNW]);
                 break;
             case 3:
                 functionNames.push("wrRSlshPolyCM");
@@ -61,11 +62,11 @@ module.exports = class MetricContract extends Contract{
 
                 functionNames.push("wrRSlshPolyData");
                 parameters.push([signedResult.GrpId,
-                        xHash,
-                        signedResult.sndrAndRcvrIndex,
-                        signedResult.becauseSndr,
-                        signedResult.polyData,
-                        signedResult.polyDataR,
+                    xHash,
+                    signedResult.sndrAndRcvrIndex,
+                    signedResult.becauseSndr,
+                    signedResult.polyData,
+                    signedResult.polyDataR,
                     signedResult.polyDataS]);
 
                 break;
@@ -97,14 +98,14 @@ module.exports = class MetricContract extends Contract{
         console.log("End build functionNames and parameters.");
 
         console.log("Begin build customer data by functioNames and parameters.");
-        for(let i= 0; i<functionNames.length;i++){
+        for (let i = 0; i < functionNames.length; i++) {
 
-            console.log("functionNames "+ functionNames[i]);
-            for(let j= 0; j<parameters[i].length;j++){
-                console.log(">>>>>>>>>>>>parameters "+ parameters[i][j]);
+            console.log("functionNames " + functionNames[i]);
+            for (let j = 0; j < parameters[i].length; j++) {
+                console.log(">>>>>>>>>>>>parameters " + parameters[i][j]);
             }
-            let dataTmp = this.constructData(functionNames[i],...parameters[i]);
-            console.log(">>>>>data built is :",dataTmp);
+            let dataTmp = this.constructData(functionNames[i], ...parameters[i]);
+            console.log(">>>>>data built is :", dataTmp);
             retData.push(dataTmp);
         }
         console.log("End build customer data by functioNames and parameters.");
