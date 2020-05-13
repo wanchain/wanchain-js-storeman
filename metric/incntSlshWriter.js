@@ -3,6 +3,7 @@
 const {metricCfg, abiMap} = require('./conf/metric');
 const MetricContract = require('./metricContract');
 let MetricTrans = require('../trans/metricTrans');
+let KeyStore = require('../utils/keyStore');
 
 let {getCommonData} = require('./metricUtil');
 
@@ -92,7 +93,11 @@ class IncntSlshWriter {
                             console.log("metricCfg.keystore.pwd",metricCfg.keystore.pwd);
                             console.log("metricCfg.keystore.path",metricCfg.keystore.path);
 
-                            let signedRawTx = mt.signFromKeystore(metricCfg.keystore.pwd, metricCfg.keystore.path);
+                            // get privateKey
+                            let prvKey = KeyStore.getPrivateKeyByKsPath(metricCfg.selfAddress,metricCfg.keystore.pwd, metricCfg.keystore.path);
+                            //let signedRawTx = mt.signFromKeystore(metricCfg.keystore.pwd, metricCfg.keystore.path);
+                            let signedRawTx = mt.sign(prvKey);
+                            console.log("<<<<<<<<signedRawTx is "+signedRawTx);
                             //todo handle error.
                             mt.sendSignedRawTrans(signedRawTx);
                             resolve();
