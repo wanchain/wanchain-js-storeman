@@ -16,5 +16,18 @@ exports.keystore = {
     pwd: '123456',
 };
 
+
 exports.gasPrice = 1000000000;
 exports.gasLimit = 470000;
+
+
+exports.filter = {
+    fromBlk: '123456',
+    address: contractAddress.createGpk,
+};
+
+exports.regGrpEvtName = 'GpkCreatedLogger';
+exports.unregGrpEvtName = 'GpkCreatedLogger';
+
+exports.grpInfoOutPath = '/home/jacob';
+exports.grpInfoFileName = 'grpInfo.json';

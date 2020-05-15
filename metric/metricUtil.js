@@ -2,6 +2,7 @@
 const {metricCfg, abiMap} = require('./conf/metric');
 const Web3 = require('web3');
 let web3 = new Web3();
+
 async function getCommonData() {
     let from;
     let to;
@@ -31,17 +32,17 @@ async function getCommonData() {
 
 async function getNonceByWeb3(addr, includePendingOrNot = true) {
     console.log(">>>>>>>>>>>>>>Entering getNonceByWeb3");
-    console.log(">>>>>>>>>>>>>>metricCfg.wanNodeURL",metricCfg.wanNodeURL);
+    console.log(">>>>>>>>>>>>>>metricCfg.wanNodeURL", metricCfg.wanNodeURL);
 
     let web3 = new Web3(new Web3.providers.HttpProvider(metricCfg.wanNodeURL));
-    console.log(">>>>>>>>>>>>>web3.version.api ",web3.version.api);
+    console.log(">>>>>>>>>>>>>web3.version.api ", web3.version.api);
     let nonce;
     return new Promise(function (resolve, reject) {
 
-        try{
+        try {
             if (includePendingOrNot) {
 
-                try{
+                try {
                     web3.eth.getTransactionCount(addr, 'pending', function (err, result) {
                         if (!err) {
                             nonce = '0x' + result.toString(16);
@@ -50,12 +51,12 @@ async function getNonceByWeb3(addr, includePendingOrNot = true) {
                             reject(err);
                         }
                     })
-                }catch(err){
+                } catch (err) {
                     reject(err)
                 }
 
             } else {
-                try{
+                try {
                     web3.eth.getTransactionCount(addr, function (err, result) {
                         if (!err) {
                             nonce = '0x' + result.toString(16);
@@ -64,14 +65,14 @@ async function getNonceByWeb3(addr, includePendingOrNot = true) {
                             reject(err);
                         }
                     })
-                }catch(err){
+                } catch (err) {
                     reject(err);
                 }
 
             }
-        }catch(err){
+        } catch (err) {
             console.log("Entering getNonceByWeb3 try catch");
-           reject(err);
+            reject(err);
         }
     })
 };

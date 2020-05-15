@@ -39,7 +39,7 @@ class IncntSlshWriter {
         let task = null;
         //this.lockMutex(this.mutexMetric);
         this.lockMutex();
-        if (this.tasks.length > 0){
+        if (this.tasks.length > 0) {
             task = this.tasks.pop();
         }
         this.unlockMutex();
@@ -49,7 +49,8 @@ class IncntSlshWriter {
     lockMutex() {
         while (this.mutexMetric) {
             sleep(3);
-        };
+        }
+        ;
         this.mutexMetric = true
     }
 
@@ -61,11 +62,11 @@ class IncntSlshWriter {
         setInterval(() => {
             console.log("--------------------------------setInterval :: popQueue---------------------");
             let task = this.popQueue();
-            if (task != null){
-                console.log("task :",task);
+            if (task != null) {
+                console.log("task :", task);
                 this.procSignedResult(task).catch((err) => {
                     console.log("--------------------------------setInterval :: enQueue---------------------");
-                    this.enQueue(task.xHash,task.signedResult);
+                    this.enQueue(task.xHash, task.signedResult);
                 })
             }
         }, 1000)
@@ -108,11 +109,11 @@ class IncntSlshWriter {
                             console.log("<<<<<<<<signedRawTx is " + signedRawTx);
                             //todo handle error.
                             mt.sendSignedRawTrans(signedRawTx)
-                                .then((result)=>{
-                                    console.log("---------------------------sendTrans successfully------------ txHash",result);
+                                .then((result) => {
+                                    console.log("---------------------------sendTrans successfully------------ txHash", result);
                                     resolve(result);
                                 })
-                                .catch((err)=>{
+                                .catch((err) => {
                                     console.log("---------------------------sendTrans failed------------ err", err);
                                     reject(err);
                                 });
