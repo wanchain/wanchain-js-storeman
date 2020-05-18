@@ -1,19 +1,28 @@
 const path = require('path');
 
-exports.wanNodeURL = 'http://192.168.1.198:5101';
+
+let gpkAddr = '0xb9DD855dc6A9340Ea6B566A5B454202115BcF485';
+let mortgageAddr = '0x06e685F98a1087e789ade454AbB3f0033DDA8d11';
+let metricAddr = '0x8e84b41800d7915aD3fF9E6bbba434c7ca99fB95';
+
+
+//exports.wanNodeURL = 'http://192.168.1.198:5101';
+exports.wanNodeURL = 'http://192.168.1.179:7654';
 
 exports.contractAddress = {
-    createGpk: '0xb9DD855dc6A9340Ea6B566A5B454202115BcF485',
-    mortgage: '0xb9DD855dc6A9340Ea6B566A5B454202115BcF485',
-    metric: '0x8D7ADa79B4a89Bdc95653696A3A289A1E5629763',   // proxy address
+    createGpk: gpkAddr,
+    mortgage: mortgageAddr,
+    metric: metricAddr,   // proxy address
 };
 
-exports.selfAddress = "0xF74256dda89B4AF2c341A314F9549fEade0304e9";
+//exports.selfAddress = "0xF74256dda89B4AF2c341A314F9549fEade0304e9";
+exports.selfAddress = "0x2e54a80b977fd1859782e2ee96a76285a7fc75ba";
 
 exports.keystore = {
     //path: path.join(__dirname, '../keystore/0xb9DD855dc6A9340Ea6B566A5B454202115BcF485'),
-    path: '/home/jacob/mpc_test_1/data1/keystore',
-    pwd: '123456',
+    path: '/home/jacob/wanchain/openStoreman/test/keystore',
+    //pwd: '123456',
+    pwd: 'wanglu',
 };
 
 
@@ -21,13 +30,18 @@ exports.gasPrice = 1000000000;
 exports.gasLimit = 470000;
 
 
+// exports.filter = {
+//     fromBlk: '0',
+//     address: gpkAddr,
+// };
+
 exports.filter = {
-    fromBlk: '123456',
-    address: contractAddress.createGpk,
+    fromBlk: '0',
+    address: mortgageAddr,
 };
 
-exports.regGrpEvtName = 'GpkCreatedLogger';
-exports.unregGrpEvtName = 'GpkCreatedLogger';
+exports.regGrpEvtName = 'StoremanGroupRegistrationLogger';
+exports.unregGrpEvtName = 'StoremanGroupApplyUnRegistrationLogger';
 
-exports.grpInfoOutPath = '/home/jacob';
-exports.grpInfoFileName = 'grpInfo.json';
+exports.grpInfoOutPath = "/home/jacob/";
+exports.grpInfoFileName = "grpInfo.json";

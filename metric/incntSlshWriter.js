@@ -60,6 +60,7 @@ class IncntSlshWriter {
 
     run() {
         setInterval(() => {
+            console.log("\n\n\n\n\n");
             console.log("--------------------------------setInterval :: popQueue---------------------");
             let task = this.popQueue();
             if (task != null) {
@@ -90,7 +91,7 @@ class IncntSlshWriter {
                     let commoneInfo = [];
                     getCommonData()
                         .then((ret) => {
-                            console.log(">>>>>ret of getCommonData ", ret);
+                            console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>ret of getCommonData ", ret);
                             commoneInfo = ret;
 
 

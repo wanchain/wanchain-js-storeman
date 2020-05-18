@@ -2,6 +2,8 @@
 
 const Web3 = require('web3');
 const {grpBuildCfg,abiMap} = require('./conf/grpBuild');
+const TimeoutPromise = require('../utils/timeoutPromise.js');
+const Contract = require('../contract/Contract');
 
 function union(thisSet, otherSet) {
     let unionSet = new Set();
@@ -53,7 +55,7 @@ function equal(thisSet, otherSet) {
 
 //output: events
 function getScEvent(address, topics, fromBlk, toBlk, retryTimes, callback) {
-
+    console.log(">>>>>>>>>>>>>Entering getScEvent");
     let times = 0;
 
     let filterValue = {
@@ -62,7 +64,8 @@ function getScEvent(address, topics, fromBlk, toBlk, retryTimes, callback) {
         topics: topics,
         address: address
     };
-
+    console.log(">>>>>>>>>>>>>filterValue " + JSON.stringify(filterValue));
+    console.log(">>>>>>>>>>>>>wanNodeURL " + grpBuildCfg.wanNodeURL);
     let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
 
     let filter = web3.eth.filter(filterValue);
@@ -89,8 +92,12 @@ function getScEvent(address, topics, fromBlk, toBlk, retryTimes, callback) {
 
 
 function getLastBlockNumber(){
-    return new Promise((resolve, reject) =>{
+    console.log(grpBuildCfg);
+    //console.log(abiMap);
+
+    return new Promise(async (resolve, reject) =>{
         try{
+            console.log("Entering getLastBlockNumber wanNodeURL :", grpBuildCfg.wanNodeURL);
             let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
             web3.eth.getBlockNumber(async (err,blockNumber)=>{
                 if(err){
@@ -107,13 +114,16 @@ function getLastBlockNumber(){
 
 }
 
-function getTotalGrps(address, topics, fromBlk, toBlk, retryTimes) {
+function getWorkingGrps(address, topics, fromBlk, toBlk, retryTimes) {
+    console.log(">>>>>>>>>>>>>Entering getWorkingGrps");
     let self = this;
-    let abi = abiMap["CreateGpk"];
-    let contractAddr = grpBuildCfg.contractAddress.createGpk;
+    let abi = abiMap["Mortgage"];
+    let contractAddr = grpBuildCfg.contractAddress.mortgage;
 
-    return new TimeoutPromise((resolve, reject) => {
+    return new TimeoutPromise(async (resolve, reject) => {
         getScEvent(address, topics, fromBlk, toBlk, retryTimes, async (err, logs) => {
+
+            console.log(">>>>>>>>>>>>>get event log. len(log) "+ logs.length);
             if (err) {
                 log.error(err);
                 reject(err);
@@ -122,6 +132,8 @@ function getTotalGrps(address, topics, fromBlk, toBlk, retryTimes) {
                 if (logs !== null) {
                     let contract = new Contract(abi, contractAddr);
                     parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
+
+                    console.log(">>>>>>>>>>>parsedLogs ", parsedLogs);
                 }
 
                 let regGrp = new Set();
@@ -129,10 +141,10 @@ function getTotalGrps(address, topics, fromBlk, toBlk, retryTimes) {
                 let totalGrp = new Set();
 
                 for (let i of parsedLogs) {
-                    if (i && (i.event === 'GpkCreatedLogger')) {
+                    if (i && (i.event === grpBuildCfg.regGrpEvtName)) {
                         regGrp.push(i.args["grpId"]);
                     }
-                    if (i && i.event === 'GpkCreatedLogger') {
+                    if (i && i.event === grpBuildCfg.unregGrpEvtName) {
                         unRegGrp.push(i.args["grpId"]);
                     }
                 }
@@ -147,6 +159,15 @@ function getTotalGrps(address, topics, fromBlk, toBlk, retryTimes) {
 
 async function getThresholdByGrpId(grpId) {
     return new Promise(function (resolve, reject) {
+        let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
+        let myContract = new web3.eth.Contract(abiMap["Mortgage"],grpBuildCfg.contractAddress.mortgage);
+        myContract.methods.getThresholdByGrpId(grpId).call({from:grpBuildCfg.selfAddress},(err,result)=>{
+            if(err){
+                reject(err);
+            }else{
+                resolve(result);
+            }
+        });
 
     })
 };
@@ -159,6 +180,15 @@ async function getThresholdByGrpId(grpId) {
 
 async function getSelectedSmNumber(grpId) {
     return new Promise(function (resolve, reject) {
+        let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
+        let myContract = new web3.eth.Contract(abiMap["Mortgage"],grpBuildCfg.contractAddress.mortgage);
+        myContract.methods.getSelectedSmNumber(grpId).call({from:grpBuildCfg.selfAddress},(err,result)=>{
+            if(err){
+                reject(err);
+            }else{
+                resolve(result);
+            }
+        });
 
     })
 };
@@ -172,6 +202,15 @@ async function getSelectedSmNumber(grpId) {
 
 async function getSelectedSmInfo(grpId,smIndex) {
     return new Promise(function (resolve, reject) {
+        let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
+        let myContract = new web3.eth.Contract(abiMap["Mortgage"],grpBuildCfg.contractAddress.mortgage);
+        myContract.methods.getSelectedSmInfo(grpId,smIndex).call({from:grpBuildCfg.selfAddress},(err,result)=>{
+            if(err){
+                reject(err);
+            }else{
+                resolve(result);
+            }
+        });
 
     })
 };
@@ -179,6 +218,15 @@ async function getSelectedSmInfo(grpId,smIndex) {
 // IGPK
 async function getPkShareByIndex(grpId,smIndex) {
     return new Promise(function (resolve, reject) {
+        let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
+        let myContract = new web3.eth.Contract(abiMap["CreateGpk"],grpBuildCfg.contractAddress.mortgage);
+        myContract.methods.getPkShareByIndex(grpId,smIndex).call({from:grpBuildCfg.selfAddress},(err,result)=>{
+            if(err){
+                reject(err);
+            }else{
+                resolve(result);
+            }
+        });
 
     })
 };
@@ -186,6 +234,15 @@ async function getPkShareByIndex(grpId,smIndex) {
 // getGPKByGrpId
 async function getGPKByGrpId(grpId) {
     return new Promise(function (resolve, reject) {
+        let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
+        let myContract = new web3.eth.Contract(abiMap["CreateGpk"],grpBuildCfg.contractAddress.mortgage);
+        myContract.methods.getGPKByGrpId(grpId).call({from:grpBuildCfg.selfAddress},(err,result)=>{
+            if(err){
+                reject(err);
+            }else{
+                resolve(result);
+            }
+        });
 
     })
 };
@@ -195,7 +252,6 @@ module.exports ={
     intersection,
     difference,
     equal,
-    getTotalGrps,
     getLastBlockNumber,
     getWorkingGrps,
     getThresholdByGrpId,

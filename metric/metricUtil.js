@@ -30,7 +30,7 @@ async function getCommonData() {
     });
 }
 
-async function getNonceByWeb3(addr, includePendingOrNot = true) {
+async function getNonceByWeb3(addr, includePendingOrNot = false) {
     console.log(">>>>>>>>>>>>>>Entering getNonceByWeb3");
     console.log(">>>>>>>>>>>>>>metricCfg.wanNodeURL", metricCfg.wanNodeURL);
 

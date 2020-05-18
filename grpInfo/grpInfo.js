@@ -1,12 +1,11 @@
 "use strict"
 
-let fs = require("fs");
-let path = require("path");
+let fs = require('fs');
+let path = require('path');
 
 const {grpBuildCfg} = require('./conf/grpBuild');
 const {
     equal,
-    getTotalGrps,
     getLastBlockNumber,
     getWorkingGrps,
     getThresholdByGrpId,
@@ -14,7 +13,7 @@ const {
     getSelectedSmInfo,
     getPkShareByIndex,
     getGPKByGrpId
-} = require('grpInfoUtil');
+} = require('./grpInfoUtil');
 
 const Web3 = require('web3');
 
@@ -25,6 +24,7 @@ function sleep(time) {
         }, time);
     })
 }
+
 
 class GrpInfo {
     constructor() {
@@ -58,24 +58,37 @@ class GrpInfo {
     run() {
         setInterval(() => {
             this.mainLoop();
-        }, 1000)
+        }, 3000)
     }
 
-    mainLoop() {
+    async mainLoop() {
         // get all group
         // get all reg event  from block to latest (using init filter)
         // get all unreg event from block to latest
         // get the diff collection
-        let lastBlockNumber = awati
-        getLastBlockNumber();
-        this.resultGrp = await
-        getTotalGrps(grpBuildCfg.contractAddress.createGpk, [], this.filter.fromBlk, lastBlockNumber, 3);
+        console.log("------------------------------------Entering mainLoop-----------------------------");
+        let lastBlockNumber = await getLastBlockNumber();
+        console.log(">>>>>>>>>>>>>>lastBlockNumber: "+lastBlockNumber);
+        console.log(">>>>>>>>>>>>>>fromBlkNumber: "+this.filter.fromBlk);
+        this.resultGrp = await getWorkingGrps(grpBuildCfg.contractAddress.mortgage, [], this.filter.fromBlk, lastBlockNumber, 3);
         // build grpInfo.json
         if (equal(this.resultGrp, this.preResultGrp)) {
             //todo no change grp, do nothing.
         } else {
-            let fileContent = this.buildGrpInfo(this.resultGrp);
-            this.writeGrpInfoFile(fileContent, path.join(grpBuildCfg.grpInfoOutPath, grpBuildCfg.grpInfoOutPath.grpInfoFileName));
+            let p = this.buildGrpInfo(this.resultGrp);
+
+            console.log(">>>>>>>>>>>>>grpInfoPath "+ grpBuildCfg.grpInfoOutPath);
+            console.log(">>>>>>>>>>>>>grpInfoFileName "+ grpBuildCfg.grpInfoFileName);
+            let fullFileName = path.join(grpBuildCfg.grpInfoOutPath,grpBuildCfg.grpInfoFileName);
+            //let fullFileName = path.join("/home/jacob/","grpInfo.json");
+
+            p.then((fileContent)=>{
+                if(fileContent.length){
+                    this.writeGrpInfoFile(fileContent, fullFileName);
+                }else{
+                    console.log(">>>>>>>>>>>>empty file content.");
+                }
+            });
             //todo grp have changed, build new grpInfo.json
 
             //todo notify mpc process
@@ -127,7 +140,7 @@ class GrpInfo {
 }
 
      */
-    buildGrpInfo(grpSet) {
+    async buildGrpInfo(grpSet) {
         let grpElem = {
             "index": null,
             "workingPk": null,
@@ -148,22 +161,24 @@ class GrpInfo {
             "grpInfo": []
         };
 
+        console.log(">>>>>>>>>>>len of grpSet "+ grpSet.size);
+        if(grpSet.size == 0){
+            return "";
+        }
         for (let grpId of grpSet) {
             let oneGrpInfoTemp = Object.assign({}, oneGrpInfo);
 
             let grpElems = []; // item : grpElem
             try {
-                let totalNumber = await
-                getSelectedSmNumber(grpId);
-                let thresholdNumber = await
-                getThresholdByGrpId(grpId);
-                let gpk = getGPKByGrpId(grpId);
+                let totalNumber = await getSelectedSmNumber(grpId);
+                let thresholdNumber = await  getThresholdByGrpId(grpId);
+                let gpk = await getGPKByGrpId(grpId);
                 let leaderIndex = 0;
                 // todo error handle
                 for (let i = 0; i < totalNumber; i++) {
                     let grpElemTemp = Object.assign({}, grpElem);
-                    grpElemTemp.pkShare = getPkShareByIndex(grpId, i);
-                    let smInfo = getSelectedSmInfo(grpId, i);
+                    grpElemTemp.pkShare = await getPkShareByIndex(grpId, i);
+                    let smInfo = await getSelectedSmInfo(grpId, i);
                     grpElemTemp.nodeId = smInfo.nodeId;
                     grpElemTemp.workingPk = smInfo.workingPk;
                     grpElemTemp.index = i;
@@ -190,6 +205,7 @@ class GrpInfo {
     }
 
     writeGrpInfoFile(fileContent, filename) {
+        console.log(">>>>>>>>>>>>>>>fileContent ",fileContent);
         fs.writeFile(filename, fileContent, (err, result) => {
             if (err) {
                 console.log(err)
@@ -206,7 +222,7 @@ class GrpInfo {
 
 global.grpInfo = null;
 
-function getGrpInfo() {
+function getGrpInfoInst() {
     if (global.grpInfo == null) {
         global.grpInfo = new GrpInfo();
     } else {
@@ -215,6 +231,6 @@ function getGrpInfo() {
 }
 
 module.exports = {
-    getGrpInfo
+    getGrpInfoInst
 };
 
