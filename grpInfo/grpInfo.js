@@ -56,9 +56,11 @@ class GrpInfo {
     }
 
     run() {
-        setInterval(() => {
-            this.mainLoop();
-        }, 3000)
+        // setInterval(() => {
+        //     this.mainLoop();
+        // }, 3000)
+
+        this.mainLoop();
     }
 
     async mainLoop() {
@@ -166,25 +168,41 @@ class GrpInfo {
             return "";
         }
         for (let grpId of grpSet) {
+            console.log(".............one group ID "+ grpId);
             let oneGrpInfoTemp = Object.assign({}, oneGrpInfo);
 
             let grpElems = []; // item : grpElem
             try {
                 let totalNumber = await getSelectedSmNumber(grpId);
+                console.log(".............totalNumber "+totalNumber);
                 let thresholdNumber = await  getThresholdByGrpId(grpId);
-                let gpk = await getGPKByGrpId(grpId);
+                console.log(".............thresholdNumber "+thresholdNumber);
                 let leaderIndex = 0;
                 // todo error handle
                 for (let i = 0; i < totalNumber; i++) {
                     let grpElemTemp = Object.assign({}, grpElem);
-                    grpElemTemp.pkShare = await getPkShareByIndex(grpId, i);
+
+                    // grpElemTemp.pkShare = await getPkShareByIndex(grpId, i);
+                    // console.log("<<<<<<<<<<<<<<<<<<pkShare "+grpElemTemp.pkShare);
+
                     let smInfo = await getSelectedSmInfo(grpId, i);
-                    grpElemTemp.nodeId = smInfo.nodeId;
-                    grpElemTemp.workingPk = smInfo.workingPk;
+                    //grpElemTemp.nodeId = smInfo.nodeId;
+                    grpElemTemp.nodeId = smInfo[2];
+                    console.log(".............nodeId "+grpElemTemp.nodeId);
+
+
+                    //grpElemTemp.workingPk = smInfo.workingPk;
+                    grpElemTemp.workingPk = smInfo[1];
+                    console.log(".............workingPk "+grpElemTemp.workingPk);
+
                     grpElemTemp.index = i;
+                    console.log(".............index "+grpElemTemp.index);
 
                     grpElems.push(grpElem);
                 }
+
+                let gpk = await getGPKByGrpId(grpId);
+                console.log("<<<<<<<<<<<<<<<<<<gpk "+gpk);
 
                 oneGrpInfoTemp.grpId = grpId;
                 oneGrpInfoTemp.grpPk = gpk;
@@ -196,7 +214,8 @@ class GrpInfo {
 
                 fileContent.grpInfo.push(oneGrpInfoTemp);
             } catch (err) {
-
+                console.log(err);
+                return "";
             }
 
         }

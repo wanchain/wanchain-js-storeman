@@ -121,37 +121,42 @@ function getWorkingGrps(address, topics, fromBlk, toBlk, retryTimes) {
     let contractAddr = grpBuildCfg.contractAddress.mortgage;
 
     return new TimeoutPromise(async (resolve, reject) => {
-        getScEvent(address, topics, fromBlk, toBlk, retryTimes, async (err, logs) => {
+        try{
+            getScEvent(address, topics, fromBlk, toBlk, retryTimes, async (err, logs) => {
 
-            console.log(">>>>>>>>>>>>>get event log. len(log) "+ logs.length);
-            if (err) {
-                log.error(err);
-                reject(err);
-            } else {
-                let parsedLogs = [];
-                if (logs !== null) {
-                    let contract = new Contract(abi, contractAddr);
-                    parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
+                console.log(">>>>>>>>>>>>>get event log. len(log) "+ logs.length);
+                if (err) {
+                    log.error(err);
+                    reject(err);
+                } else {
+                    let parsedLogs = [];
+                    if (logs !== null) {
+                        let contract = new Contract(abi, contractAddr);
+                        parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
 
-                    console.log(">>>>>>>>>>>parsedLogs ", parsedLogs);
-                }
-
-                let regGrp = new Set();
-                let unRegGrp = new Set();
-                let totalGrp = new Set();
-
-                for (let i of parsedLogs) {
-                    if (i && (i.event === grpBuildCfg.regGrpEvtName)) {
-                        regGrp.push(i.args["grpId"]);
+                        console.log(">>>>>>>>>>>parsedLogs ", parsedLogs);
                     }
-                    if (i && i.event === grpBuildCfg.unregGrpEvtName) {
-                        unRegGrp.push(i.args["grpId"]);
+
+                    let regGrp = new Set();
+                    let unRegGrp = new Set();
+                    let totalGrp = new Set();
+
+                    for (let i of parsedLogs) {
+                        if (i && (i.event === grpBuildCfg.regGrpEvtName)) {
+                            regGrp.add(i.args["groupId"]);
+                        }
+                        if (i && i.event === grpBuildCfg.unregGrpEvtName) {
+                            unRegGrp.add(i.args["groupId"]);
+                        }
                     }
+                    totalGrp = difference(regGrp,unRegGrp);
+                    resolve(totalGrp);
                 }
-                totalGrp = difference(regGrp,unRegGrp);
-                resolve(totalGrp);
-            }
-        });
+            });
+        }catch(err){
+            reject(err);
+        }
+
     });
 }
 
@@ -159,37 +164,44 @@ function getWorkingGrps(address, topics, fromBlk, toBlk, retryTimes) {
 
 async function getThresholdByGrpId(grpId) {
     return new Promise(function (resolve, reject) {
-        let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
-        let myContract = new web3.eth.Contract(abiMap["Mortgage"],grpBuildCfg.contractAddress.mortgage);
-        myContract.methods.getThresholdByGrpId(grpId).call({from:grpBuildCfg.selfAddress},(err,result)=>{
-            if(err){
-                reject(err);
-            }else{
-                resolve(result);
-            }
-        });
+        try{
+            let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
+            let abi = abiMap["Mortgage"];
+            let address = grpBuildCfg.contractAddress.mortgage;
+            console.log("address ",address);
+
+            let myContract = web3.eth.contract(abi);
+            let myContractIns = myContract.at(address);
+
+            //let ret = myContractIns.getThresholdNumber(grpId);
+            let ret = myContractIns.getSelectedSmNumber(grpId);
+            console.log("ret ", ret.toString(10));
+            resolve(ret.toString(10));
+        }catch(err){
+            reject(err);
+        }
 
     })
 };
 
-// async function getLeaderIndexByGrpId(grpId) {
-//     return new Promise(function (resolve, reject) {
-//
-//     })
-// };
 
 async function getSelectedSmNumber(grpId) {
     return new Promise(function (resolve, reject) {
-        let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
-        let myContract = new web3.eth.Contract(abiMap["Mortgage"],grpBuildCfg.contractAddress.mortgage);
-        myContract.methods.getSelectedSmNumber(grpId).call({from:grpBuildCfg.selfAddress},(err,result)=>{
-            if(err){
-                reject(err);
-            }else{
-                resolve(result);
-            }
-        });
+        try{
+            let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
+            let abi = abiMap["Mortgage"];
+            let address = grpBuildCfg.contractAddress.mortgage;
+            console.log("address ",address);
 
+            let myContract = web3.eth.contract(abi);
+            let myContractIns = myContract.at(address);
+
+            let ret = myContractIns.getSelectedSmNumber(grpId);
+            console.log("ret ", ret.toString(10));
+            resolve(ret.toString(10));
+        }catch(err){
+            reject(err);
+        }
     })
 };
 // ouput:
@@ -202,15 +214,21 @@ async function getSelectedSmNumber(grpId) {
 
 async function getSelectedSmInfo(grpId,smIndex) {
     return new Promise(function (resolve, reject) {
-        let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
-        let myContract = new web3.eth.Contract(abiMap["Mortgage"],grpBuildCfg.contractAddress.mortgage);
-        myContract.methods.getSelectedSmInfo(grpId,smIndex).call({from:grpBuildCfg.selfAddress},(err,result)=>{
-            if(err){
-                reject(err);
-            }else{
-                resolve(result);
-            }
-        });
+        try{
+            let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
+            let abi = abiMap["Mortgage"];
+            let address = grpBuildCfg.contractAddress.mortgage;
+
+            console.log("address ",address);
+
+            let myContract = web3.eth.contract(abi);
+            let myContractIns = myContract.at(address);
+
+            let ret = myContractIns.getSelectedSmInfo(grpId,smIndex);
+            resolve(ret);
+        }catch(err){
+            reject(err);
+        }
 
     })
 };
@@ -218,15 +236,19 @@ async function getSelectedSmInfo(grpId,smIndex) {
 // IGPK
 async function getPkShareByIndex(grpId,smIndex) {
     return new Promise(function (resolve, reject) {
-        let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
-        let myContract = new web3.eth.Contract(abiMap["CreateGpk"],grpBuildCfg.contractAddress.mortgage);
-        myContract.methods.getPkShareByIndex(grpId,smIndex).call({from:grpBuildCfg.selfAddress},(err,result)=>{
-            if(err){
-                reject(err);
-            }else{
-                resolve(result);
-            }
-        });
+        try{
+            let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
+            let abi = abiMap["CreateGpk"];
+            let address = grpBuildCfg.contractAddress.mortgage;
+
+            let myContract = web3.eth.contract(abi);
+            let myContractIns = myContract.at(address);
+
+            let ret = myContractIns.getPkShareByIndex(grpId,smIndex);
+            resolve(ret);
+        }catch(err){
+            reject(err);
+        }
 
     })
 };
@@ -234,16 +256,20 @@ async function getPkShareByIndex(grpId,smIndex) {
 // getGPKByGrpId
 async function getGPKByGrpId(grpId) {
     return new Promise(function (resolve, reject) {
-        let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
-        let myContract = new web3.eth.Contract(abiMap["CreateGpk"],grpBuildCfg.contractAddress.mortgage);
-        myContract.methods.getGPKByGrpId(grpId).call({from:grpBuildCfg.selfAddress},(err,result)=>{
-            if(err){
-                reject(err);
-            }else{
-                resolve(result);
-            }
-        });
+        try{
+            let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
+            let abi = abiMap["CreateGpk"];
+            let address = grpBuildCfg.contractAddress.mortgage;
+            console.log("address ",address);
 
+            let myContract = web3.eth.contract(abi);
+            let myContractIns = myContract.at(address);
+
+            let ret = myContractIns.getGPKByGrpId(grpId);
+            resolve(ret);
+        }catch(err){
+            reject(err);
+        }
     })
 };
 

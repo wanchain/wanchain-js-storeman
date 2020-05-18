@@ -2,7 +2,7 @@ const path = require('path');
 
 
 let gpkAddr = '0xb9DD855dc6A9340Ea6B566A5B454202115BcF485';
-let mortgageAddr = '0x06e685F98a1087e789ade454AbB3f0033DDA8d11';
+let mortgageAddr = '0xBf39C3FA9EEc3754629A8Fe0B34b84E117a3Ec8B';
 let metricAddr = '0x8e84b41800d7915aD3fF9E6bbba434c7ca99fB95';
 
 
@@ -40,7 +40,11 @@ exports.filter = {
     address: mortgageAddr,
 };
 
-exports.regGrpEvtName = 'StoremanGroupRegistrationLogger';
+// exports.regGrpEvtName = 'StoremanGroupRegistrationLogger';
+// exports.unregGrpEvtName = 'StoremanGroupApplyUnRegistrationLogger';
+
+
+exports.regGrpEvtName = 'selectedEvent';
 exports.unregGrpEvtName = 'StoremanGroupApplyUnRegistrationLogger';
 
 exports.grpInfoOutPath = "/home/jacob/";
