@@ -217,6 +217,11 @@ const mortgageAbi = [
                 "type": "bytes"
             },
             {
+                "indexed": true,
+                "name": "groupId",
+                "type": "bytes32"
+            },
+            {
                 "indexed": false,
                 "name": "storemanGroup",
                 "type": "bytes"
@@ -698,6 +703,10 @@ const mortgageAbi = [
             {
                 "name": "",
                 "type": "bytes"
+            },
+            {
+                "name": "",
+                "type": "bytes"
             }
         ],
         "payable": false,
@@ -781,24 +790,6 @@ const mortgageAbi = [
         "constant": false,
         "inputs": [
             {
-                "name": "types",
-                "type": "uint256[]"
-            },
-            {
-                "name": "addrs",
-                "type": "address[]"
-            }
-        ],
-        "name": "testArray",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
                 "name": "groupId",
                 "type": "bytes32"
             },
@@ -823,14 +814,14 @@ const mortgageAbi = [
         "type": "function"
     },
     {
-        "constant": false,
+        "constant": true,
         "inputs": [
             {
                 "name": "groupId",
                 "type": "bytes32"
             }
         ],
-        "name": "getThresholdNumber",
+        "name": "getThresholdByGrpId",
         "outputs": [
             {
                 "name": "",
@@ -838,7 +829,7 @@ const mortgageAbi = [
             }
         ],
         "payable": false,
-        "stateMutability": "nonpayable",
+        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -847,6 +838,10 @@ const mortgageAbi = [
             {
                 "name": "tokenOrigAccount",
                 "type": "bytes"
+            },
+            {
+                "name": "groupId",
+                "type": "bytes32"
             },
             {
                 "name": "storemanGroup",
@@ -859,8 +854,8 @@ const mortgageAbi = [
         ],
         "name": "storemanGroupRegister",
         "outputs": [],
-        "payable": true,
-        "stateMutability": "payable",
+        "payable": false,
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {

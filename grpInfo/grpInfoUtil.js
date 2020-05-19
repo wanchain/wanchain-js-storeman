@@ -130,6 +130,16 @@ function getWorkingGrps(address, topics, fromBlk, toBlk, retryTimes) {
                     reject(err);
                 } else {
                     let parsedLogs = [];
+
+                    // for (let onelog of logs){
+                    //     console.log(">>>>>>>>>>>>>>>>>one log is \n", JSON.stringify(onelog));
+                    //
+                    //     let contract = new Contract(abi, contractAddr);
+                    //     let parsedLog = contract.parseEvents([JSON.parse(JSON.stringify(onelog))]);
+                    //     console.log(">>>>>>>>>>>>>>>>>parsed one log is \n", parsedLog);
+                    //
+                    // }
+
                     if (logs !== null) {
                         let contract = new Contract(abi, contractAddr);
                         parsedLogs = contract.parseEvents(JSON.parse(JSON.stringify(logs)));
@@ -173,8 +183,8 @@ async function getThresholdByGrpId(grpId) {
             let myContract = web3.eth.contract(abi);
             let myContractIns = myContract.at(address);
 
-            //let ret = myContractIns.getThresholdNumber(grpId);
-            let ret = myContractIns.getSelectedSmNumber(grpId);
+            let ret = myContractIns.getThresholdByGrpId(grpId);
+            //let ret = myContractIns.getSelectedSmNumber(grpId);
             console.log("ret ", ret.toString(10));
             resolve(ret.toString(10));
         }catch(err){
