@@ -254,7 +254,7 @@ async function getPkShareByIndex(grpId,smIndex) {
             let myContract = web3.eth.contract(abi);
             let myContractIns = myContract.at(address);
 
-            let ret = myContractIns.getPkShareByIndex(grpId,smIndex);
+            let ret = myContractIns.getPkShare(grpId,smIndex);
             resolve(ret);
         }catch(err){
             reject(err);
@@ -275,7 +275,7 @@ async function getGPKByGrpId(grpId) {
             let myContract = web3.eth.contract(abi);
             let myContractIns = myContract.at(address);
 
-            let ret = myContractIns.getGPKByGrpId(grpId);
+            let ret = myContractIns.getGPK(grpId);
             resolve(ret);
         }catch(err){
             reject(err);
