@@ -1,8 +1,8 @@
 const path = require('path');
 
 
-let gpkAddr = '0xb9DD855dc6A9340Ea6B566A5B454202115BcF485';
-let mortgageAddr = '0xE9B039B741C1D845f336D4Cac25802DEf063B3C0';
+let gpkAddr = '0xdb1B1ADA7ca4874544A482F78E0c47e2300916e6';
+let mortgageAddr = '0x49fde469b39389Cd93999A3Ec092143C01c5f411';
 let metricAddr = '0x8e84b41800d7915aD3fF9E6bbba434c7ca99fB95';
 
 

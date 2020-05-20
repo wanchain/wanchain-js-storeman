@@ -249,8 +249,8 @@ async function getPkShareByIndex(grpId,smIndex) {
         try{
             let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
             let abi = abiMap["CreateGpk"];
-            let address = grpBuildCfg.contractAddress.mortgage;
-
+            let address = grpBuildCfg.contractAddress.createGpk;
+            console.log("address ",address);
             let myContract = web3.eth.contract(abi);
             let myContractIns = myContract.at(address);
 
@@ -269,13 +269,13 @@ async function getGPKByGrpId(grpId) {
         try{
             let web3 = new Web3(new Web3.providers.HttpProvider(grpBuildCfg.wanNodeURL));
             let abi = abiMap["CreateGpk"];
-            let address = grpBuildCfg.contractAddress.mortgage;
+            let address = grpBuildCfg.contractAddress.createGpk;
             console.log("address ",address);
 
             let myContract = web3.eth.contract(abi);
             let myContractIns = myContract.at(address);
 
-            let ret = myContractIns.getGPK(grpId);
+            let ret = myContractIns.getGpk(grpId);
             resolve(ret);
         }catch(err){
             reject(err);

@@ -182,8 +182,8 @@ class GrpInfo {
                 for (let i = 0; i < totalNumber; i++) {
                     let grpElemTemp = Object.assign({}, grpElem);
 
-                    // grpElemTemp.pkShare = await getPkShareByIndex(grpId, i);
-                    // console.log("<<<<<<<<<<<<<<<<<<pkShare "+grpElemTemp.pkShare);
+                    grpElemTemp.pkShare = await getPkShareByIndex(grpId, i);
+                    console.log(".............pkShare "+grpElemTemp.pkShare);
 
                     let smInfo = await getSelectedSmInfo(grpId, i);
                     //grpElemTemp.nodeId = smInfo.nodeId;
@@ -192,21 +192,25 @@ class GrpInfo {
 
 
                     //grpElemTemp.workingPk = smInfo.workingPk;
-                    grpElemTemp.workingPk = smInfo[1];
+                    grpElemTemp.workingPk = "0x04"+smInfo[1].substr(2);
                     console.log(".............workingPk "+grpElemTemp.workingPk);
 
-                    grpElemTemp.index = i;
+                    grpElemTemp.index = i.toString();
                     console.log(".............index "+grpElemTemp.index);
 
-                    grpElems.push(grpElem);
+                    console.log(".............address "+smInfo[0]);
+
+                    grpElems.push(grpElemTemp);
                 }
 
                 let gpk = await getGPKByGrpId(grpId);
-                console.log("<<<<<<<<<<<<<<<<<<gpk "+gpk);
+                console.log(".............gpk "+gpk);
 
                 oneGrpInfoTemp.grpId = grpId;
+
                 oneGrpInfoTemp.grpPk = gpk;
-                oneGrpInfoTemp.leaderInx = 0;
+
+                oneGrpInfoTemp.leaderInx = "0";
                 oneGrpInfoTemp.totalNumber = totalNumber;
                 oneGrpInfoTemp.thresholdNumber = thresholdNumber;
                 oneGrpInfoTemp.grpElms = grpElems;

@@ -961,6 +961,20 @@ const createGpkAbi = [
     {
         "constant": true,
         "inputs": [],
+        "name": "smg",
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
         "name": "config",
         "outputs": [
             {
@@ -979,20 +993,6 @@ const createGpkAbi = [
         "outputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "mortgage",
-        "outputs": [
-            {
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -1081,7 +1081,7 @@ const createGpkAbi = [
             {
                 "indexed": true,
                 "name": "round",
-                "type": "uint256"
+                "type": "uint16"
             }
         ],
         "name": "StartCreateGpkLogger",
@@ -1098,7 +1098,7 @@ const createGpkAbi = [
             {
                 "indexed": true,
                 "name": "round",
-                "type": "uint256"
+                "type": "uint16"
             },
             {
                 "indexed": false,
@@ -1120,7 +1120,7 @@ const createGpkAbi = [
             {
                 "indexed": true,
                 "name": "round",
-                "type": "uint256"
+                "type": "uint16"
             },
             {
                 "indexed": false,
@@ -1147,7 +1147,7 @@ const createGpkAbi = [
             {
                 "indexed": true,
                 "name": "round",
-                "type": "uint256"
+                "type": "uint16"
             },
             {
                 "indexed": false,
@@ -1179,7 +1179,7 @@ const createGpkAbi = [
             {
                 "indexed": true,
                 "name": "round",
-                "type": "uint256"
+                "type": "uint16"
             },
             {
                 "indexed": false,
@@ -1206,12 +1206,12 @@ const createGpkAbi = [
             {
                 "indexed": true,
                 "name": "round",
-                "type": "uint256"
+                "type": "uint16"
             },
             {
                 "indexed": false,
                 "name": "slashType",
-                "type": "uint256"
+                "type": "uint8"
             },
             {
                 "indexed": false,
@@ -1243,7 +1243,7 @@ const createGpkAbi = [
             {
                 "indexed": true,
                 "name": "round",
-                "type": "uint256"
+                "type": "uint16"
             }
         ],
         "name": "ResetLogger",
@@ -1274,7 +1274,7 @@ const createGpkAbi = [
                 "type": "address"
             },
             {
-                "name": "mortgageAddr",
+                "name": "smgAddr",
                 "type": "address"
             }
         ],
@@ -1416,7 +1416,11 @@ const createGpkAbi = [
                 "type": "uint256"
             },
             {
-                "name": "r",
+                "name": "iv",
+                "type": "uint128"
+            },
+            {
+                "name": "ephemPrivateKey",
                 "type": "uint256"
             }
         ],
@@ -1485,14 +1489,18 @@ const createGpkAbi = [
             },
             {
                 "name": "roundNum",
-                "type": "int256"
+                "type": "int16"
             }
         ],
         "name": "getGroupInfo",
         "outputs": [
             {
                 "name": "",
-                "type": "uint256"
+                "type": "uint16"
+            },
+            {
+                "name": "",
+                "type": "uint8"
             },
             {
                 "name": "",
@@ -1500,19 +1508,15 @@ const createGpkAbi = [
             },
             {
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "name": "",
-                "type": "uint256"
+                "type": "uint32"
             },
             {
                 "name": "",
-                "type": "uint256"
-            },
-            {
-                "name": "",
-                "type": "uint256"
+                "type": "uint32"
             }
         ],
         "payable": false,
@@ -1574,7 +1578,7 @@ const createGpkAbi = [
             },
             {
                 "name": "",
-                "type": "uint256"
+                "type": "uint8"
             },
             {
                 "name": "",
@@ -1591,6 +1595,48 @@ const createGpkAbi = [
             {
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "groupId",
+                "type": "bytes32"
+            },
+            {
+                "name": "index",
+                "type": "uint256"
+            }
+        ],
+        "name": "getPkShare",
+        "outputs": [
+            {
+                "name": "",
+                "type": "bytes"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "groupId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getGpk",
+        "outputs": [
+            {
+                "name": "",
+                "type": "bytes"
             }
         ],
         "payable": false,
