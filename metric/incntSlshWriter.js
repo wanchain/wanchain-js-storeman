@@ -4,6 +4,7 @@ const {metricCfg, abiMap} = require('./conf/metric');
 const MetricContract = require('./metricContract');
 let MetricTrans = require('../trans/metricTrans');
 let KeyStore = require('../utils/keyStore');
+const Web3 = require('web3');
 
 let {getCommonData, getReceipt} = require('./metricUtil');
 
@@ -71,6 +72,44 @@ class IncntSlshWriter {
                 })
             }
         }, 1000)
+
+        setInterval(() => {
+            console.log("\n\n\n\n\n");
+            console.log("--------------------------------setInterval :: get static data ---------------------");
+            this.getStaticData();
+        }, 10000)
+    }
+
+    getStaticData() {
+        //getPrdInctMetric
+        //getPrdSlshMetric
+        function getEpIDByNow() {
+            let tmstamp = new Date().getTime() / 1000;
+            return Math.floor(tmstamp / (5 * 1440 * 12));
+        }
+
+        let startEpID = getEpIDByNow();
+        let endEpID = startEpID + 1;
+        let grpId = "0x0000000000000000000000000000000000000031353839393533323738313235";
+
+        let abi = abiMap["Metric"];
+        let address = metricCfg.contractAddress.metric;
+
+        let web3 = new Web3(new Web3.providers.HttpProvider(metricCfg.wanNodeURL));
+
+        let MyContract = web3.eth.contract(abi);
+        let c = MyContract.at(address);
+        let ret = c.getPrdInctMetric.call(grpId, startEpID, endEpID);
+        console.log(".............getPrdInctMetric..........");
+        for(let i=0;i<ret.length;i++){
+            console.log("i: "+i+" count: "+ret[i].toString(10));
+        }
+
+        console.log(".............getPrdSlshMetric..........");
+        ret = c.getPrdSlshMetric.call(grpId, startEpID, endEpID);
+        for(let i=0;i<ret.length;i++){
+            console.log("i: "+i+" count: "+ret[i].toString(10));
+        }
     }
 
     procSignedResult(task) {
@@ -113,8 +152,8 @@ class IncntSlshWriter {
                                 .then((result) => {
                                     console.log("---------------------------sendTrans successfully------------ txHash", result);
                                     getReceipt(result)
-                                        .then((recpt)=>{
-                                            console.log("recpt "+recpt);
+                                        .then((recpt) => {
+                                            console.log("recpt " + recpt);
                                             if (recpt.status == "0x1") {
                                                 console.log("---------------------------status receipt is OK------------ txHash", result);
                                                 resolve(recpt);

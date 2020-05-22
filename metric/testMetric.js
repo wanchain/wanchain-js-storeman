@@ -29,7 +29,7 @@ function test() {
     }
 
     let slshSr = {
-        GrpId: "0x67726f75494431",
+        GrpId: "0x0000000000000000000000000000000000000031353839393533323738313235",
         IncntData: "0x",
         R: "0x",
         RNW: "0x0e",
@@ -54,7 +54,7 @@ function test() {
 
     global.incntSlshWriter.handleInctSlsh(xHashInct, incSr);
     global.incntSlshWriter.handleInctSlsh(xHashLockSmg, incLockSmgSr);
-    //global.incntSlshWriter.handleInctSlsh(xRNW, slshSr);
+    global.incntSlshWriter.handleInctSlsh(xRNW, slshSr);
 
 }
 
