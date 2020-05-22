@@ -5,7 +5,7 @@ const MetricContract = require('./metricContract');
 let MetricTrans = require('../trans/metricTrans');
 let KeyStore = require('../utils/keyStore');
 
-let {getCommonData} = require('./metricUtil');
+let {getCommonData, getReceipt} = require('./metricUtil');
 
 function sleep(time) {
     return new Promise(function (resolve, reject) {
@@ -112,7 +112,17 @@ class IncntSlshWriter {
                             mt.sendSignedRawTrans(signedRawTx)
                                 .then((result) => {
                                     console.log("---------------------------sendTrans successfully------------ txHash", result);
-                                    resolve(result);
+                                    getReceipt(result)
+                                        .then((recpt)=>{
+                                            console.log("recpt "+recpt);
+                                            if (recpt.status == "0x1") {
+                                                console.log("---------------------------status receipt is OK------------ txHash", result);
+                                                resolve(recpt);
+                                            } else {
+                                                console.log("---------------------------status receipt is error!------------ txHash", result);
+                                                reject(recpt);
+                                            }
+                                        });
                                 })
                                 .catch((err) => {
                                     console.log("---------------------------sendTrans failed------------ err", err);

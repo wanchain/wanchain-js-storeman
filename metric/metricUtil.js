@@ -3,6 +3,13 @@ const {metricCfg, abiMap} = require('./conf/metric');
 const Web3 = require('web3');
 let web3 = new Web3();
 
+function sleep(time) {
+    return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+            resolve();
+        }, time);
+    })
+}
 async function getCommonData() {
     let from;
     let to;
@@ -28,6 +35,22 @@ async function getCommonData() {
             reject(err);
         }
     });
+}
+
+async function getReceipt(txHash){
+    let web3 = new Web3(new Web3.providers.HttpProvider(metricCfg.wanNodeURL));
+    return new Promise(async (resolve, reject)=>{
+        try{
+            let receipt;
+            while(!receipt){
+                receipt= web3.eth.getTransactionReceipt(txHash);
+                await sleep(10);
+            }
+            resolve(receipt);
+        }catch(err){
+            reject(err);
+        }
+    })
 }
 
 async function getNonceByWeb3(addr, includePendingOrNot = false) {
@@ -78,5 +101,6 @@ async function getNonceByWeb3(addr, includePendingOrNot = false) {
 };
 
 module.exports = {
-    getCommonData
+    getCommonData,
+    getReceipt
 }

@@ -967,6 +967,20 @@ const metricAbi = [
     {
         "constant": true,
         "inputs": [],
+        "name": "smg",
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
         "name": "config",
         "outputs": [
             {
@@ -985,20 +999,6 @@ const metricAbi = [
         "outputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "mortgage",
-        "outputs": [
-            {
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -1072,12 +1072,17 @@ const metricAbi = [
         "type": "function"
     },
     {
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "fallback"
+    },
+    {
         "anonymous": false,
         "inputs": [
             {
                 "indexed": true,
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "indexed": true,
@@ -1099,11 +1104,43 @@ const metricAbi = [
         "type": "event"
     },
     {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "slshWriter",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "name": "grpId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "name": "hashX",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "name": "smIndex",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "name": "slshReason",
+                "type": "uint8"
+            }
+        ],
+        "name": "SMInvSlshLogger",
+        "type": "event"
+    },
+    {
         "constant": true,
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "startEpId",
@@ -1130,7 +1167,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "startEpId",
@@ -1157,7 +1194,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "epId",
@@ -1184,7 +1221,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "epId",
@@ -1211,7 +1248,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "hashX",
@@ -1286,7 +1323,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "hashX",
@@ -1367,7 +1404,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "hashX",
@@ -1389,7 +1426,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "hashX",
@@ -1411,7 +1448,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "hashX",
@@ -1433,7 +1470,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "hashX",
@@ -1471,7 +1508,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "hashX",
@@ -1509,7 +1546,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "hashX",
@@ -1547,7 +1584,7 @@ const metricAbi = [
         "inputs": [
             {
                 "name": "grpId",
-                "type": "bytes"
+                "type": "bytes32"
             },
             {
                 "name": "hashX",
@@ -1584,38 +1621,11 @@ const metricAbi = [
         "constant": false,
         "inputs": [
             {
-                "name": "grpId",
-                "type": "bytes"
-            },
-            {
-                "name": "hashX",
-                "type": "bytes32"
-            },
-            {
-                "name": "smIndex",
-                "type": "uint8"
-            }
-        ],
-        "name": "checkRProof",
-        "outputs": [
-            {
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
                 "name": "configAddr",
                 "type": "address"
             },
             {
-                "name": "mortgageAddr",
+                "name": "smgAddr",
                 "type": "address"
             }
         ],
