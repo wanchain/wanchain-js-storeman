@@ -110,6 +110,12 @@ class IncntSlshWriter {
         for(let i=0;i<ret.length;i++){
             console.log("i: "+i+" count: "+ret[i].toString(10));
         }
+
+        console.log(".............getDependence..........");
+        ret = c.getDependence.call();
+        for(let i=0;i<ret.length;i++){
+            console.log("i: "+i+" count: "+ret[i]);
+        }
     }
 
     procSignedResult(task) {

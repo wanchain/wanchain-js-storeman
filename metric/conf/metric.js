@@ -1137,6 +1137,24 @@ const metricAbi = [
     },
     {
         "constant": true,
+        "inputs": [],
+        "name": "getDependence",
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            },
+            {
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
         "inputs": [
             {
                 "name": "grpId",
