@@ -88,8 +88,11 @@ class IncntSlshWriter {
             return Math.floor(tmstamp / (5 * 1440 * 12));
         }
 
-        let startEpID = getEpIDByNow();
-        let endEpID = startEpID + 1;
+        let startEpIDTemp = getEpIDByNow();
+        let oneWeekEpoch = 7;
+        let startEpID = startEpIDTemp -oneWeekEpoch;
+        //let endEpID = startEpID + 1;
+        let endEpID = startEpIDTemp + 1;
         let grpId = "0x0000000000000000000000000000000000000031353839393533323738313235";
 
         let abi = abiMap["Metric"];
@@ -101,6 +104,8 @@ class IncntSlshWriter {
         let c = MyContract.at(address);
         let ret = c.getPrdInctMetric.call(grpId, startEpID, endEpID);
         console.log(".............getPrdInctMetric..........");
+        console.log(".............startEpId.........."+startEpID);
+        console.log(".............endEpID.........."+endEpID);
         for(let i=0;i<ret.length;i++){
             console.log("i: "+i+" count: "+ret[i].toString(10));
         }
