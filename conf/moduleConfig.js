@@ -26,8 +26,8 @@ const config = {
   retryWaitTime: 120 * 1000,
   confirmTimes: 60,
 
-  logServerUrl: '54.149.227.183',
-  logServerPort: 514,
+  logServerUrl: 'log.wanchain.org',
+  logServerPort: 1514,
 
   SAFE_BLOCK_NUM: 100,
   CONFIRM_BLOCK_NUM: 12,
@@ -122,8 +122,8 @@ const test_Config = {
   retryWaitTime: 60 * 1000,
   confirmTimes: 60,
 
-  logServerUrl: '54.149.227.183',
-  logServerPort: 515,
+  logServerUrl: 'log.wanchain.org',
+  logServerPort: 1515,
 
   SAFE_BLOCK_NUM: 100,
   CONFIRM_BLOCK_NUM: 2,
