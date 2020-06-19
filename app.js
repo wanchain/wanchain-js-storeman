@@ -203,16 +203,16 @@ global.mpcLogger = new Logger("storemanAgent-mpc-" + global.argv.c, "log/storema
 async function init() {
   try {
     global.config = loadConfig();
-
+    let tempTokenList = {};
     initChain('WAN');
  
     global.storemanRestart = true;
     backupIssueFile(global.config.issueCollectionPath);
 
-    tokenList.supportTokenAddrs = [];
-    tokenList.wanchainHtlcAddr = [];
-    tokenList.originalChainHtlcAddr = [];
-    tokenList.storemanAddress = [];
+    tempTokenList.supportTokenAddrs = [];
+    tempTokenList.wanchainHtlcAddr = [];
+    tempTokenList.originalChainHtlcAddr = [];
+    tempTokenList.storemanAddress = [];
 
     for (let crossChain in global.config.crossTokens) {
       // if (!moduleConfig.crossInfoDict[crossChain].CONF.enable) {
@@ -222,51 +222,52 @@ async function init() {
 
       initChain(crossChain);
 
-      tokenList[crossChain] = {};
-      tokenList[crossChain].storemanOri = global.config.crossTokens[crossChain].CONF.storemanOri;
-      tokenList[crossChain].storemanWan = global.config.crossTokens[crossChain].CONF.storemanWan;
+      tempTokenList[crossChain] = {};
+      tempTokenList[crossChain].storemanOri = global.config.crossTokens[crossChain].CONF.storemanOri;
+      tempTokenList[crossChain].storemanWan = global.config.crossTokens[crossChain].CONF.storemanWan;
 
       // if (global.isLeader) {
         if (!moduleConfig.crossInfoDict[crossChain].CONF.nonceless) {
-          await initNonce(crossChain, tokenList[crossChain].storemanOri);
-          syncLogger.info("CrossChain:" , crossChain, ", Nonce of chain", crossChain, tokenList[crossChain].storemanOri, global[crossChain.toLowerCase() + 'LastNonce'][tokenList[crossChain].storemanOri]);
+          await initNonce(crossChain, tempTokenList[crossChain].storemanOri);
+          syncLogger.info("CrossChain:" , crossChain, ", Nonce of chain", crossChain, tempTokenList[crossChain].storemanOri, global[crossChain.toLowerCase() + 'LastNonce'][tempTokenList[crossChain].storemanOri]);
         }
-        await initNonce('WAN', tokenList[crossChain].storemanWan);
-        syncLogger.info("CrossChain:" , crossChain, ", Nonce of chain", 'WAN', tokenList[crossChain].storemanWan,  global['wanLastNonce'][tokenList[crossChain].storemanWan]);
+        await initNonce('WAN', tempTokenList[crossChain].storemanWan);
+        syncLogger.info("CrossChain:" , crossChain, ", Nonce of chain", 'WAN', tempTokenList[crossChain].storemanWan,  global['wanLastNonce'][tempTokenList[crossChain].storemanWan]);
       // }
 
       if (moduleConfig.crossInfoDict[crossChain].CONF.schnorrMpc) {
-        tokenList.storemanAddress.push(global.config.crossTokens[crossChain].CONF.storemanPk);
+        tempTokenList.storemanAddress.push(global.config.crossTokens[crossChain].CONF.storemanPk);
       } else {
-        tokenList.storemanAddress.push(tokenList[crossChain].storemanWan);
-        tokenList.storemanAddress.push(tokenList[crossChain].storemanOri);
+        tempTokenList.storemanAddress.push(tempTokenList[crossChain].storemanWan);
+        tempTokenList.storemanAddress.push(tempTokenList[crossChain].storemanOri);
       }
 
-      tokenList[crossChain].supportTokens = {};
+      tempTokenList[crossChain].supportTokens = {};
 
       for (let token in global.config["crossTokens"][crossChain]["TOKEN"]) {
-        tokenList.supportTokenAddrs.push(token);
-        tokenList[crossChain].supportTokens[token] = global.config["crossTokens"][crossChain]["TOKEN"][token].tokenSymbol;
+        tempTokenList.supportTokenAddrs.push(token);
+        tempTokenList[crossChain].supportTokens[token] = global.config["crossTokens"][crossChain]["TOKEN"][token].tokenSymbol;
       }
 
       for (let tokenType in moduleConfig.crossInfoDict[crossChain]) {
         if (tokenType === 'CONF') {
           continue;
         }
-        tokenList[crossChain][tokenType] = {};
+        tempTokenList[crossChain][tokenType] = {};
 
-        tokenList[crossChain][tokenType].wanchainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr;
-        tokenList[crossChain][tokenType].originalChainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr;
+        tempTokenList[crossChain][tokenType].wanchainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr;
+        tempTokenList[crossChain][tokenType].originalChainHtlcAddr = moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr;
 
-        tokenList.wanchainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr);
-        tokenList.originalChainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr);
+        tempTokenList.wanchainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].wanchainHtlcAddr);
+        tempTokenList.originalChainHtlcAddr.push(moduleConfig.crossInfoDict[crossChain][tokenType].originalChainHtlcAddr);
 
-        tokenList[crossChain][tokenType].wanCrossAgent = new global.agentDict['WAN'](crossChain, tokenType);
-        tokenList[crossChain][tokenType].originCrossAgent = new global.agentDict[crossChain](crossChain, tokenType);
-        tokenList[crossChain][tokenType].lockedTime = await tokenList[crossChain][tokenType].wanCrossAgent.getLockedTime();
+        tempTokenList[crossChain][tokenType].wanCrossAgent = new global.agentDict['WAN'](crossChain, tokenType);
+        tempTokenList[crossChain][tokenType].originCrossAgent = new global.agentDict[crossChain](crossChain, tokenType);
+        tempTokenList[crossChain][tokenType].lockedTime = await tempTokenList[crossChain][tokenType].wanCrossAgent.getLockedTime();
       }
     }
     // monitorLogger.info(tokenList);
+    tokenList = tempTokenList;
     global.syncLogger.info("storeman agent init done!", tokenList);
   } catch (err) {
     console.log("init error ", err);
