@@ -55,7 +55,7 @@ module.exports = class StateAction {
       // need to release the nonce from usedNonce to pendingNonce, for fail status
       if (this.state === 'transIgnored') {
         this.addPendingNonce('lock');
-      } else if (this.state === 'transIgnored') {
+      } else if (this.state === 'fundLosted') {
         this.addPendingNonce('redeem');
       }
     }
