@@ -120,7 +120,7 @@ if (argv.help || !pass) {
 
 global.argv = argv;
 
-if (argv.index) {
+if (argv.index && argv.index !== true) {
   global.index = argv.index;
 } else {
   global.index = '';
