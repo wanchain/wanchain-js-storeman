@@ -10,7 +10,7 @@
     "crossTokens": {
       "ETH": {
         "CONF": {
-          "nodeUrl": "http://52.89.90.120:26892",
+          "nodeUrl": "http://geth-mainnet.wandevs.org:26892",
           "maxGasPrice": 50,
           "gasPriceDelta": 10,
           "gasLimit": 470000,
@@ -168,7 +168,7 @@
     "crossTokens": {
       "ETH": {
         "CONF": {
-          "nodeUrl": "http://52.34.91.48:36892",
+          "nodeUrl": "http://geth-testnet.wandevs.org:36892",
           "maxGasPrice": 50,
           "gasPriceDelta": 10,
           "gasLimit": 470000,
