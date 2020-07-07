@@ -493,7 +493,7 @@ async function syncChain(chainType, crossChain, logger) {
         let blkIndex = from;
         let blkEnd;
         let range = to - from;
-        let cntPerTime = 20000;
+        let cntPerTime = 1000;
 
         while (blkIndex < to) {
           if ((blkIndex + cntPerTime) > to) {
