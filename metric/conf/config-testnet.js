@@ -4,9 +4,8 @@ exports.wanNodeURL = 'http://192.168.1.179:7654';
 
 exports.contractAddress = {
     createGpk: '0xdb1B1ADA7ca4874544A482F78E0c47e2300916e6',
-    mortgage: '0x49fde469b39389Cd93999A3Ec092143C01c5f411',
-    //metric: '0x8e84b41800d7915aD3fF9E6bbba434c7ca99fB95',   // proxy address
-    metric: '0x2208577B3329101A4C168f95Be34A54C61c33b9A',   // proxy address
+    mortgage: '0xc3EAc95eCf5D0a197dE5632E299b6d4ec109b7Fe',
+    metric: '0x38CD2572C58Ff51F378C7a45453a27ddc8F63721',
 
 };
 

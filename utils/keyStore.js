@@ -53,6 +53,7 @@ const keyStore = {
       if (address.substr(0, 2) === '0x' || address.substr(0, 2) === '0X')
           address = address.substr(2);
       let files = fs.readdirSync(keyStorePath);
+      console.log("......................files:"+files);
       for (var i in files) {
           var item = files[i];
           if (item.toLowerCase().indexOf(address.toLowerCase()) >= 0) {
@@ -60,6 +61,7 @@ const keyStore = {
           }
       }
 
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>keystore filepath:" + filePath);
       let keystore = this.getFromFile(filePath);
       let keyAObj = {version:keystore.version, crypto:keystore.crypto};
       let privKeyA;

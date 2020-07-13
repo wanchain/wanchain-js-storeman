@@ -50,8 +50,7 @@ class IncntSlshWriter {
     lockMutex() {
         while (this.mutexMetric) {
             sleep(3);
-        }
-        ;
+        };
         this.mutexMetric = true
     }
 
@@ -60,18 +59,18 @@ class IncntSlshWriter {
     }
 
     run() {
-        setInterval(() => {
-            console.log("\n\n\n\n\n");
-            console.log("--------------------------------setInterval :: popQueue---------------------");
-            let task = this.popQueue();
-            if (task != null) {
-                console.log("task :", task);
-                this.procSignedResult(task).catch((err) => {
-                    console.log("--------------------------------setInterval :: enQueue---------------------");
-                    this.enQueue(task.xHash, task.signedResult);
-                })
-            }
-        }, 1000)
+        // setInterval(() => {
+        //     console.log("\n\n\n\n\n");
+        //     console.log("--------------------------------setInterval :: popQueue---------------------");
+        //     let task = this.popQueue();
+        //     if (task != null) {
+        //         console.log("task :", task);
+        //         this.procSignedResult(task).catch((err) => {
+        //             console.log("--------------------------------setInterval :: enQueue---------------------");
+        //             this.enQueue(task.xHash, task.signedResult);
+        //         })
+        //     }
+        // }, 1000)
 
         setInterval(() => {
             console.log("\n\n\n\n\n");
