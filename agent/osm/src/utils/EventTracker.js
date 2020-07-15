@@ -131,7 +131,7 @@ class EventTracker {
       event.cb = null;
       // save event
       if (this.isSave) {
-        let filter = {tracker: this.id, chain: this.chain, blockNumber: event.blockNumber, txIndex: event.transactionIndex, logIndex: event.logIndex};
+        let filter = {tracker: this.id, name: event.name, chain: this.chain, blockNumber: event.blockNumber, txIndex: event.transactionIndex, logIndex: event.logIndex};
         let update = Object.assign({}, filter, {txHash: event.transactionHash, topics: event.topics, data: event.data, parsed: event.parsed});
         result = await Event.updateOne(filter, update, {upsert: true}); // { n: 1, nModified: 0, ok: 1 }
       } else {
@@ -167,6 +167,17 @@ class EventTracker {
       return (a.transactionIndex - b.transactionIndex);
     }
     return (a.logIndex - b.logIndex);
+  }
+
+  async getEvent(name, filter) {
+    if (typeof(filter) != 'object') {
+      filter = {};
+    }
+    filter.tracker = this.id;
+    if (name) {
+      filter.name = name;
+    }
+    return await Event.find(filter).exec();
   }
 }
 

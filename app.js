@@ -896,8 +896,9 @@ if (global.replica) {
     readPreference: "secondaryPreferred" //readPreference must be either primary/primaryPreferred/secondary/secondaryPreferred/nearest
   }
   Object.assign(dbOption, awsDBOption);
-  dbUrl = dbUrl + "?authSource=admin";
+  // dbUrl = dbUrl + "?authSource=admin";
 }
+dbUrl = dbUrl + "?authSource=admin";
 let db = mongoose.createConnection(dbUrl, dbOption);
 
 db.on('connected', function(err) {

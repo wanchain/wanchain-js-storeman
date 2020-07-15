@@ -4,7 +4,7 @@ const config = require('../../cfg/config');
 const abiMap = require('../../cfg/abi');
 const keythereum = require('keythereum');
 const ethUtil = require('ethereumjs-util');
-const Web3 = require('web3');
+const Web3 = require('web3_1.2');
 const wanUtil = require('wanchain-util');
 const Tx = wanUtil.wanchainTx;
 
@@ -15,7 +15,7 @@ const selfAddress = '0x' + ethUtil.pubToAddress(selfPk).toString('hex').toLowerC
 let selfNonce = 0;
 console.log("keystore path: %s", config.keystore.path);
 // console.log("sk: %s", '0x' + selfSk.toString('hex'));
-console.log("pk: %s", '0x04' + selfPk.toString('hex'));
+console.log("pk: %s", '0x' + selfPk.toString('hex'));
 console.log("address: %s", selfAddress);
 
 const web3 = new Web3(new Web3.providers.HttpProvider(config.wanNodeURL));
@@ -87,60 +87,60 @@ async function getTxReceipt(txHash, name = '') {
   }
 }
 
-async function sendPloyCommit(groupId, polyCommit) {
+async function sendPloyCommit(groupId, round, curve, polyCommit) {
   let order = polyCommit.length;
-  let buf = Buffer.alloc(order * 65);
+  let buf = Buffer.alloc(order * 64);
   let offset = 0;
   for (let i = 0; i < order; i++) {
     let temp = Buffer.from(polyCommit[i].substr(2), 'hex');
     temp.copy(buf, offset);
-    offset += 65;
+    offset += 64;
   }
   let pcStr = '0x' + buf.toString('hex');
-  // console.log("group %s sendPloyCommit %s", groupId, pcStr);
-  let txData = await createGpkSc.methods.setPolyCommit(groupId, pcStr).encodeABI();
+  console.log("group %s round %d curve %d sendPloyCommit %s", groupId, round, curve, pcStr);
+  let txData = await createGpkSc.methods.setPolyCommit(groupId, round, curve, pcStr).encodeABI();
   let txHash = await sendTx(config.contractAddress.createGpk, txData);
   return txHash;
 }
 
-async function sendEncSij(groupId, dest, encSij) {
-  let txData = await createGpkSc.methods.setEncSij(groupId, dest, encSij).encodeABI();
+async function sendEncSij(groupId, round, curve, dest, encSij) {
+  let txData = await createGpkSc.methods.setEncSij(groupId, round, curve, dest, encSij).encodeABI();
   let txHash = await sendTx(config.contractAddress.createGpk, txData);
   return txHash;  
 }
 
-async function sendCheckStatus(groupId, src, isValid) {
-  let txData = await createGpkSc.methods.setCheckStatus(groupId, src, isValid).encodeABI();
+async function sendCheckStatus(groupId, round, curve, src, isValid) {
+  let txData = await createGpkSc.methods.setCheckStatus(groupId, round, curve, src, isValid).encodeABI();
   let txHash = await sendTx(config.contractAddress.createGpk, txData);
   return txHash;  
 }
 
-async function sendSij(groupId, dest, sij, ephemPrivateKey) {
-  let txData = await createGpkSc.methods.revealSij(groupId, dest, sij, ephemPrivateKey).encodeABI();
+async function sendSij(groupId, round, curve, dest, sij, ephemPrivateKey) {
+  let txData = await createGpkSc.methods.revealSij(groupId, round, curve, dest, sij, ephemPrivateKey).encodeABI();
   let txHash = await sendTx(config.contractAddress.createGpk, txData);
   return txHash;
 }
 
-async function sendPolyCommitTimeout(groupId) {
-  let txData = await createGpkSc.methods.polyCommitTimeout(groupId).encodeABI();
+async function sendPolyCommitTimeout(groupId, curve) {
+  let txData = await createGpkSc.methods.polyCommitTimeout(groupId, curve).encodeABI();
   let txHash = await sendTx(config.contractAddress.createGpk, txData);
   return txHash;
 }
 
-async function sendEncSijTimeout(groupId, src) {
-  let txData = await createGpkSc.methods.encSijTimeout(groupId, src).encodeABI();
+async function sendEncSijTimeout(groupId, curve, src) {
+  let txData = await createGpkSc.methods.encSijTimeout(groupId, curve, src).encodeABI();
   let txHash = await sendTx(config.contractAddress.createGpk, txData);
   return txHash;
 }
 
-async function sendCheckTimeout(groupId, dest) {
-  let txData = await createGpkSc.methods.checkEncSijTimeout(groupId, dest).encodeABI();
+async function sendCheckTimeout(groupId, curve, dest) {
+  let txData = await createGpkSc.methods.checkEncSijTimeout(groupId, curve, dest).encodeABI();
   let txHash = await sendTx(config.contractAddress.createGpk, txData);
   return txHash;
 }
 
-async function sendSijTimeout(groupId, src) {
-  let txData = await createGpkSc.methods.SijTimeout(groupId, src).encodeABI();
+async function sendSijTimeout(groupId, curve, src) {
+  let txData = await createGpkSc.methods.SijTimeout(groupId, curve, src).encodeABI();
   let txHash = await sendTx(config.contractAddress.createGpk, txData);
   return txHash;
 }
@@ -155,12 +155,30 @@ function getEvents(options) {
 
 function genKeystoreFile(gpk, sk, password) {
   let keystore = web3.eth.accounts.encrypt(sk, password);
-  let gAddress = ethUtil.pubToAddress(Buffer.from(gpk.substr(4), 'hex')).toString('hex').toLowerCase(); // no 0x
+  let gAddress = ethUtil.pubToAddress(Buffer.from(gpk.substr(2), 'hex')).toString('hex').toLowerCase(); // no 0x
   keystore.address = gAddress;
   let fp = path.join(__dirname, '../../keystore/', gpk);
   fs.writeFileSync(fp, JSON.stringify(keystore), 'utf8');
   fp = path.join(__dirname, '../../keystore/', gpk + '.pwd');
   fs.writeFileSync(fp, password, 'utf8');
+}
+
+function parseEvent(contractName, eventName, event) {
+  let abi = abiMap.get(contractName);
+  if (!abi) {
+    console.log("invalid contract name %s to parse log", contractName);
+    return null;
+  }
+  
+  for (let i = 0; i < abi.length; i++) {
+    const item = abi[i];
+    if ((item.type == 'event') && (item.name == eventName)) {
+      let decoded = web3.eth.abi.decodeLog(item.inputs, event.data, event.topics.slice(1));
+      decoded._name_ = eventName;
+      return decoded;
+    }
+  }
+  return null;
 }
 
 module.exports = {
@@ -182,5 +200,6 @@ module.exports = {
   sendSijTimeout,
   getBlockNumber,
   getEvents,
-  genKeystoreFile
+  genKeystoreFile,
+  parseEvent
 }
