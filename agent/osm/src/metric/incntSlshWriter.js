@@ -22,6 +22,7 @@ class IncntSlshWriter {
         this.logger = global.metricLogger;
         this.tasks = [];
         this.mutexMetric = false;
+        //todo should read the task on disk
     }
 
     handleInctSlsh(xhash, signedResult) {
