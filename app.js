@@ -199,6 +199,8 @@ global.agentDict = {
 global.syncLogger = new Logger("storemanAgent-sync-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.monitorLogger = new Logger("storemanAgent-action-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.mpcLogger = new Logger("storemanAgent-mpc-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
+global.metricLogger = new Logger("storemanAgent-metric-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
+global.grpInfoLogger = new Logger("storemanAgent-metric-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 
 async function init() {
   try {

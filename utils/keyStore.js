@@ -1,6 +1,7 @@
 const fs = require('fs');
 const keythereum = require("keythereum");
 let wanUtil = require('wanchain-util');
+const path = require('path');
 
 // const keyStorePath = process.env.HOME + "/keystore/";
 const keyStorePath = global.keystore;
@@ -45,6 +46,35 @@ const keyStore = {
   {
     let publicKey = wanUtil.recoverPubkeyFromWaddress(WAddress).A;
     return "0x"+wanUtil.sha3(publicKey.slice(1)).slice(-20).toString('hex');
+  },
+  getPrivateKeyByKsPath(address,password,keyStorePath){
+
+      let filePath;
+      if (address.substr(0, 2) === '0x' || address.substr(0, 2) === '0X')
+          address = address.substr(2);
+      let files = fs.readdirSync(keyStorePath);
+      console.log("......................files:"+files);
+      for (var i in files) {
+          var item = files[i];
+          if (item.toLowerCase().indexOf(address.toLowerCase()) >= 0) {
+              filePath =  path.join(keyStorePath,item);
+          }
+      }
+
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>keystore filepath:" + filePath);
+      let keystore = this.getFromFile(filePath);
+      let keyAObj = {version:keystore.version, crypto:keystore.crypto};
+      let privKeyA;
+      // let privKeyB;
+      try {
+          privKeyA = keythereum.recover(password, keyAObj);
+          // privKeyB = keythereum.recover(password, keyBObj);
+      }catch(error){
+          console.log('User Transaction input : ', 'wrong password');
+          return null;
+      }
+      // return [privKeyA,privKeyB];
+      return privKeyA;
   },
   getPrivateKey(address,password){
     let keystore = this.getKeystoreJSON(address);
