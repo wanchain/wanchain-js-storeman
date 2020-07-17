@@ -57,9 +57,10 @@ function listenEvent() {
   let id = wanchain.selfAddress + '_gpk';
   let evtTracker = new EventTracker(id, eventHandler, true, config.startBlock);
   evtTracker.subscribe('smg_selectedEvent', config.contractAddress.smg, ["0x62487e9f333516e24026d78ce371e54c664a46271dcf5ffdafd8cd10ea75a5bf"]);
-  evtTracker.subscribe('gpk_GpkCreatedLogger', config.contractAddress.createGpk, ["0x2e793a95012b45cc0d04ab8579c7ea491b2153f808fa8e4fc8dadf0fb88c5f2c"]);
-  evtTracker.subscribe('gpk_SlashLogger', config.contractAddress.createGpk, ["0x55a838f0e5dda7c3de54baf9c24a1d73c2c17849295e268ce5b0b7dde1d28266"]);
-  evtTracker.subscribe('gpk_ResetLogger', config.contractAddress.createGpk, ["0x05965810523ac64b8d0831d42cc849f23ea3438450561887aad3c4b7687e78db"]);
+  evtTracker.subscribe('gpk_GpkCreatedLogger', config.contractAddress.createGpk, ["0x884822611cfb227c03601397b3912b6e3f6c0559500336651a8214a2e5bc290e"]);
+  evtTracker.subscribe('gpk_SlashLogger', config.contractAddress.createGpk, ["0x6db7153a0195112b574e9c22db0cf9526d68f6951c394ed1b179447813515b42"]);
+  evtTracker.subscribe('gpk_ResetLogger', config.contractAddress.createGpk, ["0x13beb2234bbbe2e676ea7d404e3cf57bf7e167ebdf43c97bf34007c878a06e88"]);
+  evtTracker.subscribe('gpk_CloseLogger', config.contractAddress.createGpk, ["0xa9ae7136d2e2e390eb5f98304af73123f4b84e37bd83d1101c08ff39456f0b5f"]);
   evtTracker.start();
 }
 
@@ -77,6 +78,9 @@ async function eventHandler(evt) {
       case 'gpk_SlashLogger':
         await procGpkSlashLogger(evt);
         break;
+      case 'gpk_CloseLogger':
+        await procGpkCloseLogger(evt);
+        break;
       default:
         break;
     }
@@ -91,31 +95,54 @@ async function procSmgSelectedEvent(evt) {
   let groupId = evt.topics[1];
   let group = groupMap.get(groupId);
   let info = await createGpkSc.methods.getGroupInfo(groupId, -1).call();
-  console.log("gpk agent get group info: %O", info);
+  // console.log("gpk agent get group info: %O", info);
   let round = parseInt(info[0]), status = parseInt(info[1]);
-  if ((status == GpkStatus.PolyCommit) && checkSelfSelected(groupId)) {
-    if (!group) {
-      let newGroup = new Group(groupId, round);
-      groupMap.set(groupId, newGroup);
-      await newGroup.start();
-    } else if (group.round < round) {
-      await group.nextRound(round);
+  if (status == GpkStatus.PolyCommit) {
+    console.log("gpk agent start group %s round %d", groupId, round);
+    let selected = await checkSelfSelected(groupId);
+    if (selected) {
+      if (!group) {
+        let newGroup = new Group(groupId, round);
+        groupMap.set(groupId, newGroup);
+        await newGroup.start();
+      } else if (group.round < round) {
+        await group.nextRound(round);
+      } else {
+        console.error("%s gpk agent ignore group %s round %d status %d event", new Date().toISOString(), groupId, round, status);
+      }
     } else {
-      console.error("%s gpk agent ignore group %s round %d status %d event", new Date().toISOString(), groupId, round, status);
+      console.log("gpk agent skip group %s round %d as not-selected", groupId, round);  
     }
   }
 }
 
 async function checkSelfSelected(groupId) {
-  let info = await smgSc.methods.getStoremanInfo(wanchain.selfAddress).call();
-  let curgroup = info[9];
-  let nextGroup = info[10];
-  return ((groupId == curgroup) || (groupId == nextGroup));
+  let isSelected = false;
+  let smNumber = await smgSc.methods.getSelectedSmNumber(groupId).call();
+  if (smNumber) {
+    let ps = new Array(smNumber);
+    for (let i = 0; i < smNumber; i++) {
+      ps[i] = new Promise(async (resolve, reject) => {
+        try {
+          let sm = await smgSc.methods.getSelectedSmInfo(groupId, i).call();
+          if (sm[0].toLowerCase() == wanchain.selfAddress) {
+            isSelected = true;
+          }
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      })
+    }
+    await Promise.all(ps);
+  }
+  return isSelected;
 }
 
 function procGpkCreatedLogger(evt) {
   let groupId = evt.topics[1];
-  console.log("%s gpk agent finish group %s", new Date().toISOString(), groupId);
+  let round = evt.topics[2];
+  console.log("%s gpk agent complete group %s at round %d", new Date().toISOString(), groupId, round);
 }
 
 function procGpkSlashLogger(evt) {
@@ -123,6 +150,12 @@ function procGpkSlashLogger(evt) {
   let round = evt.topics[2];
   let curve = evt.topics[3];
   console.log("%s group %s round %d curve %d slash someone: %O", new Date().toISOString(), groupId, round, curve, evt);
+}
+
+function procGpkCloseLogger(evt) {
+  let groupId = evt.topics[1];
+  let round = evt.topics[2];
+  console.log("%s gpk agent close group %s at round %d", new Date().toISOString(), groupId, round);
 }
 
 module.exports = {
