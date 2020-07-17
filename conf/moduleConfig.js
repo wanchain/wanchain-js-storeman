@@ -286,6 +286,54 @@ const test_Config = {
 
         smgAdminAddr: ['0xa54aed7a6742bf9691514f5911d5153b40269666','0xb6e948e3ecb09094d768ec571f9c3651cd29adf4'],
         smgAdminAbi: [{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"},{"name":"punishPercent","type":"uint256"}],"name":"punishStoremanGroup","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"tokenManager","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"quotaLedger","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"kill","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"}],"name":"storemanGroupWithdrawDeposit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"}],"name":"setSmgWhiteList","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"address"}],"name":"mapStoremanGroup","outputs":[{"name":"deposit","type":"uint256"},{"name":"originalChainAddr","type":"address"},{"name":"unregisterApplyTime","type":"uint256"},{"name":"txFeeRatio","type":"uint256"},{"name":"bonusBlockNumber","type":"uint256"},{"name":"initiator","type":"address"},{"name":"punishPercent","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"originalChainAddr","type":"address"},{"name":"txFeeRatio","type":"uint256"}],"name":"storemanGroupRegister","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[],"name":"acceptOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"},{"name":"originalChainAddr","type":"address"},{"name":"txFeeRatio","type":"uint256"}],"name":"storemanGroupRegisterByDelegate","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"address"}],"name":"mapSmgWhiteList","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"},{"name":"destAddress","type":"address"},{"name":"isTransferAll","type":"bool"}],"name":"transferSmgDeposit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_newOwner","type":"address"}],"name":"changeOwner","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"}],"name":"depositSmgBonus","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[],"name":"halted","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"}],"name":"smgApplyUnregisterByDelegate","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"}],"name":"smgWithdrawDepositByDelegate","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"}],"name":"smgClaimSystemBonusByDelegate","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"newOwner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"tm","type":"address"},{"name":"ql","type":"address"}],"name":"injectDependencies","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"}],"name":"storemanGroupClaimSystemBonus","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"halt","type":"bool"}],"name":"setHalt","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"}],"name":"storemanGroupApplyUnregister","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"smgWanAddr","type":"address"},{"indexed":false,"name":"smgOrigAddr","type":"address"},{"indexed":false,"name":"wanDeposit","type":"uint256"},{"indexed":false,"name":"quota","type":"uint256"},{"indexed":false,"name":"txFeeRatio","type":"uint256"}],"name":"StoremanGroupRegistrationLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"sender","type":"address"},{"indexed":true,"name":"wancoin","type":"uint256"}],"name":"StoremanGroupDepositBonusLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"smgWanAddr","type":"address"},{"indexed":true,"name":"tokenOrigAddr","type":"address"}],"name":"SmgEnableWhiteListLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"smgWanAddr","type":"address"},{"indexed":true,"name":"applyTime","type":"uint256"}],"name":"StoremanGroupApplyUnRegistrationLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"smgWanAddr","type":"address"},{"indexed":true,"name":"actualReturn","type":"uint256"},{"indexed":false,"name":"deposit","type":"uint256"}],"name":"StoremanGroupWithdrawLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"bonusRecipient","type":"address"},{"indexed":true,"name":"bonus","type":"uint256"}],"name":"StoremanGroupClaimSystemBonusLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"smgWanAddr","type":"address"},{"indexed":true,"name":"punishPercent","type":"uint256"}],"name":"StoremanGroupPunishedLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"smgAddress","type":"address"},{"indexed":false,"name":"destAddress","type":"address"},{"indexed":false,"name":"deposit","type":"uint256"}],"name":"SmgTranferDepositLogger","type":"event"}]
+      },
+      CONTRACT: {
+        crossScAddr: '0x358b18d9dfa4cce042f2926d014643d4b3742b31',
+        crossScAbi: require('../abi/crossApproach.abi.json'),
+        oracleAddr: '0x7bb4cacc6155399243d68c1362892ac3a26c266f',
+        oracleAbi: require('../abi/oracle.abi.json'),
+        quotaAddr: '0x7bb4cacc6155399243d68c1362892ac3a26c266f',
+        quotaAbi: require('../abi/quota.abi.json'),
+        tokenManagerAddr: '0x670847a824974b4cd5555d6b46228749e44242a3',
+        tokenManagerAbi: require('../abi/tokenManager.abi.json'),
+      },
+      FUNCTION: {
+        Mint: {
+          smgHtlc: ['smgMintLock', 'smgMintRedeem', 'smgMintRevoke'],
+          walletHtlc: ['userMintLock', 'userMintRedeem', 'userMintRevoke'],
+          smgRapid: ['smgFastMint'],
+          walletRapid: ['userFastMint'],
+        },
+        Burn: {
+          smgHtlc: ['smgBurnLock', 'smgBurnRedeem', 'smgBurnRevoke'],
+          walletHtlc: ['userBurnLock', 'userBurnRedeem', 'userBurnRevoke'],
+          smgRapid: ['smgFastBurn'],
+          walletRapid: ['userFastBurn'],
+        },
+        Debt: {
+          src: ['srcDebtLock', 'srcDebtRedeem', 'srcDebtRevoke'],
+          dest:  ['destDebtLock', 'destDebtRedeem', 'destDebtRevoke']
+        },
+        WithdrawFee: 'smgWithdrawFee'
+      },
+      EVENT: {
+        Mint: {
+          smgHtlc: ['SmgMintRedeemLogger', 'SmgMintRedeemLogger', 'SmgMintRevokeLogger'],
+          walletHtlc: ['UserMintLockLogger', 'UserMintRedeemLogger', 'UserMintRevokeLogger'],
+          smgRapid: ['SmgFastMintLogger'],
+          walletRapid: ['UserFastMintLogger'],
+        },
+        Burn: {
+          smgHtlc: ['SmgBurnLockLogger', 'SmgBurnRedeemLogger', 'SmgBurnRevokeLogger'],
+          walletHtlc: ['UserBurnLockLogger', 'UserBurnRedeemLogger', 'UserBurnRevokeLogger'],
+          smgRapid: ['SmgBurnLockLogger'],
+          walletRapid: ['UserFastBurnLogger'],
+        },
+        Debt: {
+          src: ['SrcDebtLockLogger', 'SrcDebtRedeemLogger', 'SrcDebtRevokeLogger'],
+          dest:  ['DestDebtLockLogger', 'DestDebtRedeemLogger', 'DestDebtRevokeLogger']
+        },
+        WithdrawFee: 'smgWithdrawFee'
       }
     },
     EOS: {
@@ -368,6 +416,87 @@ const test_Config = {
         smgAdminAddr: '0x59adc38f0b3f64fb542b50e3e955e7a8c1eb3e3b',
         smgAdminAbi: [{"constant":true,"inputs":[],"name":"USE_CONTRACT","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"DEFAULT_BONUS_PERIOD_BLOCKS","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"},{"name":"","type":"address"}],"name":"mapCoinSmgInfo","outputs":[{"name":"deposit","type":"uint256"},{"name":"originalChainAddr","type":"bytes"},{"name":"unregisterApplyTime","type":"uint256"},{"name":"txFeeRatio","type":"uint256"},{"name":"bonusBlockNumber","type":"uint256"},{"name":"initiator","type":"address"},{"name":"punishPercent","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"},{"name":"","type":"address"}],"name":"mapSmgWhiteList","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"acceptOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"USE_SCRIPT","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"DEFAULT_BONUS_RATIO_FOR_DEPOSIT","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_newOwner","type":"address"}],"name":"changeOwner","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"halted","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"DEFAULT_PRECISE","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"mapCoinInfo","outputs":[{"name":"coin2WanRatio","type":"uint256"},{"name":"defaultMinDeposit","type":"uint256"},{"name":"htlcType","type":"uint256"},{"name":"originalChainHtlc","type":"bytes"},{"name":"wanchainHtlc","type":"address"},{"name":"wanchainTokenManager","type":"address"},{"name":"withdrawDelayTime","type":"uint256"},{"name":"useWhiteList","type":"bool"},{"name":"startBonusBlk","type":"uint256"},{"name":"bonusTotal","type":"uint256"},{"name":"bonusPeriodBlks","type":"uint256"},{"name":"bonusRatio","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"newOwner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"halt","type":"bool"}],"name":"setHalt","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"coin","type":"uint256"},{"indexed":true,"name":"ratio","type":"uint256"},{"indexed":true,"name":"defaultMinDeposit","type":"uint256"},{"indexed":false,"name":"htlcType","type":"uint256"},{"indexed":false,"name":"originalChainHtlc","type":"bytes"},{"indexed":false,"name":"wanHtlcAddr","type":"address"},{"indexed":false,"name":"wanchainTokenManagerAddr","type":"address"},{"indexed":false,"name":"withdrawDelayTime","type":"uint256"}],"name":"SmginitializeCoin","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"smgAddress","type":"address"},{"indexed":false,"name":"smgOriginalChainAddress","type":"bytes"},{"indexed":true,"name":"coin","type":"uint256"},{"indexed":false,"name":"wancoin","type":"uint256"},{"indexed":false,"name":"tokenQuota","type":"uint256"},{"indexed":false,"name":"txFeeratio","type":"uint256"}],"name":"SmgRegister","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"sender","type":"address"},{"indexed":true,"name":"coin","type":"uint256"},{"indexed":false,"name":"wancoin","type":"uint256"}],"name":"SmgDepositBonus","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"smgAddress","type":"address"},{"indexed":true,"name":"coin","type":"uint256"}],"name":"SmgWhiteList","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"smgAddress","type":"address"},{"indexed":true,"name":"coin","type":"uint256"},{"indexed":true,"name":"orgSCAddr","type":"bytes"}],"name":"SmgSetOrigSC","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"smgAddress","type":"address"},{"indexed":true,"name":"coin","type":"uint256"},{"indexed":true,"name":"proxySCAddr","type":"address"}],"name":"SmgSetProxySC","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"smgAddress","type":"address"},{"indexed":true,"name":"coin","type":"uint256"},{"indexed":true,"name":"applyTime","type":"uint256"}],"name":"SmgApplyUnRegister","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"smgAddress","type":"address"},{"indexed":true,"name":"coin","type":"uint256"},{"indexed":true,"name":"withdrawTime","type":"uint256"}],"name":"SmgWithdraw","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"smgAddress","type":"address"},{"indexed":true,"name":"coin","type":"uint256"},{"indexed":true,"name":"bonus","type":"uint256"}],"name":"SmgClaimSystemBonus","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"smgAddress","type":"address"},{"indexed":true,"name":"coin","type":"uint256"},{"indexed":true,"name":"punishPercent","type":"uint256"}],"name":"SmgPunished","type":"event"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"},{"name":"ratio","type":"uint256"},{"name":"defaultMinDeposit","type":"uint256"},{"name":"htlcType","type":"uint256"},{"name":"originalChainHtlc","type":"bytes"},{"name":"wanHtlcAddr","type":"address"},{"name":"wanchainTokenManagerAddr","type":"address"},{"name":"withdrawDelayTime","type":"uint256"}],"name":"initializeCoin","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"},{"name":"ratio","type":"uint256"}],"name":"setWToken2WanRatio","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"},{"name":"ratio","type":"uint256"}],"name":"setSystemBonusRatio","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"},{"name":"delayTime","type":"uint256"}],"name":"setWithdrawDepositDelayTime","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"},{"name":"isSystemBonusPeriod","type":"bool"},{"name":"systemBonusPeriod","type":"uint256"}],"name":"setSystemEnableBonus","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"},{"name":"enableUserWhiteList","type":"bool"}],"name":"setSmgEnableUserWhiteList","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"},{"name":"originalChainAddr","type":"bytes"},{"name":"txFeeRatio","type":"uint256"}],"name":"addStoremanGroup","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"},{"name":"smgWanAddr","type":"address"},{"name":"originalChainAddr","type":"bytes"},{"name":"txFeeRatio","type":"uint256"}],"name":"storemanGroupRegisterByDelegate","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"}],"name":"depositSmgBonus","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"},{"name":"smgAddr","type":"address"}],"name":"setSmgWhiteList","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"coin","type":"uint256"},{"name":"storemanAddr","type":"address"}],"name":"getStoremanOriginalChainAddr","outputs":[{"name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"coin","type":"uint256"},{"name":"storemanAddr","type":"address"}],"name":"getStoremanTxFeeRatio","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"}],"name":"storemanGroupApplyUnregister","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"}],"name":"storemanGroupWithdrawDeposit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"}],"name":"storemanGroupClaimSystemBonus","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"coin","type":"uint256"},{"name":"smgAddr","type":"address"},{"name":"punishPercent","type":"uint256"}],"name":"punishStoremanGroup","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"kill","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"transferDeposit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]
       }
+    },
+    WAN: {
+      CONF: {
+        enable: true,
+      },
+      CONTRACT: {
+        crossScAddr: '0x358b18d9dfa4cce042f2926d014643d4b3742b31',
+        crossScAbi: require('../abi/crossApproach.abi.json'),
+        oracleAddr: '0x7bb4cacc6155399243d68c1362892ac3a26c266f',
+        oracleAbi: require('../abi/oracle.abi.json'),
+        quotaAddr: '0x7bb4cacc6155399243d68c1362892ac3a26c266f',
+        quotaAbi: require('../abi/quota.abi.json'),
+        tokenManagerAddr: '0x670847a824974b4cd5555d6b46228749e44242a3',
+        tokenManagerAbi: require('../abi/tokenManager.abi.json'),
+      },
+      FUNCTION: {
+        Mint: {
+          smgHtlc: ['smgMintLock', 'smgMintRedeem', 'smgMintRevoke'],
+          walletHtlc: ['userMintLock', 'userMintRedeem', 'userMintRevoke'],
+          smgRapid: ['smgFastMint'],
+          walletRapid: ['userFastMint'],
+        },
+        Burn: {
+          smgHtlc: ['smgBurnLock', 'smgBurnRedeem', 'smgBurnRevoke'],
+          walletHtlc: ['userBurnLock', 'userBurnRedeem', 'userBurnRevoke'],
+          smgRapid: ['smgFastBurn'],
+          walletRapid: ['userFastBurn'],
+        },
+        Debt: {
+          src: ['srcDebtLock', 'srcDebtRedeem', 'srcDebtRevoke'],
+          dest: ['destDebtLock', 'destDebtRedeem', 'destDebtRevoke']
+        },
+        WithdrawFee: 'smgWithdrawFee'
+      },
+      EVENT: {
+        Mint: {
+          smgHtlc: ['SmgMintRedeemLogger', 'SmgMintRedeemLogger', 'SmgMintRevokeLogger'],
+          walletHtlc: ['UserMintLockLogger', 'UserMintRedeemLogger', 'UserMintRevokeLogger'],
+          smgRapid: ['SmgFastMintLogger'],
+          walletRapid: ['UserFastMintLogger'],
+        },
+        Burn: {
+          smgHtlc: ['SmgBurnLockLogger', 'SmgBurnRedeemLogger', 'SmgBurnRevokeLogger'],
+          walletHtlc: ['UserBurnLockLogger', 'UserBurnRedeemLogger', 'UserBurnRevokeLogger'],
+          smgRapid: ['SmgBurnLockLogger'],
+          walletRapid: ['UserFastBurnLogger'],
+        },
+        Debt: {
+          src: ['SrcDebtLockLogger', 'SrcDebtRedeemLogger', 'SrcDebtRevokeLogger'],
+          dest: ['DestDebtLockLogger', 'DestDebtRedeemLogger', 'DestDebtRevokeLogger']
+        },
+        WithdrawFee: 'smgWithdrawFee'
+      }
+    },
+  },
+  crossChainSmgScDictTest: {
+    CONTRACT: {
+      smgAdminAddr: '0xc8d2d6a886e23cb88d80f63295fb6ff2664a033f',
+      smgAdminAbi: require('../abi/smg.abi.json')
+    },
+    FUNCTION: {
+      register: 'registerStartEvent',
+      unregister: 'StoremanGroupUnregisterEvent',
+      dismiss: 'StoremanGroupDismissedLogger',
+      stakeIn: 'stakeIn',
+      stakeOut: 'stakeOut',
+      stakeClaim: 'stakeClaim',
+      delegateIn: 'delegateIn',
+      delegateOut: 'delegateOut',
+      delegateClaim: 'delegateClaim'
+    },
+    EVENT: {
+      register: 'registerStartEvent',
+      unregister: 'StoremanGroupUnregisterEvent',
+      dismiss: 'StoremanGroupDismissedLogger',
+      stakeIn: 'stakeIn',
+      stakeOut: 'stakeOut',
+      stakeClaim: 'stakeClaim',
+      delegateIn: 'delegateIn',
+      delegateOut: 'delegateOut',
+      delegateClaim: 'delegateClaim'
     }
   }
 };
