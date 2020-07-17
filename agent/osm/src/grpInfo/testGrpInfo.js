@@ -6,4 +6,5 @@ function test() {
     getGrpInfoInst();
     global.grpInfo.run();
 }
+
 test();

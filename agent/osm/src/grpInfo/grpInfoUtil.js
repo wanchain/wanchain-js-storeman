@@ -50,7 +50,13 @@ function difference(thisSet, otherSet) {
 function equal(thisSet, otherSet) {
     let differenceSet = new Set();
     differenceSet = difference(thisSet, otherSet);
-    return differenceSet.length == 0 ? true : false;
+    console.log("differenceSet",differenceSet);
+
+    let differenceSet1 = new Set();
+    differenceSet1 = difference(otherSet,thisSet);
+    console.log("differenceSet",differenceSet1);
+
+    return differenceSet.size == 0 && differenceSet1.size == 0 ? true : false;
 }
 
 
@@ -58,9 +64,10 @@ function getContract(abi, address) {
     let web3 = new Web3()
     web3.setProvider(new Web3.providers.HttpProvider(metricCfg.wanNodeURL));
     let contract = new web3.eth.Contract(abi, address);
-    console.log("URL:",metricCfg.wanNodeURL);
+    console.log("URL:", metricCfg.wanNodeURL);
     //console.log("abi:",abi);
-    console.log("address:",address);
+    console.log("address:", address);
+    console.log("self address:", metricCfg.selfAddress);
     return contract;
 }
 
@@ -74,7 +81,7 @@ async function getGrpsByAdd(wkAddr) {
             let c = getContract(abiMap.get("smg"), metricCfg.contractAddress.smg);
             let ret = await c.methods.getStoremanInfo(wkAddr).call();
 
-            console.log("getThresholdByGrpId ret ", ret);
+            console.log("%%%%%%%%%%%%%%%%%%%%%%%getGrpsByAdd ret ", ret);
             let grps = [];
             if (ret["nextGroupId"].length) {
                 grps.push(ret["nextGroupId"].toString(10))
@@ -110,6 +117,7 @@ async function getReadyGrps(grps) {
             //enum GroupStatus {none, initial,curveSeted, failed,selected,ready,unregistered, dismissed}
             for (let grp of grps) {
                 let grpInfo = await c.methods.getStoremanGroupInfo(grp).call();
+                console.log("%%%%%%%%%%%%%%%%%%%%%%% getReadyGrps grpID", grp, "ret getStoremanGroupInfo", grpInfo);
                 if (parseInt(grpInfo["status"]) == grpStatus.ready) {
                     grpsReady.push(grp);
                 }
@@ -128,7 +136,7 @@ async function getSelectedSmNumber(grpId) {
         try {
             let c = getContract(abiMap.get("smg"), metricCfg.contractAddress.smg);
             let ret = await c.methods.getSelectedSmNumber(grpId).call();
-            console.log("getSelectedSmNumber ret ", ret.toString(10));
+            console.log("%%%%%%%%%%%%%%%%%%%%%%% getSelectedSmNumber ret ", ret.toString(10));
             resolve(ret.toString(10));
         } catch (err) {
             console.log("getSelectedSmNumber error", err);
@@ -142,7 +150,7 @@ async function getThresholdByGrpId(grpId) {
         try {
             let c = getContract(abiMap.get("smg"), metricCfg.contractAddress.smg);
             let ret = await c.methods.getThresholdByGrpId(grpId).call();
-            console.log("getThresholdByGrpId ret ", ret.toString(10));
+            console.log("%%%%%%%%%%%%%%%%%%%%%%% getThresholdByGrpId ret ", ret.toString(10));
             resolve(ret.toString(10));
         } catch (err) {
             console.log("getThresholdByGrpId error", err);
@@ -155,7 +163,7 @@ async function getThresholdByGrpId(grpId) {
 //      gpks:[gpk1,gpk2]
 //  }
 async function getCurveGpk(grpId) {
-    let ret = {
+    let retResult = {
         "curveTypes": [],
         "gpks": []
     };
@@ -163,17 +171,17 @@ async function getCurveGpk(grpId) {
         try {
             let c = getContract(abiMap.get("smg"), metricCfg.contractAddress.smg);
             let ret = await c.methods.getStoremanGroupConfig(grpId).call();
-            console.log("getStoremanGroupConfig ret ", ret);
+            console.log("%%%%%%%%%%%%%%%%%%%%%%% getStoremanGroupConfig ret ", ret);
             if (ret["gpk1"].length) {
-                ret.curveTypes.push(ret["curve1"]);
-                ret.gpks.push(ret["gpk1"]);
+                retResult.curveTypes.push(ret["curve1"]);
+                retResult.gpks.push(ret["gpk1"]);
             }
 
             if (ret["gpk2"].length) {
-                ret.curveTypes.push(ret["curve2"]);
-                ret.gpks.push(ret["gpk2"]);
+                retResult.curveTypes.push(ret["curve2"]);
+                retResult.gpks.push(ret["gpk2"]);
             }
-            resolve(ret);
+            resolve(retResult);
         } catch (err) {
             console.log("getStoremanGroupConfig error", err);
             reject(err);
@@ -185,13 +193,15 @@ async function getGrpInfoContent(grpId, smCount) {
     return new Promise(async (resolve, reject) => {
 
         try {
-            let c = getContract(abiMap.get("smg"), metricCfg.contractAddress.smg);
+
             let pms = [];
+
+            let c = getContract(abiMap.get("smg"), metricCfg.contractAddress.smg);
             for (let i = 0; i < parseInt(smCount); i++) {
                 pms.push(new Promise(async (resolve, reject) => {
                     try {
                         let ret = await c.methods.getSelectedSmInfo(grpId, i).call();
-                        console.log("getSelectedSmInfo ret ", ret);
+                        console.log("%%%%%%%%%%%%%%%%%%%%%%% getSelectedSmInfo ret ", ret);
                         resolve(ret);
                     } catch (err) {
                         reject(err);
@@ -199,42 +209,55 @@ async function getGrpInfoContent(grpId, smCount) {
                 }))
             }
 
-            let c1 = getContract(abiMap.get("smg"), metricCfg.contractAddress.createGpk);
+
+            let c1 = getContract(abiMap.get("CreateGpk"), metricCfg.contractAddress.createGpk);
             for (let i = 0; i < parseInt(smCount); i++) {
                 pms.push(new Promise(async (resolve, reject) => {
                     try {
                         let ret = await c1.methods.getPkShare(grpId, i).call();
-                        console.log("getPkShare ret ", ret);
+                        console.log("%%%%%%%%%%%%%%%%%%%%%%% getPkShare ret ", ret);
                         resolve(ret);
                     } catch (err) {
                         reject(err);
                     }
                 }))
             }
+
+            console.log("._._._._._._._._._._ len of all promise", pms.length);
+
             let resultAll = await Promise.all(pms);
 
+            console.log("._._._._._._._._._._ len of all promise result", resultAll.length);
+            for (let retItem of resultAll) {
+                console.log("._._._._._._._._._._ retItem", retItem);
+            }
+
             let resultContent = [];
-            for(let i=0;i<smCount;i++){
+            for (let i = 0; i < parseInt(smCount); i++) {
+
                 let baseInfo = resultAll[i];
-                let gpkShareInfo = resultAll[i+smCount];
+                let gpkShareInfo = resultAll[i + parseInt(smCount)];
+
                 let oneResult = {
-                    "workingPk":null,
-                    "nodeId":null,
-                    "address":null,
-                    "pkShares":[],
+                    "workingPk": null,
+                    "nodeId": null,
+                    "address": null,
+                    "pkShares": [],
                 };
 
-                oneResult.pkShares.push(gpkShareInfo[0]);
-                oneResult.pkShares.push(gpkShareInfo[1]);
+                console.log("._._._._._._._._._._sm index:", i, "baseInfo:", resultAll[i], "gpkShareInfo", resultAll[i + parseInt(smCount)]);
+
+                oneResult.pkShares.push(gpkShareInfo["pkShare1"]);
+                oneResult.pkShares.push(gpkShareInfo["pkShare2"]);
 
                 oneResult.workingPk = baseInfo["pk"];
-                oneResult.nodeId =baseInfo["enodeId"];
-                oneResult.address =baseInfo["txAddress"];
+                oneResult.nodeId = baseInfo["enodeId"];
+                oneResult.address = baseInfo["txAddress"];
 
                 resultContent.push(oneResult);
             }
-            console.log("ret of getGrpInfoContent",resultContent);
-            result(resultContent);
+            console.log("ret of getGrpInfoContent", resultContent);
+            resolve(resultContent);
 
         } catch (err) {
             console.log("getGrpInfoContent error", err);
