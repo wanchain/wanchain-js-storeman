@@ -177,9 +177,8 @@ global.incntSlshWriter = null;
 function getIncntSlshWriter() {
     if (global.incntSlshWriter == null) {
         global.incntSlshWriter = new IncntSlshWriter();
-    } else {
-        return global.incntSlshWriter;
     }
+    return global.incntSlshWriter;
 }
 
 module.exports = {

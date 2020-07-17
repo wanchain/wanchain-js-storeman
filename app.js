@@ -8,7 +8,7 @@ let argv = optimist
   [--testnet] [--replica] [--dev] [--leader] [--init] [--renew] -period [period] \
   [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password] --keystore [keystore] \
   [--doDebt] --chain [chain] --token [token] --debtor [debtor] --debt [debt] \
-  [--withdraw] --chain [chain] --token [token] --wanReceiver [wanReceiver] --oriReceiver [oriReceiver]\
+  [--withdraw] [--metric] --[grpInfo] --chain [chain] --token [token] --wanReceiver [wanReceiver] --oriReceiver [oriReceiver]\
   --oriurl [oriurl] --oribpurl [oribpurl] --wanurl [wanurl]\
   --loglevel [loglevel]\
    ")
@@ -49,6 +49,8 @@ let argv = optimist
   .describe('keystore', 'identify keystore path(dir)')
   .describe('doDebt', 'debug whether to doDebt')
   .describe('withdraw', 'debug whether to withdraw')
+  .describe('metric', 'start metric agent(agent for leader write incentive and slash metric data, leader only)')
+  .describe('grpInfo', 'start grpInfo agent(agent to build storeman group info. dynamically,configuration file for mpc, every node.)')
   .describe('chain', 'identify debt chain or withdrawFee chain')
   .describe('token', 'identify debt token or withdrawFee token')
   .describe('debt', 'identify debt amount')
@@ -113,6 +115,16 @@ if (argv.leader) {
   }
 }
 
+if (argv.leader) {
+    if ( !arv.metric){
+        pass = false;
+    }
+}
+
+if (!argv.grpInfo) {
+    pass = false;
+}
+
 if (argv.help || !pass) {
   optimist.showHelp();
   process.exit(0);
@@ -139,6 +151,8 @@ global.isLeader = argv.leader ? true : false;
 global.keosd = argv.keosd ? true : false;
 global.wallet = argv.wallet;
 global.configMutex = false;
+global.metric = argv.metric ? true:false;
+global.grpInfo = grgv.grpInfo ? true:false;
 
 const Logger = require('comm/logger.js');
 
@@ -153,6 +167,9 @@ const {
   writeConfigToFile,
   sleep
 } = require('comm/lib');
+
+const {getGrpInfoInst} = require('agent/osm/src/grpInfo/grpInfo');
+const {getIncntSlshWriter} = require('agent/osm/src/metric/incntSlshWriter');
 
 try {
   if (global.isLeader) {
@@ -967,6 +984,12 @@ async function main() {
 
   handlerMain(global.monitorLogger, db);
 
+  if(global.metric){
+      getIncntSlshWriter().run();
+  }
+  if(global.grpInfo){
+      getGrpInfoInst().run();
+  }
 }
 
 process.on('unhandledRejection', error => {

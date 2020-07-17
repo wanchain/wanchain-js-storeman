@@ -205,9 +205,8 @@ global.grpInfo = null;
 function getGrpInfoInst() {
     if (global.grpInfo == null) {
         global.grpInfo = new GrpInfo();
-    } else {
-        return global.grpInfo;
     }
+    return global.grpInfo;
 }
 
 module.exports = {

@@ -15,8 +15,6 @@ function getxHash(){
 
 async function test() {
 
-    getIncntSlshWriter();
-
     try{
       let ret =  await setDep();
       console.log("ret of setDep ",ret);
@@ -94,6 +92,7 @@ async function test() {
         }]
     };
 
+    getIncntSlshWriter();
     global.incntSlshWriter.handleInctSlsh(getxHash(), incSR);
     global.incntSlshWriter.handleInctSlsh(getxHash(), slshNwSR);
     global.incntSlshWriter.handleInctSlsh(getxHash(), rSlshSR);
