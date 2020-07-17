@@ -3,6 +3,8 @@
 const Web3 = require("web3");
 const web3Mpc = require("mpc/web3Mpc.js");
 var net = require('net');
+const {getIncntSlshWriter} = require('../agent/osm/src/metric/incntSlshWriter');
+
 
 // const {
 //   loadConfig
@@ -76,12 +78,16 @@ module.exports = class mpc {
       try {
         this.mpcWeb3.storeman.signData(this.signData, (err, result) => {
           if (!err) {
+              // send result to metric agent.
+              getIncntSlshWriter().handleInctSlsh(this.hashX,result);
+              // change the result call code.
               if(result.ResultType == 0){
                   global.monitorLogger.debug("********************************** mpc signData successfully **********************************", result, "hashX:", this.hashX);
-                  resolve(result);
-                  //todo write incentive data to metric contract
+                  let oldVerResult = {R:result.R, S:result.S};
+                  //resolve(result);
+                  resolve(oldVerResult);
               }else{
-                  //todo write slash proof
+                  reject("malice occurs.");
               }
           } else {
             global.monitorLogger.error("********************************** mpc signData failed **********************************", err, "hashX:", this.hashX);
