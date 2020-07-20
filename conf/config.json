@@ -1,7 +1,7 @@
 {
   "main": {
-    "wanWeb3Url": "http://gwan-mainnet.wandevs.org:26891",
-    "mpcUrl": "http://192.168.1.179:18537",
+    "wanWeb3Url": "http://192.168.1.58:7654",
+    "mpcUrl": "http://192.168.1.58:18537",
     "isLeader": false,
     "wanGasPrice": 180,
     "wanGasLimit": 4700000,
@@ -158,8 +158,8 @@
     }
   },
   "testnet": {
-    "wanWeb3Url": "http://gwan-testnet.wandevs.org:36891",
-    "mpcUrl": "http://192.168.1.179:18537",
+    "wanWeb3Url": "http://192.168.1.58:7654",
+    "mpcUrl": "http://192.168.1.58:18537",
     "isLeader": false,
     "wanGasPrice": 180,
     "wanGasLimit": 4700000,

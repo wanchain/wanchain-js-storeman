@@ -2,16 +2,21 @@ const fs = require('fs');
 const path = require('path');
 const config = require('../../cfg/config');
 const abiMap = require('../../cfg/abi');
-const keythereum = require('keythereum');
+const KeyStore = require('../../../../utils/keyStore');
 const ethUtil = require('ethereumjs-util');
 const Web3 = require('web3_1.2');
 const wanUtil = require('wanchain-util');
 const Tx = wanUtil.wanchainTx;
 
-const keystore = JSON.parse(fs.readFileSync(config.keystore.path, "utf8"));
-const selfSk = keythereum.recover(config.keystore.pwd, keystore); // Buffer
+const selfAddress = global.workingAddress.toLowerCase();
+// const keystore = JSON.parse(fs.readFileSync(config.keystore.path, "utf8"));
+const selfSk = KeyStore.getPrivateKeyByKsPath(selfAddress, config.keystore.pwd, config.keystore.path); // Buffer
 const selfPk = ethUtil.privateToPublic(selfSk); // Buffer
-const selfAddress = '0x' + ethUtil.pubToAddress(selfPk).toString('hex').toLowerCase();
+const checkAddress = '0x' + ethUtil.pubToAddress(selfPk).toString('hex').toLowerCase();
+if (selfAddress != checkAddress) {
+  console.error("keystore file does not match working address");
+}
+
 let selfNonce = 0;
 console.log("keystore path: %s", config.keystore.path);
 // console.log("sk: %s", '0x' + selfSk.toString('hex'));

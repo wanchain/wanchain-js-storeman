@@ -1,8 +1,8 @@
-const path = require('path');
+// const path = require('path');
 const globalConfig = require('../../../conf/config');
 
-//exports.wanNodeURL = globalConfig.testnet.wanWeb3Url;
-exports.wanNodeURL = 'http://127.0.0.1:7654';
+exports.wanNodeURL = globalConfig.testnet.wanWeb3Url;
+// exports.wanNodeURL = 'http://127.0.0.1:7654';
 
 exports.contractAddress = {
     smg: '0x06D7840Ab88F52248257ec340f2CD2a6213B1369',
@@ -11,12 +11,11 @@ exports.contractAddress = {
 };
 
 exports.keystore = {
-    //todo should input the real keystore path
-    //path: global.keystore,
-    path: path.join(__dirname, '../keystore/0x5793e629c061e7fd642ab6a1b4d552cec0e2d606'),
-    pwd: 'wanglu',
+    path: global.keystore,
+    pwd: global.secret['WORKING_PWD']
+    // path: path.join(__dirname, '../keystore/0x5793e629c061e7fd642ab6a1b4d552cec0e2d606'),
+    // pwd: 'wanglu',
 };
-
 
 //todo should input the real mpc's config path
 exports.grpInfoOutPath = __dirname;

@@ -1,4 +1,3 @@
-const path = require('path');
 const globalConfig = require('../../../conf/config');
 
 exports.wanNodeURL = globalConfig.main.wanWeb3Url;
@@ -11,9 +10,8 @@ exports.contractAddress = {
 
 exports.keystore = {
     path: global.keystore,
-    pwd: 'wanglu',
+    pwd: global.secret['WORKING_PWD']
 };
-
 
 //todo should input the real mpc's config path
 exports.grpInfoOutPath = __dirname;

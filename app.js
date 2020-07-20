@@ -10,7 +10,7 @@ let argv = optimist
   [--doDebt] --chain [chain] --token [token] --debtor [debtor] --debt [debt] \
   [--withdraw] [--metric] --[grpInfo] --chain [chain] --token [token] --wanReceiver [wanReceiver] --oriReceiver [oriReceiver]\
   --oriurl [oriurl] --oribpurl [oribpurl] --wanurl [wanurl]\
-  --loglevel [loglevel]\
+  --loglevel [loglevel] -wa [workingAddr]\
    ")
   .alias('h', 'help')
   .alias('i', 'index')
@@ -61,6 +61,7 @@ let argv = optimist
   .describe('oribpurl', 'identify ori chain BP url')
   .describe('wanurl', 'identify wan chain url')
   .describe('loglevel', 'identify agent loglevel')
+  .describe('wa', 'identify agent working address')
   .default('i', 0)
   .default('period', '2')
   .default('loglevel', 'debug')
@@ -86,6 +87,7 @@ let argv = optimist
   .string('oribpurl')
   .string('wanurl')
   .string('loglevel')
+  .string('wa')
   .boolean('testnet', 'replica', 'dev', 'leader', 'init', 'renew', 'mpc', 'schnorr', 'keosd', 'doDebt', 'withdraw')
   .argv;
 
@@ -115,8 +117,12 @@ if (argv.leader) {
   }
 }
 
+if (!argv.wa) {
+  pass = false;
+}
+
 if (argv.leader) {
-    if ( !arv.metric){
+    if ( !argv.metric){
         pass = false;
     }
 }
@@ -151,8 +157,9 @@ global.isLeader = argv.leader ? true : false;
 global.keosd = argv.keosd ? true : false;
 global.wallet = argv.wallet;
 global.configMutex = false;
+global.workingAddress = argv.wa;
 global.metric = argv.metric ? true:false;
-global.grpInfo = grgv.grpInfo ? true:false;
+global.grpInfo = argv.grpInfo ? true:false;
 
 const Logger = require('comm/logger.js');
 
@@ -168,22 +175,23 @@ const {
   sleep
 } = require('comm/lib');
 
-const {getGrpInfoInst} = require('agent/osm/src/grpInfo/grpInfo');
-const {getIncntSlshWriter} = require('agent/osm/src/metric/incntSlshWriter');
-
 try {
+  global.keystore = global.argv.keystore;
+  if (global.argv.password) {
+    global.secret = loadJsonFile(global.argv.password);
+  }
   if (global.isLeader) {
-    if (global.argv.password) {
-      global.secret = loadJsonFile(global.argv.password);
-    }
     if (global.keosd) {
       global.keosdUrl = global.argv.keosdUrl;
     }
-    global.keystore = global.argv.keystore;
   }
 } catch (err) {
   // process.exit(0);
 }
+
+const gpk = require('./agent/osm/src/gpk/agent');
+const {getGrpInfoInst} = require('agent/osm/src/grpInfo/grpInfo');
+const {getIncntSlshWriter} = require('agent/osm/src/metric/incntSlshWriter');
 
 const moduleConfig = require('conf/moduleConfig.js');
 global.config = loadConfig();
@@ -216,6 +224,7 @@ global.agentDict = {
 global.syncLogger = new Logger("storemanAgent-sync-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.monitorLogger = new Logger("storemanAgent-action-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.mpcLogger = new Logger("storemanAgent-mpc-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
+global.gpkLogger = new Logger("storemanAgent-gpk-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.metricLogger = new Logger("storemanAgent-metric-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.grpInfoLogger = new Logger("storemanAgent-metric-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 
@@ -983,6 +992,8 @@ async function main() {
   }
 
   handlerMain(global.monitorLogger, db);
+
+  gpk.run();
 
   if(global.metric){
       getIncntSlshWriter().run();
