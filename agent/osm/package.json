@@ -14,7 +14,7 @@
     "keythereum": "^1.0.4",
     "ecurve-bn256": "^1.0.15",
     "wanchain-util": "^1.2.0",
-    "web3": "^1.2.9",
+    "web3_1.2": "npm:web3@1.2.9",
     "mongoose": "^5.0.13"
   }
 }
