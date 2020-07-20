@@ -210,7 +210,7 @@ async function getGrpInfoContent(grpId, smCount) {
             }
 
 
-            let c1 = getContract(abiMap.get("CreateGpk"), metricCfg.contractAddress.createGpk);
+            let c1 = getContract(abiMap.get("gpk"), metricCfg.contractAddress.gpk);
             for (let i = 0; i < parseInt(smCount); i++) {
                 pms.push(new Promise(async (resolve, reject) => {
                     try {

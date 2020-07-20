@@ -6,7 +6,7 @@ exports.wanNodeURL = 'http://127.0.0.1:7654';
 
 exports.contractAddress = {
     smg: '0x06D7840Ab88F52248257ec340f2CD2a6213B1369',
-    createGpk: '0xa7D83D33E76e08FF1218AFa9bEa90fED3B732F8D',
+    gpk: '0xa7D83D33E76e08FF1218AFa9bEa90fED3B732F8D',
     metric: '0x5e9F6a7875F97Eb84Bf68514fA09a1a45cf9FDa2'
 };
 

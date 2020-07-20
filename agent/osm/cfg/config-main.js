@@ -5,7 +5,7 @@ exports.wanNodeURL = globalConfig.main.wanWeb3Url;
 
 exports.contractAddress = {
     smg: '0x06D7840Ab88F52248257ec340f2CD2a6213B1369',
-    createGpk: '0xa7D83D33E76e08FF1218AFa9bEa90fED3B732F8D',
+    gpk: '0xa7D83D33E76e08FF1218AFa9bEa90fED3B732F8D',
     metric: '0x8e84b41800d7915aD3fF9E6bbba434c7ca99fB95'
 };
 
