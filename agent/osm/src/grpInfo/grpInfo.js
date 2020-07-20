@@ -3,6 +3,7 @@
 let fs = require('fs');
 let path = require('path');
 const metricCfg = require('../../cfg/config');
+const wanchain = require('../utils/wanchain');
 
 const {
     equal,
@@ -46,7 +47,7 @@ class GrpInfo {
 
         try {
             console.log("------------------------------------Entering mainLoop-----------------------------");
-            let grps = await  getGrpsByAdd(metricCfg.selfAddress);
+            let grps = await  getGrpsByAdd(wanchain.selfAddress);
             let grpsReady = await  getReadyGrps(grps);
             let grpsReadySet = new Set(grpsReady);
             console.log("old group set:", this.preGrpSet);

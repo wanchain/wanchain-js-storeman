@@ -4,6 +4,7 @@ const Web3 = require('web3_1.2');
 
 const abiMap = require('../../cfg/abi');
 const metricCfg = require('../../cfg/config');
+const wanchain = require('../utils/wanchain');
 
 function union(thisSet, otherSet) {
     let unionSet = new Set();
@@ -67,7 +68,7 @@ function getContract(abi, address) {
     console.log("URL:", metricCfg.wanNodeURL);
     //console.log("abi:",abi);
     console.log("address:", address);
-    console.log("self address:", metricCfg.selfAddress);
+    console.log("self address:", wanchain.selfAddress);
     return contract;
 }
 

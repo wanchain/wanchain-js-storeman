@@ -6,6 +6,7 @@ const MetricContract = require('./metricContract');
 let MetricTrans = require('../../../../trans/metricTrans');
 let KeyStore = require('../../../../utils/keyStore');
 const Web3 = require('web3');
+const wanchain = require('../utils/wanchain');
 
 let {getCommonData, getReceipt} = require('./metricUtil');
 
@@ -149,9 +150,9 @@ class IncntSlshWriter {
                 let mt = new MetricTrans(...commoneInfo);
                 mt.setData(data);
 
-                let prvKey = KeyStore.getPrivateKeyByKsPath(metricCfg.selfAddress, metricCfg.keystore.pwd, metricCfg.keystore.path);
+                // let prvKey = KeyStore.getPrivateKeyByKsPath(wanchain.selfAddress, metricCfg.keystore.pwd, metricCfg.keystore.path);
                 //let signedRawTx = mt.signFromKeystore(metricCfg.keystore.pwd, metricCfg.keystore.path);
-                let signedRawTx = mt.sign(prvKey);
+                let signedRawTx = mt.sign(wanchain.selfSk);
                 console.log("<<<<<<<<signedRawTx is " + signedRawTx);
 
                 let txHash = await mt.sendSignedRawTrans(signedRawTx)

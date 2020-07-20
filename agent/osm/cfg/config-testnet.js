@@ -13,12 +13,10 @@ exports.contractAddress = {
 exports.keystore = {
     //todo should input the real keystore path
     //path: global.keystore,
-    path: '/home/jacob/wanchain/openStoreman/test/keystore',
+    path: path.join(__dirname, '../keystore/0x5793e629c061e7fd642ab6a1b4d552cec0e2d606'),
     pwd: 'wanglu',
 };
 
-
-exports.selfAddress = "0x2e54a80b977fd1859782e2ee96a76285a7fc75ba";
 
 //todo should input the real mpc's config path
 exports.grpInfoOutPath = __dirname;

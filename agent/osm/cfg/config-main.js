@@ -14,7 +14,6 @@ exports.keystore = {
     pwd: 'wanglu',
 };
 
-exports.selfAddress = "0x2e54a80b977fd1859782e2ee96a76285a7fc75ba";
 
 //todo should input the real mpc's config path
 exports.grpInfoOutPath = __dirname;

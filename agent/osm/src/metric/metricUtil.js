@@ -2,6 +2,7 @@
 const metricCfg = require('../../cfg/config');
 const Web3 = require('web3');
 let web3 = new Web3();
+const wanchain = require('../utils/wanchain');
 
 function sleep(time) {
     return new Promise(function (resolve, reject) {
@@ -20,7 +21,7 @@ async function getCommonData() {
 
     return new Promise(async (resolve, reject) => {
         try {
-            from = metricCfg.selfAddress;
+            from = wanchain.selfAddress;
             to = metricCfg.contractAddress.metric;
             gas = web3.toBigNumber(metricCfg.gasLimit);
             gasPrice = web3.toBigNumber(metricCfg.gasPrice);
