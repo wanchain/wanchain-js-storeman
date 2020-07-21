@@ -71,6 +71,9 @@ module.exports = class BaseAgent {
       this.tokenAddr = record.tokenAddr;
       this.tokenSymbol = record.tokenSymbol;
       this.decimals = record.decimals;
+
+      let tokenAbi = moduleConfig.tokenAbi;
+      this.tokenContract = new Contract(tokenAbi, this.tokenAddr);
     }
 
     this.debtOptEnable = moduleConfig.crossInfoDict[crossChain].CONF.debtOptEnable;
@@ -636,6 +639,113 @@ module.exports = class BaseAgent {
     }
 
     return [hashX, content];
+  }
+
+  getApproveData() {
+    this.logger.debug("********************************** funcInterface **********************************", this.approveFunc);
+    return this.tokenContract.constructData(this.approveFunc, this.contractAddr, this.amount);
+  }
+
+  // smgMintLock(bytes32 xHash, bytes32 smgID, uint tokenPairID, uint value, address userAccount, bytes r, bytes32 s)
+  // smgBurnLock(bytes32 xHash, bytes32 smgID, uint tokenPairID, uint value, address userAccount, bytes r, bytes32 s)
+  // smgFastMint(bytes32 uniqueID, bytes32 smgID, uint tokenPairID, uint value, address userAccount, bytes r, bytes32 s)
+  // smgFastBurn(bytes32 uniqueID, bytes32 smgID, uint tokenPairID, uint value, address userAccount, bytes r, bytes32 s)
+  // srcDebtLock(bytes32 xHash, bytes32 srcSmgID, bytes32 destSmgID, bytes r, bytes32 s)
+  // destDebtLock(bytes32 xHash, bytes32 srcSmgID, bytes32 destSmgID, bytes r, bytes32 s)
+    async getLockData() {
+    this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[0], "hashX", this.hashKey);
+    this.logger.debug('getLockData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenPairID-', this.tokenPairID, 'hashKey-', this.hashKey, 'crossAddress-', this.crossAddress, 'Amount-', this.amount);
+
+    // web3.toBigNumber(eosToFloat(this.amount))
+    if (this.schnorrMpc) {
+      let signData = [this.hashKey, this.tokenPairID, this.amount, this.crossAddress];
+      let typesArray = ['bytes32', 'uint', 'uint', 'address'];
+      if (this.record.isDebt) {
+        typesArray = ['bytes32', 'bytes32'];
+      }
+      let internalSignature = await this.internalSignViaMpc(signData, typesArray);
+      let params = signData.concat(this.storemanPk, internalSignature.R, internalSignature.S);
+      if (this.isLeader) {
+        return this.contract.constructData(this.crossFunc[0], ...params);
+      } else {
+        return null;
+      }
+    } else if (this.tokenType === 'COIN') {
+      return this.contract.constructData(this.crossFunc[0], this.hashKey, this.crossAddress, this.amount);
+    } else {
+      return this.contract.constructData(this.crossFunc[0], this.tokenAddr, this.hashKey, this.crossAddress, this.amount);
+    }
+  }
+
+  // smgMintRedeem(bytes32 x)
+  // smgBurnRedeem(bytes32 x)
+  // srcDebtRedeem(bytes32 x)
+  // destDebtRedeem(bytes32 x)
+  async getRedeemData() {
+    this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[1], "hashX", this.hashKey);
+    this.logger.debug('getRedeemData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenPairID-', this.tokenPairID, 'hashKey-', this.hashKey, 'key-', this.key);
+
+    if (this.schnorrMpc) {
+      let signData = [this.key];
+      // let typesArray = ['bytes32'];
+      // let internalSignature = await this.internalSignViaMpc(signData, typesArray);
+      // let params = signData.concat(internalSignature.R, internalSignature.S);
+      if (this.isLeader) {
+        // return this.contract.constructData(this.crossFunc[1], ...params);
+        return this.contract.constructData(this.crossFunc[1], ...signData);
+      } else {
+        return null;
+      }
+    } else if (this.tokenType === 'COIN') {
+      return this.contract.constructData(this.crossFunc[1], this.key);
+    } else {
+      return this.contract.constructData(this.crossFunc[1], this.tokenAddr, this.key);
+    }
+  }
+
+  // smgMintRevoke(bytes32 xHash)
+  // smgBurnRevoke(bytes32 xHash)
+  // srcDebtRevoke(bytes32 xHash)
+  // destDebtRevoke(bytes32 xHash)
+  async getRevokeData() {
+    this.logger.debug("********************************** funcInterface **********************************", this.crossFunc[2], "hashX", this.hashKey);
+    this.logger.debug('getRevokeData: transChainType-', this.transChainType, 'crossDirection-', this.crossDirection, 'tokenPairID-', this.tokenPairID, 'hashKey-', this.hashKey);
+
+    if (this.schnorrMpc) {
+      let signData = [this.hashKey];
+      // let typesArray = ['bytes32'];
+      // let internalSignature = await this.internalSignViaMpc(signData, typesArray);
+      if (this.isLeader) {
+        // return this.contract.constructData(this.crossFunc[0], signData.concat(internalSignature.R, internalSignature.S));
+        return this.contract.constructData(this.crossFunc[2], ...signData);
+      } else {
+        return null;
+      }
+    } else if (this.tokenType === 'COIN') {
+      return this.contract.constructData(this.crossFunc[2], this.hashKey);
+    } else {
+      return this.contract.constructData(this.crossFunc[2], this.tokenAddr, this.hashKey);
+    }
+  }
+  
+  buildApproveZeroData(hashKey, result) {
+    this.logger.debug("********************************** insertApproveZeroData trans **********************************", hashKey);
+
+    let content = {
+      storemanApproveZeroTxHash: (Array.isArray(this.record.storemanApproveZeroTxHash)) ? [...this.record.storemanApproveZeroTxHash] : [this.record.storemanApproveZeroTxHash]
+    }
+    content.storemanApproveZeroTxHash.push(result.toLowerCase());
+    return content;
+  }
+
+  buildApproveData(hashKey, result) {
+    this.logger.debug("********************************** insertApproveData trans **********************************", hashKey);
+
+    let content = {
+      storemanApproveTxHash: (Array.isArray(this.record.storemanApproveTxHash)) ? [...this.record.storemanApproveTxHash] : [this.record.storemanApproveTxHash]
+    }
+    content.storemanApproveTxHash.push(result.toLowerCase());
+    return content;
   }
 
   buildLockData(hashKey, result) {

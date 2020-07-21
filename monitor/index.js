@@ -26,7 +26,7 @@ function monitorRecord(record) {
     .catch(err => global.monitorLogger.error(err));
 }
 
-async function handlerMain(logger, db) {
+async function handlerMain(logger, modelOps) {
   while (1) {
     logger.info("********************************** handlerMain start **********************************");
 

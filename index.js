@@ -15,7 +15,7 @@ let argv = optimist
   .alias({ 'h': 'help', 'i': 'index' })
   .describe({
     'h': 'display the usage',
-    'i': 'identify storemanAgent indet',
+    'i': 'identify storemanAgent index',
     'groupid': 'identify storeman group unique identification',
     'chain1': 'identify cross chain-pair chain1 unique identification',
     'add1': 'identify the address at chain1: which is used for execute the transaction',
