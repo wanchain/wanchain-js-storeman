@@ -6,6 +6,9 @@ const wanchain = require('../utils/wanchain');
 const mongoose = require('mongoose');
 const GroupInfo = require('../../db/models/group_info');
 const Round = require('./Round');
+const Logger = require('comm/logger.js');
+
+const logger = new Logger("gpk-agent-" + wanchain.selfAddress, "log/gpk.log", "log/gpk_error.log", global.argv.loglevel);
 
 // record latest round of each group
 const groupMap = new Map();
@@ -14,12 +17,12 @@ const smgSc = wanchain.getContract('smg', config.contractAddress.smg);
 const gpkSc = wanchain.getContract('gpk', config.contractAddress.gpk);
 
 function run() {
-  console.log("run gpk agent");
+  logger.info("run gpk agent");
   mongoose.connect(config.dbUrl(), config.dbOptions, async (err) => {
     if (err) {
-      console.error(err);
+      logger.error(err);
     } else {
-      console.log('database connected');
+      logger.info('database connected');
       await recoverGroup();
       listenEvent();
     }
@@ -30,7 +33,7 @@ async function recoverGroup() {
   let groups = await GroupInfo.find({selfAddress: wanchain.selfAddress}).exec();
   await Promise.all(groups.map(group => {
     return new Promise(async (resolve, reject) => {
-      console.log("gpk agent recover group %s", group.id);
+      logger.info("gpk agent recover group %s", group.id);
       try {
         let resumeGroup = new Group(group.id, group.round);
         resumeGroup.curves = group.curves;
@@ -46,7 +49,7 @@ async function recoverGroup() {
         await resumeGroup.start(true);
         resolve();
       } catch (err) {
-        console.log("gpk agent recover group %s error: %O", group.id, err);
+        logger.error("gpk agent recover group %s error: %O", group.id, err);
         reject(err);
       }
     });
@@ -65,7 +68,7 @@ function listenEvent() {
 }
 
 async function eventHandler(evt) {
-  // console.log("receive evt: %O", evt);
+  // logger.info("receive evt: %O", evt);
   try {
     switch (evt.name) {
       case 'smg_selectedEvent':
@@ -86,7 +89,7 @@ async function eventHandler(evt) {
     }
     return true;
   } catch (err) {
-    console.error("%s gpk agent process %s event err: %O", new Date().toISOString(), evt.name, err);
+    logger.error("%s gpk agent process %s event err: %O", new Date().toISOString(), evt.name, err);
     return false;
   }
 }
@@ -95,10 +98,10 @@ async function procSmgSelectedEvent(evt) {
   let groupId = evt.topics[1];
   let group = groupMap.get(groupId);
   let info = await gpkSc.methods.getGroupInfo(groupId, -1).call();
-  // console.log("gpk agent get group info: %O", info);
+  // logger.info("gpk agent get group info: %O", info);
   let round = parseInt(info[0]), status = parseInt(info[1]);
   if (status == GpkStatus.PolyCommit) {
-    console.log("gpk agent start group %s round %d", groupId, round);
+    logger.info("gpk agent start group %s round %d", groupId, round);
     let selected = await checkSelfSelected(groupId);
     if (selected) {
       if (!group) {
@@ -108,10 +111,10 @@ async function procSmgSelectedEvent(evt) {
       } else if (group.round < round) {
         await group.nextRound(round);
       } else {
-        console.error("%s gpk agent ignore group %s round %d status %d event", new Date().toISOString(), groupId, round, status);
+        logger.error("%s gpk agent ignore group %s round %d status %d event", new Date().toISOString(), groupId, round, status);
       }
     } else {
-      console.log("gpk agent skip group %s round %d as not-selected", groupId, round);  
+      logger.info("gpk agent skip group %s round %d as not-selected", groupId, round);  
     }
   }
 }
@@ -142,20 +145,20 @@ async function checkSelfSelected(groupId) {
 function procGpkCreatedLogger(evt) {
   let groupId = evt.topics[1];
   let round = evt.topics[2];
-  console.log("%s gpk agent complete group %s at round %d", new Date().toISOString(), groupId, round);
+  logger.info("%s gpk agent complete group %s at round %d", new Date().toISOString(), groupId, round);
 }
 
 function procGpkSlashLogger(evt) {
   let groupId = evt.topics[1];
   let round = evt.topics[2];
   let curve = evt.topics[3];
-  console.log("%s group %s round %d curve %d slash someone: %O", new Date().toISOString(), groupId, round, curve, evt);
+  logger.info("%s group %s round %d curve %d slash someone: %O", new Date().toISOString(), groupId, round, curve, evt);
 }
 
 function procGpkCloseLogger(evt) {
   let groupId = evt.topics[1];
   let round = evt.topics[2];
-  console.log("%s gpk agent close group %s at round %d", new Date().toISOString(), groupId, round);
+  logger.info("%s gpk agent close group %s at round %d", new Date().toISOString(), groupId, round);
 }
 
 module.exports = {

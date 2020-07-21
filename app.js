@@ -161,8 +161,6 @@ global.workingAddress = argv.wa;
 global.metric = argv.metric ? true:false;
 global.grpInfo = argv.grpInfo ? true:false;
 
-const Logger = require('comm/logger.js');
-
 const {
   loadJsonFile,
   loadConfig,
@@ -221,10 +219,11 @@ global.agentDict = {
   WAN: WanAgent
 }
 
+const Logger = require('comm/logger.js');
+
 global.syncLogger = new Logger("storemanAgent-sync-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.monitorLogger = new Logger("storemanAgent-action-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.mpcLogger = new Logger("storemanAgent-mpc-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
-global.gpkLogger = new Logger("storemanAgent-gpk-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.metricLogger = new Logger("storemanAgent-metric-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.grpInfoLogger = new Logger("storemanAgent-metric-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 
