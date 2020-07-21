@@ -5,8 +5,8 @@ const mongoose = require('mongoose');
 const Event = require('../../db/models/event');
 
 class EventTracker {
-  constructor(id, cb, isSave, startBlock, interval = 1, chain = 'WAN', confirmBlocks = 30) {
-    // context
+  constructor(logger, id, cb, isSave, startBlock, interval = 1, chain = 'WAN', confirmBlocks = 30) {
+    this.logger = logger;
     this.id = id;
     this.contextName = id + '_eventTracker';
     this.cb = cb || null;
@@ -33,7 +33,7 @@ class EventTracker {
     try {
       // connect db
       await mongoose.connect(config.dbUrl(), config.dbOptions);
-      console.log('database connected');
+      this.logger.info('database connected');
 
       // get block number, ctxBlock > inputBlock > curBlock
       let cxt = await tool.readContextDb(this.contextName);
@@ -46,12 +46,12 @@ class EventTracker {
       if (!this.startBlock) {
         this.startBlock = await wanchain.getBlockNumber() - this.confirmBlocks;
       }
-      console.log("%s EventTracker start from block %d", this.id, this.startBlock);
+      this.logger.info("%s EventTracker start from block %d", this.id, this.startBlock);
       
       // schedual
       this.next(this.schThreshold + 1); // delay to schedual
     } catch (err) {
-      console.error(err);
+      this.logger.error(err);
     }
   }
 
@@ -70,7 +70,7 @@ class EventTracker {
       if (endBlock > latestBlock) {
         endBlock = latestBlock;
       }
-      console.log("%s eventTracker scan block %d-%d", this.id, this.startBlock, endBlock);
+      this.logger.info("%s eventTracker scan block %d-%d", this.id, this.startBlock, endBlock);
       await Promise.all(this.subscribeArray.map(sub => {
         return new Promise((resolve, reject) => {
           wanchain.getEvents({
@@ -86,12 +86,12 @@ class EventTracker {
             })
             resolve();
           }).catch((err) => {
-            console.error("%s eventTracker fetch event %s from block %d-%d error: %O", this.id, sub[0], this.startBlock, endBlock, err);
+            this.logger.error("%s eventTracker fetch event %s from block %d-%d error: %O", this.id, sub[0], this.startBlock, endBlock, err);
             reject(err);
           })
         });
       }));
-      // console.log("%s eventTracker fetched %d event from block %d-%d", this.id, eventArray.length, this.startBlock, endBlock);
+      // this.logger.info("%s eventTracker fetched %d event from block %d-%d", this.id, eventArray.length, this.startBlock, endBlock);
       this.startBlock = endBlock + 1;
       if (eventArray.length) {
         eventArray.sort(this.sortLog);
@@ -104,14 +104,14 @@ class EventTracker {
       await tool.writeContextDb(this.contextName, {nextBlock});
       this.next(latestBlock - endBlock);
     } catch (err) {
-      console.error("%s evevtTracker loop error: %O", this.id, err);
+      this.logger.error("%s evevtTracker loop error: %O", this.id, err);
       this.next();
     }
   }
 
   async dispatch() {
     if (this.eventList.length == 0) {
-      // console.log("dispatchEvent finished");
+      // this.logger.info("dispatchEvent finished");
       return;
     }
     let event = this.eventList[0];
@@ -142,7 +142,7 @@ class EventTracker {
         return await this.dispatch();
       }
     }
-    console.log("dispatch event error: %O", event);
+    this.logger.error("dispatch event error: %O", event);
   }
 
   next(blockLeft = 0) {
