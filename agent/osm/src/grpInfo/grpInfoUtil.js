@@ -251,9 +251,14 @@ async function getGrpInfoContent(grpId, smCount) {
                 oneResult.pkShares.push(gpkShareInfo["pkShare1"]);
                 oneResult.pkShares.push(gpkShareInfo["pkShare2"]);
 
-                oneResult.workingPk = baseInfo["pk"];
-                oneResult.nodeId = baseInfo["enodeId"];
-                oneResult.address = baseInfo["txAddress"];
+                // oneResult.workingPk = baseInfo["pk"];
+                // oneResult.nodeId = baseInfo["enodeId"];
+                // oneResult.address = baseInfo["txAddress"];
+
+                oneResult.address = baseInfo[0];
+                oneResult.workingPk = baseInfo[1];
+                oneResult.nodeId = baseInfo[2];
+
 
                 resultContent.push(oneResult);
             }
