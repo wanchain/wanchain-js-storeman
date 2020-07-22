@@ -973,7 +973,7 @@ async function main() {
     renewJob.start();
   }
 
-  syncMain(global.syncLogger, db);
+  // syncMain(global.syncLogger, db);
 
   await updateRecordAfterRestart(global.monitorLogger);
 

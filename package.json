@@ -34,6 +34,9 @@
     "web_1.2": "npm:web3@^1.2.9",
     "winston": "^3.0.0",
     "winston-daily-rotate-file": "^3.3.2",
-    "winston-syslog": "^2.0.0"
+    "winston-syslog": "^2.0.0",
+    "bigi": "^1.4.2",
+    "ethereumjs-util": "^6.2.0",
+    "ecurve-bn256": "^1.0.15"
   }
 }

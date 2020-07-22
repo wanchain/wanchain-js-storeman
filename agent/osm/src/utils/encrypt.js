@@ -17,6 +17,12 @@ const curveMap = new Map([
 
 const PK_STR_LEN = 128;
 
+function genRandomHex(length) {
+  let bytes = parseInt((length + 1) / 2);
+  let random = crypto.randomBytes(bytes);
+  return random.toString('hex').substr(0, length);
+};
+
 function genRandomCoef(curve, bytes) {
   let random = BigInteger.fromBuffer(crypto.randomBytes(bytes));
   return random.mod(curveMap.get(curve).n).add(BigInteger.valueOf(1));
@@ -128,6 +134,7 @@ function recoverSiG(curve, polyCommit) {
 };
 
 module.exports = {
+  genRandomHex,
   genRandomCoef,
   mulG,
   genSij,

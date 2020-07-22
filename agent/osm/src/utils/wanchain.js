@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const config = require('../../cfg/config');
 const abiMap = require('../../cfg/abi');
+const encrypt = require('./encrypt');
 const KeyStore = require('../../../../utils/keyStore');
 const ethUtil = require('ethereumjs-util');
 const Web3 = require('web3_1.2');
@@ -158,13 +159,14 @@ function getEvents(options) {
   return web3.eth.getPastLogs(options); // promise
 }
 
-function genKeystoreFile(gpk, sk, password) {
+function genKeystoreFile(gpk, sk) {
+  let password = encrypt.genRandomHex(16);
   let keystore = web3.eth.accounts.encrypt(sk, password);
   let gAddress = ethUtil.pubToAddress(Buffer.from(gpk.substr(2), 'hex')).toString('hex').toLowerCase(); // no 0x
   keystore.address = gAddress;
-  let fp = path.join(__dirname, '../../keystore/', gpk);
+  let fp = path.join(__dirname, '../../../../../keystore/ks', gpk);
   fs.writeFileSync(fp, JSON.stringify(keystore), 'utf8');
-  fp = path.join(__dirname, '../../keystore/', gpk + '.pwd');
+  fp = path.join(__dirname, '../../../../../keystore/pwd', gpk + '.pwd');
   fs.writeFileSync(fp, password, 'utf8');
 }
 

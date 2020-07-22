@@ -44,7 +44,7 @@ class EventTracker {
       if (!this.startBlock) {
         this.startBlock = await wanchain.getBlockNumber() - this.confirmBlocks - rewindBlocks;
       }
-      this.logger.info("%s EventTracker start from block %d", this.id, this.startBlock);
+      this.logger.info("%s eventTracker start from block %d", this.id, this.startBlock);
       
       // schedual
       this.next(this.schThreshold + 1); // delay to schedual
