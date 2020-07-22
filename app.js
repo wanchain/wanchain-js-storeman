@@ -3,6 +3,7 @@
 const optimist = require('optimist');
 const CronJob = require("cron").CronJob;
 
+
 let argv = optimist
   .usage("Usage: $0  -i [index] -pk [PK] -mpcip [mpcIP] -mpcport [mpcPort] -mpcipc [mpcIpc] -dbip [dbIp] -dbport [dbPort] -dbuser [dbUser] -c [chainType] -w [storemanWanAddr] -o [storemanOriAddr] \
   [--testnet] [--replica] [--dev] [--leader] [--init] [--renew] -period [period] \
@@ -217,6 +218,7 @@ const WanAgent = require("agent/WanAgent.js");
 
 const NormalCross = require("monitor/normalCross.js");
 const Debt = require("monitor/debt.js");
+const {handlerOpenStoreman} = require("monitor/openStoreman.js");
 const WithdrawFee = require("monitor/withdrawFee.js");
 
 let handlingList = {};
@@ -995,6 +997,7 @@ async function main() {
   }
 
   handlerMain(global.monitorLogger, db);
+  handlerOpenStoreman(global.monitorLogger, db)
 
   startOsmAgent();
 }
