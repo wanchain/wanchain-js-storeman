@@ -7,6 +7,8 @@ let MetricTrans = require('../../../../trans/metricTrans');
 let KeyStore = require('../../../../utils/keyStore');
 const Web3 = require('web3');
 const wanchain = require('../utils/wanchain');
+const {startFakeSmagent} = require('./fakesmagent/testFakesmagent');
+
 
 let {getCommonData, getReceipt} = require('./metricUtil');
 
@@ -63,6 +65,10 @@ class IncntSlshWriter {
     }
 
     run() {
+
+        if(global.enableFakeSmagent){
+            startFakeSmagent();
+        }
         setInterval(async() => {
 
             console.log("\n\n\n\n\n");

@@ -10,12 +10,12 @@ exports.contractAddress = {
     tm:'0x29786De4f8Da347C84CE6440E1822D05BEF6C55f'
 };
 
-exports.keystore = {
-    //todo should input the real keystore path
-    //path: global.keystore,
-    path: '/home/jacob/wanchain/openStoreman/test/keystore',
-    pwd: 'wanglu',
-};
+// exports.keystore = {
+//     //todo should input the real keystore path
+//     //path: global.keystore,
+//     path: '/home/jacob/wanchain/openStoreman/test/keystore',
+//     pwd: 'wanglu',
+// };
 
 
 exports.selfAddress = "0x2e54a80b977fd1859782e2ee96a76285a7fc75ba";

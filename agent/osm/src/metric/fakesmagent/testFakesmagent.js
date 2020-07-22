@@ -4,6 +4,17 @@
  */
 
 "use strict"
+//todo need delete begin
+global.secret = {
+    WORKING_PWD:'wanglu'
+};
+global.keystore = "/home/jacob/wanchain/openStoreman/test/keystore";
+global.workingAddress = '0x2e54a80b977fd1859782e2ee96a76285a7fc75ba';
+
+
+global.enableFakeSmagent = true;
+//todo need delete end
+
 
 const {getIncntSlshWriter} = require('../incntSlshWriter');
 const Web3 = require('web3_1.2');
@@ -202,6 +213,9 @@ function getDep() {
 function startFakeSmagent() {
     run();
 }
+
+startFakeSmagent();
+
 module.exports = {
     startFakeSmagent
 };
