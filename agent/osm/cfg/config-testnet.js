@@ -5,9 +5,9 @@ exports.wanNodeURL = globalConfig.testnet.wanWeb3Url;
 // exports.wanNodeURL = 'http://127.0.0.1:7654';
 
 exports.contractAddress = {
-    smg: '0x06D7840Ab88F52248257ec340f2CD2a6213B1369',
-    gpk: '0xa7D83D33E76e08FF1218AFa9bEa90fED3B732F8D',
-    metric: '0x5e9F6a7875F97Eb84Bf68514fA09a1a45cf9FDa2'
+    smg: '0xE1c68f35b9740BA2d56d7e814dC1272954fc77D0',
+    gpk: '0xa358c0640D56350115Ca3875167aCCAee63871a0',
+    metric: '0x72D5C87150092f5842B9b0E4386b98e456AE0497'
 };
 
 exports.keystore = {
@@ -21,38 +21,8 @@ exports.keystore = {
 exports.grpInfoOutPath = __dirname;
 exports.grpInfoFileName = "grpInfo.json";
 
-exports.startBlock = 2479267;
-
 exports.gasPrice = 180000000000;
 exports.gasLimit = 10000000;
 
-let dbServer = {
-    "hosts": "192.168.1.58:27017",
-    "replica": "",
-    "database": "osm-testnet",
-    "username": "dev",
-    "password": "wanglu"
-};
-
-exports.dbOptions = {
-    // useNewUrlParser: true,
-    keepAlive: true,
-    reconnectTries: Number.MAX_VALUE
-};
-
-exports.dbUrl = function (readSecondary = false) {
-    let dbString = 'mongodb://';
-    if (dbServer.name) {
-        dbString += (dbServer.username + ':' + dbServer.password + '@');
-    }
-    dbString += dbServer.hosts;
-    dbString += ('/' + dbServer.database);
-    dbString += '?authSource=admin';
-    if (dbServer.replica) {
-        dbString += ('&replicaSet=' + dbServer.replica);
-    }
-    if (readSecondary) {
-        dbString += '&readPreference=secondaryPreferred';
-    }
-    return dbString;
-};
+exports.dbUrl = global.dbUrl;
+exports.dbOption = global.dbOption;

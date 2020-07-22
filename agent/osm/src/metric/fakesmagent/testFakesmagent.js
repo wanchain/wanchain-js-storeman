@@ -214,7 +214,7 @@ function startFakeSmagent() {
     run();
 }
 
-startFakeSmagent();
+// startFakeSmagent();
 
 module.exports = {
     startFakeSmagent

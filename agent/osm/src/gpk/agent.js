@@ -18,7 +18,7 @@ const gpkSc = wanchain.getContract('gpk', config.contractAddress.gpk);
 
 function run() {
   logger.info("run gpk agent");
-  mongoose.connect(config.dbUrl(), config.dbOptions, async (err) => {
+  mongoose.connect(config.dbUrl, config.dbOption, async (err) => {
     if (err) {
       logger.error(err);
     } else {

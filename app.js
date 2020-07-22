@@ -187,12 +187,27 @@ try {
   // process.exit(0);
 }
 
-const gpk = require('./agent/osm/src/gpk/agent');
-const {getGrpInfoInst} = require('agent/osm/src/grpInfo/grpInfo');
-const {getIncntSlshWriter} = require('agent/osm/src/metric/incntSlshWriter');
-
 const moduleConfig = require('conf/moduleConfig.js');
 global.config = loadConfig();
+
+let dbOption = {
+  useNewUrlParser: true
+}
+let dbUrl = moduleConfig.crossDbUrl + global.index;
+if (global.replica) {
+  const awsDBOption = {
+    // used for mongo replicaSet
+    replicaSet: "s0",
+    readPreference: "secondaryPreferred" //readPreference must be either primary/primaryPreferred/secondary/secondaryPreferred/nearest
+  }
+  Object.assign(dbOption, awsDBOption);
+  // dbUrl = dbUrl + "?authSource=admin";
+}
+dbUrl = dbUrl + "?authSource=admin";
+
+global.dbUrl = dbUrl;
+global.dbOption = dbOption;
+console.log('init db %s: %O', dbUrl, dbOption);
 
 const mongoose = require('mongoose');
 const ModelOps = require('db/modelOps');
@@ -912,20 +927,6 @@ async function withdrawFee(logger) {
   }
 }
 
-let dbOption = {
-  useNewUrlParser: true
-}
-let dbUrl = moduleConfig.crossDbUrl + global.index;
-if (global.replica) {
-  const awsDBOption = {
-    // used for mongo replicaSet
-    replicaSet: "s0",
-    readPreference: "secondaryPreferred" //readPreference must be either primary/primaryPreferred/secondary/secondaryPreferred/nearest
-  }
-  Object.assign(dbOption, awsDBOption);
-  // dbUrl = dbUrl + "?authSource=admin";
-}
-dbUrl = dbUrl + "?authSource=admin";
 let db = mongoose.createConnection(dbUrl, dbOption);
 
 db.on('connected', function(err) {
@@ -939,6 +940,10 @@ db.on('connected', function(err) {
 });
 
 let modelOps = new ModelOps(global.syncLogger, db);
+
+const gpk = require('./agent/osm/src/gpk/agent');
+const {getGrpInfoInst} = require('agent/osm/src/grpInfo/grpInfo');
+const {getIncntSlshWriter} = require('agent/osm/src/metric/incntSlshWriter');
 
 async function main() {
   global.syncLogger.info("storeman agent start!", global.argv);
@@ -992,14 +997,7 @@ async function main() {
 
   handlerMain(global.monitorLogger, db);
 
-  gpk.run();
-
-  if(global.metric){
-      getIncntSlshWriter().run();
-  }
-  if(global.grpInfo){
-      getGrpInfoInst().run();
-  }
+  startOsmAgent();
 }
 
 process.on('unhandledRejection', error => {
@@ -1007,5 +1005,14 @@ process.on('unhandledRejection', error => {
   global.syncLogger.error('unhandledRejection', error.message, error);
 });
 
+function startOsmAgent() {
+  gpk.run();
+  if(global.metric){
+      getIncntSlshWriter().run();
+  }
+  if(global.grpInfo){
+      getGrpInfoInst().run();
+  }
+}
 
 main();

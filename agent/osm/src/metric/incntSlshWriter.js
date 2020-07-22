@@ -67,7 +67,7 @@ class IncntSlshWriter {
     run() {
 
         if(global.enableFakeSmagent){
-            startFakeSmagent();
+            // startFakeSmagent();
         }
         setInterval(async() => {
 

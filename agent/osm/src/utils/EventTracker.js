@@ -4,6 +4,8 @@ const tool = require('./tools');
 const mongoose = require('mongoose');
 const Event = require('../../db/models/event');
 
+const rewindBlocks = 24 * 60 * 60 / 5; // 1 day
+
 class EventTracker {
   constructor(logger, id, cb, isSave, startBlock, interval = 1, chain = 'WAN', confirmBlocks = 30) {
     this.logger = logger;
@@ -31,10 +33,6 @@ class EventTracker {
 
   async start() {
     try {
-      // connect db
-      await mongoose.connect(config.dbUrl(), config.dbOptions);
-      this.logger.info('database connected');
-
       // get block number, ctxBlock > inputBlock > curBlock
       let cxt = await tool.readContextDb(this.contextName);
       if (cxt) {
@@ -44,7 +42,7 @@ class EventTracker {
         }
       }
       if (!this.startBlock) {
-        this.startBlock = await wanchain.getBlockNumber() - this.confirmBlocks;
+        this.startBlock = await wanchain.getBlockNumber() - this.confirmBlocks - rewindBlocks;
       }
       this.logger.info("%s EventTracker start from block %d", this.id, this.startBlock);
       

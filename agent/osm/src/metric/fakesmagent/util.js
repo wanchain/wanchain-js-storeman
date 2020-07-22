@@ -1,6 +1,5 @@
 const Web3 = require('web3_1.2');
-const abiMap = require('abi');
-const metricCfg = require('config');
+const metricCfg = require('./config');
 
 async function sleep(timeduring) {
     return new Promise((resolve, reject) => {
