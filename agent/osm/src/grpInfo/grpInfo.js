@@ -201,13 +201,13 @@ class GrpInfo {
     }
 }
 
-global.grpInfo = null;
+global.grpInfoInst = null;
 
 function getGrpInfoInst() {
-    if (global.grpInfo == null) {
-        global.grpInfo = new GrpInfo();
+    if (global.grpInfoInst == null) {
+        global.grpInfoInst = new GrpInfo();
     }
-    return global.grpInfo;
+    return global.grpInfoInst;
 }
 
 module.exports = {
