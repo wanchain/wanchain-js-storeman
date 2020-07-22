@@ -207,7 +207,6 @@ dbUrl = dbUrl + "?authSource=admin";
 
 global.dbUrl = dbUrl;
 global.dbOption = dbOption;
-console.log('init db %s: %O', dbUrl, dbOption);
 
 const mongoose = require('mongoose');
 const ModelOps = require('db/modelOps');
