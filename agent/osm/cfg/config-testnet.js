@@ -20,7 +20,7 @@ exports.keystore = {
 //todo should input the real mpc's config path
 //exports.grpInfoOutPath = __dirname;
 exports.grpInfoOutPath = path.join(__dirname,"../../../../schnorrmpc/data/");
-exports.grpInfoFileName = "grpInfo.json";
+exports.grpInfoFileName = "groupInfo.json";
 
 exports.gasPrice = 180000000000;
 exports.gasLimit = 10000000;
