@@ -161,15 +161,16 @@ function getEvents(options) {
 }
 
 
-async function getGroupById(group) {
-  let group = await smg.getStoremanGroupInfo(groupId);
+async function getGroupById(groupId) {
+  let group = await smg.methods.getStoremanGroupInfo(groupId).call();
   return group;
 }
 
 async function getSkbyAddr(addr) {
-  let sk = await smg.getStoremanInfo(addr);
+  let sk = await smg.methods.getStoremanInfo(addr).call();
   return sk;
 }
+
 async function sendToSelect(groupId) {
   let txData = await smg.methods.select(groupId).encodeABI();
   let txHash = await sendTx(config.contractAddress.smg, txData);

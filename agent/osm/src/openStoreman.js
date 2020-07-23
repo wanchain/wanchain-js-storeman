@@ -1,3 +1,4 @@
+const wanchain = require('./utils/wanchain');
 
 const GroupStatus = {
   none:0, 
@@ -9,8 +10,9 @@ const GroupStatus = {
   unregistered:6, 
   dismissed:7,
 }
-const wkAddr = golbal.config.wkAddr;
-const {getGroupById,getSkbyAddr,sendToSelect, sendToIncentive} = require('../agent/osm/src/utils/wanchain')
+const wkAddr = wanchain.selfAddress;
+
+console.log("open storeman wkAddr: %s", wkAddr);
 
 let lastIncentivedDay = 0;
 async function handlerOpenStoremanIncentive(wkaddr){
@@ -19,9 +21,9 @@ async function handlerOpenStoremanIncentive(wkaddr){
     return;
   }
   while(1){
-    let txhash = await sendToIncentive(wkaddr)
+    let txhash = await wanchain.sendToIncentive(wkaddr)
     global.logger.info(arguments.callee.name+" txhash:", txhash);
-    let receipt = await sendToIncentive(txhash, arguments.callee.name)
+    let receipt = await wanchain.sendToIncentive(txhash, arguments.callee.name)
     if(!receipt  ||  !receipt.logs || receipt.logs.topics[3]==1){
       lastIncentivedDay = curDay;
       break;
@@ -34,14 +36,14 @@ async function handlerOpenStoremanStatus(group){
     case GroupStatus.curveSeted: // toselect.
       if(wkAddr == group.selectedNode[0]){ // is Leader
         if(cur > group.registerTime+group.registerDuration){
-          await sendToSelect(group.groupId);
+          await wanchain.sendToSelect(group.groupId);
         }
       }
       break;
     case GroupStatus.ready:  // to unregister
       if(wkAddr == group.selectedNode[0]){ // is Leader
         if(cur > group.endTime){
-          sendUnregister(group.groupId);
+          // await wanchain.sendUnregister(group.groupId);
         }
       }
 
@@ -49,10 +51,10 @@ async function handlerOpenStoremanStatus(group){
     case GroupStatus.unregistered:  // TODO: 可能不需要处理. 平账后, 直接标志为dismissed
       if(wkAddr == group.selectedNode[0]){ // is Leader
         if(cur > group.registerTime+group.registerDuration){
-          await sendToSelect(group.groupId);
+          await wanchain.sendToSelect(group.groupId);
         }
       }
-	  storemanGroupDismiss
+	  // storemanGroupDismiss
 
       break;
     default:
@@ -60,19 +62,19 @@ async function handlerOpenStoremanStatus(group){
       break;
   }
 }
-async function handlerOpenStoreman(logger, db) { 
+async function handlerOpenStoreman(logger) { 
   while (1) {
     logger.info("********************************** handlerOpenStoreman start **********************************");
 
     try{
       // get my group
-      let sk = getSkbyAddr(wkAddr);
-      let group = getGroupById(sk.groupId);
+      let sk = await wanchain.getSkbyAddr(wkAddr);
+      let group = await wanchain.getGroupById(sk.groupId);
       handlerOpenStoremanIncentive(wkAddr);
 
       handlerOpenStoremanStatus(group);
       if(sk.nextGrupId){
-        let groupNext = getGroupById(sk.nextGrupId);
+        let groupNext = await wanchain.getGroupById(sk.nextGrupId);
         handlerOpenStoremanStatus(groupNext);
       }
     }catch(err){
@@ -82,9 +84,7 @@ async function handlerOpenStoreman(logger, db) {
   }
 }
 
-
-
-
 module.exports = {
-  GroupStatus,handlerOpenStoreman,
+  GroupStatus,
+  handlerOpenStoreman
 }

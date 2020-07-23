@@ -218,7 +218,6 @@ const WanAgent = require("agent/WanAgent.js");
 
 const NormalCross = require("monitor/normalCross.js");
 const Debt = require("monitor/debt.js");
-const {handlerOpenStoreman} = require("monitor/openStoreman.js");
 const WithdrawFee = require("monitor/withdrawFee.js");
 
 let handlingList = {};
@@ -240,6 +239,7 @@ const Logger = require('comm/logger.js');
 global.syncLogger = new Logger("storemanAgent-sync-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.monitorLogger = new Logger("storemanAgent-action-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.mpcLogger = new Logger("storemanAgent-mpc-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
+global.osmLogger = new Logger("openStoreman-" + global.argv.c, "log/openStoreman.log", "log/openStoreman_error.log", global.argv.loglevel);
 global.metricLogger = new Logger("storemanAgent-metric-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.grpInfoLogger = new Logger("storemanAgent-metric-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 
@@ -942,7 +942,8 @@ db.on('connected', function(err) {
 
 let modelOps = new ModelOps(global.syncLogger, db);
 
-const gpk = require('./agent/osm/src/gpk/agent');
+const {handlerOpenStoreman} = require("agent/osm/src/openStoreman");
+const gpk = require('agent/osm/src/gpk/agent');
 const {getGrpInfoInst} = require('agent/osm/src/grpInfo/grpInfo');
 const {getIncntSlshWriter} = require('agent/osm/src/metric/incntSlshWriter');
 
@@ -997,7 +998,6 @@ async function main() {
   }
 
   handlerMain(global.monitorLogger, db);
-  handlerOpenStoreman(global.monitorLogger, db)
 
   startOsmAgent();
 }
@@ -1008,6 +1008,7 @@ process.on('unhandledRejection', error => {
 });
 
 function startOsmAgent() {
+  handlerOpenStoreman(global.monitorLogger)
   gpk.run();
   if(global.metric){
       getIncntSlshWriter().run();
