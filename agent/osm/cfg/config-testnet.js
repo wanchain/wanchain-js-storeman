@@ -5,7 +5,7 @@ exports.wanNodeURL = globalConfig.testnet.wanWeb3Url;
 // exports.wanNodeURL = 'http://127.0.0.1:7654';
 
 exports.contractAddress = {
-    smg: '0xE1c68f35b9740BA2d56d7e814dC1272954fc77D0',
+    smg: '0x627e8f93c89ea22f5414aba9d2304c0f2009aba5',
     gpk: '0xa358c0640D56350115Ca3875167aCCAee63871a0',
     metric: '0x72D5C87150092f5842B9b0E4386b98e456AE0497'
 };

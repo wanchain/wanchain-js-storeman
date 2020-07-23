@@ -13,6 +13,17 @@ const GroupStatus = {
 const wkAddr = wanchain.selfAddress;
 
 let lastIncentivedDay = 0;
+
+async function sleep(time) {
+	return new Promise(function (resolve, reject) {
+			setTimeout(function () {
+					resolve();
+			}, time);
+	});
+};
+
+
+
 async function handlerOpenStoremanIncentive(wkaddr){
   let curDay = Date.now()/1000/60/60/24;
   if(curDay == lastIncentivedDay){
