@@ -27,6 +27,7 @@ console.log("address: %s", selfAddress);
 const web3 = new Web3(new Web3.providers.HttpProvider(config.wanNodeURL));
 
 const gpkSc = getContract('gpk', config.contractAddress.gpk);
+const smg = getContract('smg', config.contractAddress.smg);
 
 function getContract(name, address) {
   let abi = abiMap.get(name);
@@ -159,6 +160,27 @@ function getEvents(options) {
   return web3.eth.getPastLogs(options); // promise
 }
 
+
+async function getStoremanGroupInfo(group) {
+  let group = await smg.getStoremanGroupInfo(groupId);
+  return group;
+}
+
+async function getSkbyAddr(addr) {
+  let sk = await smg.getStoremanInfo(addr);
+  return sk;
+}
+async function sendToSelect(groupId) {
+  let txData = await smg.methods.select(groupId).encodeABI();
+  let txHash = await sendTx(config.contractAddress.smg, txData);
+  return txHash;
+}
+
+async function sendToIncentive(addr) {
+  let txData = await smg.methods.incentiveCandidator(addr).encodeABI();
+  let txHash = await sendTx(config.contractAddress.smg, txData);
+  return txHash;
+}
 function genKeystoreFile(gpk, sk) {
   let password = encrypt.genRandomHex(16);
   let keystore = web3.eth.accounts.encrypt(sk, password);
@@ -208,5 +230,6 @@ module.exports = {
   getBlockNumber,
   getEvents,
   genKeystoreFile,
+  getGroupById,getSkbyAddr,sendToSelect, sendToIncentive,
   parseEvent
 }

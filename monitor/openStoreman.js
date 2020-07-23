@@ -10,7 +10,7 @@ const GroupStatus = {
   dismissed:7,
 }
 const wkAddr = golbal.config.wkAddr;
-const {getGroupById,getSkbyAddr,sendToSelect,getTxReceipt, sendToIncentive} = require('../agent/osm/src/utils/wanchain')
+const {getGroupById,getSkbyAddr,sendToSelect, sendToIncentive} = require('../agent/osm/src/utils/wanchain')
 
 let lastIncentivedDay = 0;
 async function handlerOpenStoremanIncentive(wkaddr){
