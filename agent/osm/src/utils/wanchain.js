@@ -162,8 +162,16 @@ function getEvents(options) {
 
 
 async function getGroupById(groupId) {
-  let group = await smg.methods.getStoremanGroupInfo(groupId).call();
-  return group;
+  let group1 = await smg.methods.getStoremanGroupInfo(groupId).call();
+  let group2 = await smg.methods.getStoremanGroupConfig(groupId).call();
+  let group = Object.assign(group, group2);
+  let selectedNode = [];
+  for(let i=0; i<group.selectedCount; i++){
+    let a = await smg.methods.getSelectedSmInfo(groupId, i);
+    selectedNode.push(a.wkAddr);
+  }
+  group.selectedNode = selectedNode;
+  return group
 }
 
 async function getSkbyAddr(addr) {
