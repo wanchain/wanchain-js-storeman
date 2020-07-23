@@ -67,7 +67,7 @@ class IncntSlshWriter {
     run() {
 
         if(global.enableFakeSmagent){
-            // startFakeSmagent();
+            startFakeSmagent();
         }
         setInterval(async() => {
 
@@ -104,7 +104,7 @@ class IncntSlshWriter {
         let startEpID = startEpIDTemp - oneWeekEpoch;
         //let endEpID = startEpID + 1;
         let endEpID = startEpIDTemp + 1;
-        let grpId = "0x0000000000000000000000000000000000000031353839393533323738313235";
+        let grpId = "0x0000000000000000000000000000000000000000000000003133323935313034";
 
         let abi = abiMap.get("metric");
         let address = metricCfg.contractAddress.metric;
