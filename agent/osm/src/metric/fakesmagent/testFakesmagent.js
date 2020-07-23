@@ -85,7 +85,7 @@ async function run() {
     // add TM Token
     await addToken();
 
-    getIncntSlshWriter();
+    // getIncntSlshWriter();
 
     while (1) {
         try {
