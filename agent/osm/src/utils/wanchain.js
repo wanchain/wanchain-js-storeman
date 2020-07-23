@@ -161,7 +161,7 @@ function getEvents(options) {
 }
 
 
-async function getStoremanGroupInfo(group) {
+async function getGroupById(group) {
   let group = await smg.getStoremanGroupInfo(groupId);
   return group;
 }
