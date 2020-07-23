@@ -1008,7 +1008,7 @@ process.on('unhandledRejection', error => {
 });
 
 function startOsmAgent() {
-  handlerOpenStoreman(global.monitorLogger)
+  // handlerOpenStoreman(global.monitorLogger)
   gpk.run();
   if(global.metric){
       getIncntSlshWriter().run();
