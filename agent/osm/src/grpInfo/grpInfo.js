@@ -98,7 +98,8 @@ class GrpInfo {
         let grpElem = {
             "index": null,
             "workingPk": null,
-            "nodeId": null
+            "nodeId": null,
+            "address":null,
         };
 
         let grpCurve = {
@@ -148,6 +149,7 @@ class GrpInfo {
                     grpElemTemp.nodeId = grpInfoContent[i].nodeId;
                     console.log(".............nodeId " + grpElemTemp.nodeId);
 
+                    grpElemTemp.address = grpInfoContent[i].address;
                     console.log(".............address " + grpInfoContent[i].address);
 
                     grpElems.push(grpElemTemp);

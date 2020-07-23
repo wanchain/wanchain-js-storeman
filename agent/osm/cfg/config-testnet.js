@@ -1,4 +1,4 @@
-// const path = require('path');
+const path = require('path');
 const globalConfig = require('../../../conf/config');
 
 exports.wanNodeURL = globalConfig.testnet.wanWeb3Url;
@@ -19,8 +19,8 @@ exports.keystore = {
 
 //todo should input the real mpc's config path
 //exports.grpInfoOutPath = __dirname;
-exports.grpInfoOutPath = "../../../../schnorrmpc/data/";
-exports.grpInfoFileName = "grpInfo.json";
+exports.grpInfoOutPath = path.join(__dirname,"../../../../schnorrmpc/data/");
+exports.grpInfoFileName = "groupInfo.json";
 
 exports.gasPrice = 180000000000;
 exports.gasLimit = 10000000;
