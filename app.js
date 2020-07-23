@@ -218,7 +218,7 @@ const WanAgent = require("agent/WanAgent.js");
 
 const NormalCross = require("monitor/normalCross.js");
 const Debt = require("monitor/debt.js");
-const {handlerOpenStoreman} = require("monitor/openStoreman.js");
+//const {handlerOpenStoreman} = require("monitor/openStoreman.js");
 const WithdrawFee = require("monitor/withdrawFee.js");
 
 let handlingList = {};
@@ -997,7 +997,7 @@ async function main() {
   }
 
   handlerMain(global.monitorLogger, db);
-  handlerOpenStoreman(global.monitorLogger, db)
+  //handlerOpenStoreman(global.monitorLogger, db)
 
   startOsmAgent();
 }
