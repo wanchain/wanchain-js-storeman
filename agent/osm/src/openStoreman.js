@@ -12,8 +12,6 @@ const GroupStatus = {
 }
 const wkAddr = wanchain.selfAddress;
 
-console.log("open storeman wkAddr: %s", wkAddr);
-
 let lastIncentivedDay = 0;
 async function handlerOpenStoremanIncentive(wkaddr){
   let curDay = Date.now()/1000/60/60/24;

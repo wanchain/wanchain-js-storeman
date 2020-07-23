@@ -218,10 +218,6 @@ const WanAgent = require("agent/WanAgent.js");
 
 const NormalCross = require("monitor/normalCross.js");
 const Debt = require("monitor/debt.js");
-<<<<<<< HEAD
-=======
-//const {handlerOpenStoreman} = require("monitor/openStoreman.js");
->>>>>>> 00199272123ce61440eb6b68718aac136213fcb7
 const WithdrawFee = require("monitor/withdrawFee.js");
 
 let handlingList = {};
