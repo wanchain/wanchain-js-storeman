@@ -2,9 +2,9 @@ const path = require('path');
 const globalConfig = require('../../../../../conf/config');
 exports.wanNodeURL = globalConfig.testnet.wanWeb3Url;
 
-exports.ipcUrl = '../../../../../../../osm1/schnorrmpc/data/gwan.ipc';
-exports.ipcUrlNode2 = '../../../../../../../osm2/schnorrmpc/data/gwan.ipc';
-exports.ipcUrlNode3 = '../../../../../../../osm3/schnorrmpc/data/gwan.ipc';
+exports.ipcUrl = path.join(__dirname,'../../../../../../../osm1/schnorrmpc/data/gwan.ipc');
+exports.ipcUrlNode2 = path.join(__dirname,'../../../../../../../osm2/schnorrmpc/data/gwan.ipc');
+exports.ipcUrlNode3 = path.join(__dirname,'../../../../../../../osm3/schnorrmpc/data/gwan.ipc');
 
 exports.contractAddress = {
     htlc:'0xBC14e83fB52eB2b3233E067ed6dA4a0D45014495',
