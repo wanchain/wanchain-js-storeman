@@ -99,7 +99,7 @@ async function procSmgSelectedEvent(evt) {
   let group = groupMap.get(groupId);
   let info = await gpkSc.methods.getGroupInfo(groupId, -1).call();
   // logger.info("gpk agent get group info: %O", info);
-  let round = parseInt(info[0]), status = parseInt(info[1]);
+  let round = parseInt(info.queriedRound), status = parseInt(info.curve1Status);
   if (status == GpkStatus.PolyCommit) {
     logger.info("gpk agent start group %s round %d", groupId, round);
     let selected = await checkSelfSelected(groupId);
