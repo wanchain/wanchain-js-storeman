@@ -140,7 +140,7 @@ async function getMpcSignedData(gpk, data, curveType) {
 
         try {
             // add valid data
-            for (let i = 2; i < 4; i++) {
+            for (let i = 2; i < 5; i++) {
                 let ipcUrl = "ipcUrlNode" + i;
                 console.log("......ipcUrl", metricCfg[ipcUrl]);
                 web3.setProvider(new Web3027.providers.IpcProvider(metricCfg[ipcUrl], net));

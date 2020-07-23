@@ -6,8 +6,8 @@ exports.wanNodeURL = globalConfig.testnet.wanWeb3Url;
 
 exports.contractAddress = {
     smg: '0x627e8f93c89ea22f5414aba9d2304c0f2009aba5',
-    gpk: '0xa358c0640D56350115Ca3875167aCCAee63871a0',
-    metric: '0x72D5C87150092f5842B9b0E4386b98e456AE0497'
+    gpk: '0x9475e9645C7EA7025F074FA5ACac374596753b4A',
+    metric: '0xB5aeb49FbFDC621D08EcCCA40770C9E17688C0dD'
 };
 
 exports.keystore = {
