@@ -87,7 +87,7 @@ async function handlerOpenStoreman(logger) {
         handlerOpenStoremanStatus(groupNext);
       }
     }catch(err){
-      logger.error("handlerOpenStoreman error:", error);
+      logger.error("handlerOpenStoreman error:", err);
     }
     await sleep(1000*60*10);
   }
