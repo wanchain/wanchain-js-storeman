@@ -1,6 +1,5 @@
 const smgAbi = require('./osmAbi.json')
 
-
 const gpkAbi = [
   {
     "constant": true,
