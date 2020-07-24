@@ -1,8 +1,7 @@
-const config = require('../../cfg/config');
 const wanchain = require('./wanchain');
 const tool = require('./tools');
 const mongoose = require('mongoose');
-const Event = require('../../db/models/event');
+const Event = require('../../db/models/event_tracker');
 
 const rewindBlocks = 24 * 60 * 60 / 5; // 1 day
 
