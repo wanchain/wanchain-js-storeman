@@ -13,6 +13,8 @@ const WanChain = require('chain/wan');
 const EosChain = require('chain/eos');
 const crossChainAccount = require('utils/encrypt/crossAccountEncrypt');
 
+const chainConstants = require('bip44-constants')
+
 function loadJsonFile(path) {
   let json = JSON.parse(fs.readFileSync(path));
   return json;
@@ -448,6 +450,153 @@ function writeConfigToFile(argv) {
   });
 };
 
+function getChainIdByChainSymbol(chainSymbol) {
+  let chainConstant = chainConstants.filter(item => item[1] === chainSymbol);
+  let chainIndex = chainConstant[0][0].toString(16);
+  chainIndex = chainIndex.slice(1, chainIndex.length);
+  return chainIndex;
+}
+
+function getChainInfoByChainIndex(chainIndex) {
+  let chainInfo = chainConstants.filter(item => item[0] === Number('0x80000000'.toString(10)) + parseInt(chainIndex));
+  return chainInfo[0];
+}
+
+function getChainInfoByChainId(chainId) {
+  let chainInfo = chainConstants.filter(item => item[0] === Number(chainId));
+  return chainInfo[0];
+}
+
+async function initCrossStoremanV2(wAddress) {
+  let wanChain = getGlobalChain('WAN');
+
+  // return new Promise(async (resolve, reject) => {
+    try {
+      // let storeman = await wanChain.getStoremanInfo(wAddress);
+      // let groupID = storeman.groupId;
+      let groupID = '0x111122223333444455556666777788889999AAAABBBBCCCCDDDDEEEEFFFFCCCC';
+      let storemanGroupConfig = await wanChain.getStoremanGroupConfig(groupID);
+      storemanGroupConfig.chain1 = '2153201998';
+      storemanGroupConfig.chain2 = '2147483708';
+      return storemanGroupConfig;
+      // resolve(storemanGroupConfig);
+    } catch (err) {
+      throw (new Error(err));
+      // reject(err);
+    }
+  // });
+}
+
+async function initCrossTokensV2(chainID1, chainID2) {
+  let wanChain = getGlobalChain('WAN');
+  let crossTokens = {};
+  let empty = true;
+  let self = this;
+  const moduleConfig = require('conf/moduleConfig.js');
+
+  // return new Promise(async (resolve, reject) => {
+    try {
+      let tokenPairs = await wanChain.getTokenPairsByChainPair(chainID1, chainID2);
+
+      tokenPairs.map((tokenPair) => {
+        let oriChain = getChainInfoByChainId(tokenPair.fromChainID)[1];
+        crossTokens[oriChain][tokenPair.fromAccount] = {};
+        crossTokens[oriChain][tokenPair.fromAccount].name = tokenPair.ancestorSymbol;
+        crossTokens[oriChain][tokenPair.fromAccount].tokenSymbol = tokenPair.ancestorSymbol;
+        crossTokens[oriChain][tokenPair.fromAccount].decimals = tokenPair.ancestorDecimals;
+
+        let shadowChain = getChainInfoByChainId(tokenPair.toChainID)[1];
+        crossTokens[shadowChain][tokenPair.tokenAddress] = {};
+        crossTokens[shadowChain][tokenPair.tokenAddress].name = tokenPair.ancestorSymbol;
+        crossTokens[shadowChain][tokenPair.tokenAddress].tokenSymbol = tokenPair.ancestorSymbol;
+        crossTokens[shadowChain][tokenPair.tokenAddress].decimals = tokenPair.ancestorDecimals;
+
+        if (tokenPair.fromAccount === "0x0000000000000000000000000000000000000000") {
+          crossTokens[oriChain][tokenPair.fromAccount].tokenType = "COIN";
+          crossTokens[shadowChain][tokenPair.tokenAddress].tokenType = "COIN";
+        } else {
+          crossTokens[oriChain][tokenPair.fromAccount].tokenType = "TOKEN";
+          crossTokens[shadowChain][tokenPair.tokenAddress].tokenType = "TOKEN";
+        }
+      });
+      return crossTokens;
+      // resolve(crossTokens);
+    } catch (err) {
+      throw (new Error(err));
+      // reject(err);
+    }
+  // });
+}
+
+async function initConfigV2(wAddress) {
+  // let storemanGroupConfig = await initCrossStoremanV2(wAddress);
+  // let crossTokens = await initCrossTokensV2(storemanGroupConfig.chain1, storemanGroupConfig.chain2);
+
+  try {
+    let wanChain = getGlobalChain('WAN');
+    let groupID = '0x111122223333444455556666777788889999AAAABBBBCCCCDDDDEEEEFFFFCCCC';
+    let storemanGroupConfig = await wanChain.getStoremanGroupConfig(groupID);
+    storemanGroupConfig.chain1 = '2153201998';
+    storemanGroupConfig.chain2 = '2147483708';
+    let tokenPairs = await wanChain.getTokenPairsByChainPair(storemanGroupConfig.chain1, storemanGroupConfig.chain2);
+    let tokenPairIDs = await wanChain.getTokenPairIDsByChainPair(storemanGroupConfig.chain1, storemanGroupConfig.chain2);
+
+    fs.readFile(configPath, (err, data) => {
+      if (err) {
+        throw (new Error(err));
+      }
+  
+      var config = data.toString();
+      config = JSON.parse(config);
+  
+      var net;
+      if (global.testnet) {
+        net = "testnet";
+      } else {
+        net = "main";
+      }
+  
+      config[net].storemanGroups[groupID] = storemanGroupConfig;
+      config[net].tokenPairIDs = tokenPairIDs;
+      config[net].tokenPairs = tokenPairs;
+  
+      let chain1 = getChainInfoByChainId(storemanGroupConfig.chain1)[1];
+      if (!config[net].crossTokens[chain1]) {
+        config[net].crossTokens[chain1] = {"CONF": {}};
+      }
+      config[net].crossTokens[chain1].CONF.curve = storemanGroupConfig.curve1;
+      config[net].crossTokens[chain1].CONF.storemanPk = storemanGroupConfig.gpk1;
+  
+      let chain2 = getChainInfoByChainId(storemanGroupConfig.chain2)[1];
+      if (!config[net].crossTokens[chain2]) {
+        config[net].crossTokens[chain2] = {"CONF": {}};
+      }
+      config[net].crossTokens[chain2].CONF.curve = storemanGroupConfig.curve2;
+      config[net].crossTokens[chain2].CONF.storemanPk = storemanGroupConfig.gpk2;
+  
+      var str = JSON.stringify(config, null, 2);
+      fs.writeFile(configPath, str, (err) => {
+        if (err) {
+          throw (new Error(err));
+        } else {
+          return tokenPairs;
+        }
+      })
+    })
+  } catch (err) {
+    throw (new Error(err));
+  }
+
+}
+
+function getChainPairs(groupID) {
+  let storemanGroupConfig = global.config.storemanGroups[groupID];
+  
+  let chain1 = getChainInfoByChainId(storemanGroupConfig.chain1)[1];
+  let chain2 = getChainInfoByChainId(storemanGroupConfig.chain2)[1];
+  return [chain1, chain2]
+}
+
 exports.sleep = sleep;
 exports.loadJsonFile = loadJsonFile;
 exports.loadConfig = loadConfig;
@@ -470,3 +619,8 @@ exports.weiToToken = weiToToken;
 exports.generateKey = generateKey;
 exports.sha256 = sha256;
 exports.writeConfigToFile = writeConfigToFile;
+exports.getChainIdByChainSymbol = getChainIdByChainSymbol;
+exports.getChainInfoByChainIndex = getChainInfoByChainIndex;
+exports.getChainInfoByChainId = getChainInfoByChainId;
+exports.initConfigV2 = initConfigV2;
+exports.getChainPairs = getChainPairs;

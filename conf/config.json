@@ -158,17 +158,89 @@
     }
   },
   "testnet": {
-    "wanWeb3Url": "http://gwan-testnet.wandevs.org:36891",
-    "mpcUrl": "http://192.168.1.179:18537",
+    "wanWeb3Url": "http://192.168.1.179:18545",
+    "mpcUrl": "http://192.168.1.179:18545",
     "isLeader": false,
     "wanGasPrice": 180,
     "wanGasLimit": 4700000,
     "mailReceiver": "monitor@wanchain.org",
     "issueCollectionPath": "./invalidTrans/test/",
+    "storemanGroups": {
+      "0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffffcccc": {
+        "groupId": "0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffffcccc",
+        "status": "1",
+        "deposit": "2",
+        "chain1": "2153201998",
+        "chain2": "2147483708",
+        "curve1": "5",
+        "curve2": "6",
+        "gpk1": "0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff0000",
+        "gpk2": "0x111122223333444455556666777788889999aaaabbbbccccddddeeee00000000",
+        "startTime": "1595234554",
+        "endTime": "2595234554"
+      },
+      "0x111122223333444455556666777788889999AAAABBBBCCCCDDDDEEEEFFFFCCCC": {
+        "groupId": "0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffffcccc",
+        "status": "1",
+        "deposit": "2",
+        "chain1": "2153201998",
+        "chain2": "2147483708",
+        "curve1": "5",
+        "curve2": "6",
+        "gpk1": "0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff0000",
+        "gpk2": "0x111122223333444455556666777788889999aaaabbbbccccddddeeee00000000",
+        "startTime": "1595234554",
+        "endTime": "2595234554"
+      }
+    },
+    "tokenPairIDs": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "tokenPairs": [
+      {
+        "id": "1",
+        "fromChainID": "2147483708",
+        "fromAccount": "0x0000000000000000000000000000000000000000",
+        "toChainID": "2153201998",
+        "tokenAddress": "0x36FfEcE47A3BaF210b26cc469E37eef2212d9812",
+        "ancestorSymbol": "ETH",
+        "ancestorDecimals": "18"
+      },
+      {
+        "id": "2",
+        "fromChainID": "2153201998",
+        "fromAccount": "0x0000000000000000000000000000000000000000",
+        "toChainID": "2147483708",
+        "tokenAddress": "0xe87627630583e5411486982268b01DaBcaB5CeC0",
+        "ancestorSymbol": "WAN",
+        "ancestorDecimals": "18"
+      },
+      {
+        "id": "3",
+        "fromChainID": "2147483708",
+        "fromAccount": "0x64993826cdf00b4355c4f366e2c38da140eb5f0d",
+        "toChainID": "2153201998",
+        "tokenAddress": "0x1A5a44D553Df414920874042b8324Cb63F11e917",
+        "ancestorSymbol": "LINK",
+        "ancestorDecimals": "18"
+      },
+      {
+        "id": "4",
+        "fromChainID": "2153201998",
+        "fromAccount": "0x3f759314c81f078b9baab7a1fddd6758f027d333",
+        "toChainID": "2147483708",
+        "tokenAddress": "0x132329E7e4CD25f4CcAE33d40B4eb40006f1Fb52",
+        "ancestorSymbol": "FNX",
+        "ancestorDecimals": "18"
+      }
+    ],
     "crossTokens": {
       "ETH": {
         "CONF": {
-          "nodeUrl": "http://52.34.91.48:36892",
+          "nodeUrl": "http://192.168.1.179:28545",
           "maxGasPrice": 50,
           "gasPriceDelta": 10,
           "gasLimit": 470000,
@@ -176,7 +248,9 @@
           "tokenAllowanceThreshold": 500,
           "storemanOri": "0x41623962c5d44565de623d53eb677e0f300467d2",
           "storemanWan": "0x06daa9379cbe241a84a65b217a11b38fe3b4b063",
-          "storemanPk": ""
+          "curve": "6",
+          "storemanPk": "0x111122223333444455556666777788889999aaaabbbbccccddddeeee00000000",
+          "storemanAddr": "0x06daa9379cbe241a84a65b217a11b38fe3b4b063"
         },
         "TOKEN": {
           "0x": {
@@ -378,6 +452,12 @@
             "tokenSymbol": "NS",
             "tokenType": "TOKEN"
           }
+        }
+      },
+      "WAN": {
+        "CONF": {
+          "curve": "5",
+          "storemanPk": "0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff0000"
         }
       }
     }

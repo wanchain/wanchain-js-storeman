@@ -288,13 +288,13 @@ const test_Config = {
         smgAdminAbi: [{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"},{"name":"punishPercent","type":"uint256"}],"name":"punishStoremanGroup","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"tokenManager","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"quotaLedger","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"kill","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"}],"name":"storemanGroupWithdrawDeposit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"}],"name":"setSmgWhiteList","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"address"}],"name":"mapStoremanGroup","outputs":[{"name":"deposit","type":"uint256"},{"name":"originalChainAddr","type":"address"},{"name":"unregisterApplyTime","type":"uint256"},{"name":"txFeeRatio","type":"uint256"},{"name":"bonusBlockNumber","type":"uint256"},{"name":"initiator","type":"address"},{"name":"punishPercent","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"originalChainAddr","type":"address"},{"name":"txFeeRatio","type":"uint256"}],"name":"storemanGroupRegister","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[],"name":"acceptOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"},{"name":"originalChainAddr","type":"address"},{"name":"txFeeRatio","type":"uint256"}],"name":"storemanGroupRegisterByDelegate","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"address"}],"name":"mapSmgWhiteList","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"},{"name":"destAddress","type":"address"},{"name":"isTransferAll","type":"bool"}],"name":"transferSmgDeposit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_newOwner","type":"address"}],"name":"changeOwner","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"}],"name":"depositSmgBonus","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[],"name":"halted","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"}],"name":"smgApplyUnregisterByDelegate","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"}],"name":"smgWithdrawDepositByDelegate","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"},{"name":"storemanGroup","type":"address"}],"name":"smgClaimSystemBonusByDelegate","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"newOwner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"tm","type":"address"},{"name":"ql","type":"address"}],"name":"injectDependencies","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"}],"name":"storemanGroupClaimSystemBonus","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"halt","type":"bool"}],"name":"setHalt","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"tokenOrigAddr","type":"address"}],"name":"storemanGroupApplyUnregister","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"smgWanAddr","type":"address"},{"indexed":false,"name":"smgOrigAddr","type":"address"},{"indexed":false,"name":"wanDeposit","type":"uint256"},{"indexed":false,"name":"quota","type":"uint256"},{"indexed":false,"name":"txFeeRatio","type":"uint256"}],"name":"StoremanGroupRegistrationLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"sender","type":"address"},{"indexed":true,"name":"wancoin","type":"uint256"}],"name":"StoremanGroupDepositBonusLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"smgWanAddr","type":"address"},{"indexed":true,"name":"tokenOrigAddr","type":"address"}],"name":"SmgEnableWhiteListLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"smgWanAddr","type":"address"},{"indexed":true,"name":"applyTime","type":"uint256"}],"name":"StoremanGroupApplyUnRegistrationLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"smgWanAddr","type":"address"},{"indexed":true,"name":"actualReturn","type":"uint256"},{"indexed":false,"name":"deposit","type":"uint256"}],"name":"StoremanGroupWithdrawLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"bonusRecipient","type":"address"},{"indexed":true,"name":"bonus","type":"uint256"}],"name":"StoremanGroupClaimSystemBonusLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"smgWanAddr","type":"address"},{"indexed":true,"name":"punishPercent","type":"uint256"}],"name":"StoremanGroupPunishedLogger","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOrigAddr","type":"address"},{"indexed":true,"name":"smgAddress","type":"address"},{"indexed":false,"name":"destAddress","type":"address"},{"indexed":false,"name":"deposit","type":"uint256"}],"name":"SmgTranferDepositLogger","type":"event"}]
       },
       CONTRACT: {
-        crossScAddr: '0x358b18d9dfa4cce042f2926d014643d4b3742b31',
-        crossScAbi: require('../abi/crossApproach.abi.json'),
-        oracleAddr: '0x7bb4cacc6155399243d68c1362892ac3a26c266f',
+        crossScAddr: '0xFd2985b1943B3Bf794635c5eE5741ebc933391fD',
+        crossScAbi: require('../abi/crossApproach.abi.json').concat(require('../abi/rapidityLib.abi.json'), require('../abi/htlcBurnLib.abi.json'), require('../abi/htlcDebtLib.abi.json'), require('../abi/htlcMintLib.abi.json')),
+        oracleAddr: '0x32007bdD5C7DfC4fCa2baC68c7177FA54a986224',
         oracleAbi: require('../abi/oracle.abi.json'),
-        quotaAddr: '0x7bb4cacc6155399243d68c1362892ac3a26c266f',
+        quotaAddr: '0x408A8162BC536A35Df3585686B2d62C301B94Fe9',
         quotaAbi: require('../abi/quota.abi.json'),
-        tokenManagerAddr: '0x670847a824974b4cd5555d6b46228749e44242a3',
+        tokenManagerAddr: '0x795262615D297495Bd0A0FD9Aa36967D4D065213',
         tokenManagerAbi: require('../abi/tokenManager.abi.json'),
       },
       FUNCTION: {
@@ -422,13 +422,13 @@ const test_Config = {
         enable: true,
       },
       CONTRACT: {
-        crossScAddr: '0x358b18d9dfa4cce042f2926d014643d4b3742b31',
+        crossScAddr: '0x772F713CA8AFc23c78DC68a87d01605534275De9',
         crossScAbi: require('../abi/crossApproach.abi.json'),
-        oracleAddr: '0x7bb4cacc6155399243d68c1362892ac3a26c266f',
+        oracleAddr: '0x7CDCfA32C918eEee93C6F85C840b68e173f7c2C6',
         oracleAbi: require('../abi/oracle.abi.json'),
-        quotaAddr: '0x7bb4cacc6155399243d68c1362892ac3a26c266f',
+        quotaAddr: '0x9EF48fa8F2C3C3028291b63003f180182284d2bb',
         quotaAbi: require('../abi/quota.abi.json'),
-        tokenManagerAddr: '0x670847a824974b4cd5555d6b46228749e44242a3',
+        tokenManagerAddr: '0x71D742a30661832e8F74DD9816072F3060501f3F',
         tokenManagerAbi: require('../abi/tokenManager.abi.json'),
       },
       FUNCTION: {
@@ -471,15 +471,15 @@ const test_Config = {
       }
     },
   },
-  crossChainSmgScDictTest: {
+  crossChainSmgScDict: {
     CONTRACT: {
-      smgAdminAddr: '0xc8d2d6a886e23cb88d80f63295fb6ff2664a033f',
+      smgAdminAddr: '0x0C04A1FbF7ede6C23e5Da17FD3EfFA20544212EF',
       smgAdminAbi: require('../abi/smg.abi.json')
     },
     FUNCTION: {
-      register: 'registerStartEvent',
-      unregister: 'StoremanGroupUnregisterEvent',
-      dismiss: 'StoremanGroupDismissedLogger',
+      register: 'storemanGroupRegisterStart',
+      unregister: 'storemanGroupUnregister',
+      dismiss: 'storemanGroupDismiss',
       stakeIn: 'stakeIn',
       stakeOut: 'stakeOut',
       stakeClaim: 'stakeClaim',
@@ -488,9 +488,9 @@ const test_Config = {
       delegateClaim: 'delegateClaim'
     },
     EVENT: {
-      register: 'registerStartEvent',
+      register: 'StoremanGroupRegisterStartEvent',
       unregister: 'StoremanGroupUnregisterEvent',
-      dismiss: 'StoremanGroupDismissedLogger',
+      dismiss: 'StoremanGroupDismissedEvent',
       stakeIn: 'stakeIn',
       stakeOut: 'stakeOut',
       stakeClaim: 'stakeClaim',

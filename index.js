@@ -4,6 +4,7 @@ const optimist = require('optimist')
 
 let argv = optimist
   .usage("Usage: $0 -i [index] \
+  --waddress [waddress] \
   --groupid [groupID] \
   --chain1 [chain1] --add1 [add1] --url1 [url1] \
   --chain2 [chain2] --add2 [add2] --url2 [url2] \
@@ -16,6 +17,7 @@ let argv = optimist
   .describe({
     'h': 'display the usage',
     'i': 'identify storemanAgent index',
+    'waddress': 'identify storeman work address',
     'groupid': 'identify storeman group unique identification',
     'chain1': 'identify cross chain-pair chain1 unique identification',
     'add1': 'identify the address at chain1: which is used for execute the transaction',
@@ -41,11 +43,12 @@ let argv = optimist
   .boolean(['testnet', 'dev', 'leader', 'init', 'renew', 'mpc', 'replica'])
   .string(['groupid', 'chain1', 'add1', 'url1', 'chain2', 'add2', 'url2', 'dbip', 'dbuser', 'mpcip', 'mpcipc', 'period', 'loglevel'])
   .default({ 'period': '2', 'loglevel': 'debug' })
-  .demand(['groupid'])
+  // .demand(['groupid'])
   .check(function (argv) {
-    if((argv.mpc && ((!argv.mpcIP || !argv.mpcPort) && (!argv.mpcipc)))) {
-      return false;
-    }
+    // if((argv.mpc && ((!argv.mpcIP || !argv.mpcPort) && (!argv.mpcipc)))) {
+    //   return false;
+    // }
+    return true;
   })
   .argv;
 
@@ -53,8 +56,70 @@ if (argv.help) {
   optimist.showHelp();
 }
 
+global.argv = argv;
+global.testnet = argv.testnet ? true : false;
+global.dev = argv.dev ? true : false;
+global.mpcIP = argv.mpcIP;
+global.mpcPort = argv.mpcPort;
+global.dbIp = argv.dbIp;
+global.dbPort = argv.dbPort;
+global.replica = argv.replica ? true : false;
+global.dev = argv.dev ? true : false;
+global.isLeader = argv.leader ? true : false;
+global.keosd = argv.keosd ? true : false;
+global.wallet = argv.wallet;
+global.configMutex = false;
+
+if (argv.index && argv.index !== true) {
+  global.index = argv.index;
+} else {
+  global.index = '';
+}
+
+const {
+  loadConfig,
+  initNonce,
+  initConfigV2,
+  getChainPairs,
+  getTokenPairIDsByChainPair
+} = require('comm/lib');
+// let modelOps = require('db/index.js');
+
+const moduleConfig = require('conf/moduleConfig.js');
+
+async function init(groupID) {
+  try {
+    global.config = loadConfig();
+    let tempTokenList = {};
+    tempTokenList.storemanPk = [];
+    let storemanGroup = global.config.storemanGroups[groupID];
+    let chainPairs = getChainPairs(groupID);
+
+    for (let chainType of chainPairs) {
+      tempTokenList[chainType] = {};
+      tempTokenList[chainType].storemanAddr = global.config.crossTokens[chainType].CONF.storemanAddr;
+      if (!moduleConfig.crossInfoDict[chainType].CONF.nonceless) {
+        // await initNonce(chainType, tempTokenList[chainType].storemanAddr);
+        // syncLogger.info("CrossChain:" , chainType, ", Nonce of chain", tempTokenList[chainType].storemanAddr, global[chainType.toLowerCase() + 'LastNonce'][tempTokenList[chainType].storemanAddr]);
+      }
+      tempTokenList[chainType].crossScAddr = moduleConfig.crossInfoDict[chainType].CONTRACT.crossScAddr;
+      tempTokenList.storemanPk.push(global.config.crossTokens[chainType].CONF.storemanPk);
+    }
+
+    tempTokenList.supportTokenPairs = global.config.tokenPairIDs;
+
+    console.log(tempTokenList); 
+  } catch (err) {
+    console.log("init error ", err);
+    process.exit();
+  }
+}
+
 function main() {
   console.log(argv);
+  initConfigV2();
+
+  init("0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffffcccc");
 }
 
 main();

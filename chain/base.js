@@ -2,6 +2,7 @@ const moduleConfig = require('conf/moduleConfig.js');
 const coder = require('web3/lib/solidity/coder');
 const TimeoutPromise = require('utils/timeoutPromise.js')
 const Web3 = require("web3");
+const Web3_v2 = require('web3_1.2');
 const net = require('net');
 
 function sleep(time) {
@@ -65,6 +66,14 @@ class baseChain {
     }
   }
 
+  getClientV2(nodeUrl) {
+    if (nodeUrl.indexOf("http://") !== -1) {
+      return new Web3_v2(new Web3_v2.providers.HttpProvider(nodeUrl));
+    } else {
+      return new Web3_v2(new Web3_v2.providers.IpcProvider(nodeUrl, net));
+    }
+  }
+
   getNetworkId() {
     let log = this.log;
     let chainType = this.chainType;
@@ -85,7 +94,7 @@ class baseChain {
     }, moduleConfig.promiseTimeout, "ChainType: " + chainType + ' getNetworkId timeout');
   }
 
-  getScEvent(address, topics, fromBlk, toBlk, retryTimes, callback) {
+  getScEvent(address, topics, fromBlk = 0, toBlk = 'latest', retryTimes = 0, callback) {
     let baseChain = this;
     let chainType = this.chainType;
     let times = 0;
@@ -121,7 +130,7 @@ class baseChain {
     }
   }
 
-  getScEventSync(address, topics, fromBlk, toBlk, retryTimes = 0) {
+  getScEventSync(address, topics, fromBlk = 0, toBlk = 'latest', retryTimes = 0) {
     let baseChain = this;
     let chainType = this.chainType;
     let times = 0;
@@ -478,6 +487,12 @@ class baseChain {
     let contract = this.client.eth.contract(abi);
     let conInstance = contract.at(contractAddr);
     return conInstance[contractFunc];
+  }
+
+  getSolInterfaceV2(abi, contractAddr, contractFunc) {
+    let clientV2 = this.getClientV2(this.nodeUrl);
+    let contract = new clientV2.eth.Contract(abi, contractAddr);
+    return contract.methods[contractFunc];
   }
 
   getSolVar(abi, contractAddr, varName) {
