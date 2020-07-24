@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
-const collection = "eventTracker";
+const collection = "event_tracker";
 
-var EventSchema = new mongoose.Schema({
+var EventTrackerSchema = new mongoose.Schema({
   tracker: {
     type: String,
     index: true
@@ -41,4 +41,4 @@ var EventSchema = new mongoose.Schema({
   id: false
 });
 
-module.exports = mongoose.model(collection, EventSchema, collection);
+module.exports = mongoose.model(collection, EventTrackerSchema, collection);
