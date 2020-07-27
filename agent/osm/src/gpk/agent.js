@@ -6,7 +6,7 @@ const wanchain = require('../utils/wanchain');
 const mongoose = require('mongoose');
 const GroupInfo = require('../../db/models/group_info');
 const Round = require('./Round');
-const Logger = require('comm/logger.js');
+const Logger = require('../../../../comm/logger.js');
 
 const logger = new Logger("gpk-agent-" + wanchain.selfAddress, "log/gpk.log", "log/gpk_error.log", global.argv.loglevel);
 
@@ -128,7 +128,7 @@ async function checkSelfSelected(groupId) {
       ps[i] = new Promise(async (resolve, reject) => {
         try {
           let sm = await smgSc.methods.getSelectedSmInfo(groupId, i).call();
-          if (sm[0].toLowerCase() == wanchain.selfAddress) {
+          if (sm.wkAddr.toLowerCase() == wanchain.selfAddress) {
             isSelected = true;
           }
           resolve();

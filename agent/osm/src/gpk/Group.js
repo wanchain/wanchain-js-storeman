@@ -27,7 +27,7 @@ class Group {
     this.logger.info("start gpk group %s round %d", this.id, this.round);
     this.initSc();
     this.initSelfKey();
-    await wanchain.updateNounce();
+    // await wanchain.updateNounce();
     if (isResume) {
       await this.rounds[0].start(isResume);
       if (this.rounds[1]) {
@@ -59,22 +59,20 @@ class Group {
 
   async getSmList() {
     let smNumber = await this.smgSc.methods.getSelectedSmNumber(this.id).call();
-    let smList = new Array(smNumber);
     let ps = new Array(smNumber);
     for (let i = 0; i < smNumber; i++) {
       ps[i] = new Promise(async (resolve, reject) => {
         try {
           let sm = await this.smgSc.methods.getSelectedSmInfo(this.id, i).call();
-          let address = sm[0].toLowerCase();
-          let pk = sm[1];
-          smList[i] = { address, pk};
-          resolve();
+          let address = sm.wkAddr.toLowerCase();
+          let pk = sm.PK;
+          resolve({ address, pk});
         } catch (err) {
           reject(err);
         }
       })
     }
-    await Promise.all(ps);
+    let smList = await Promise.all(ps);
     this.logger.info('gpk group get smList: %O', smList);
     return smList;
   }

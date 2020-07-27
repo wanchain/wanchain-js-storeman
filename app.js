@@ -239,7 +239,6 @@ const Logger = require('comm/logger.js');
 global.syncLogger = new Logger("storemanAgent-sync-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.monitorLogger = new Logger("storemanAgent-action-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.mpcLogger = new Logger("storemanAgent-mpc-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
-global.osmLogger = new Logger("openStoreman-" + global.argv.c, "log/openStoreman.log", "log/openStoreman_error.log", global.argv.loglevel);
 global.metricLogger = new Logger("storemanAgent-metric-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 global.grpInfoLogger = new Logger("storemanAgent-metric-" + global.argv.c, "log/storemanAgent.log", "log/storemanAgent_error.log", global.argv.loglevel);
 
@@ -942,8 +941,8 @@ db.on('connected', function(err) {
 
 let modelOps = new ModelOps(global.syncLogger, db);
 
-const {handlerOpenStoreman} = require("agent/osm/src/openStoreman");
-const gpk = require('agent/osm/src/gpk/agent');
+const {handlerOpenStoreman} = require("./agent/osm/src/openStoreman");
+const gpk = require('./agent/osm/src/gpk/agent');
 const {getGrpInfoInst} = require('agent/osm/src/grpInfo/grpInfo');
 const {getIncntSlshWriter} = require('agent/osm/src/metric/incntSlshWriter');
 
@@ -1008,7 +1007,7 @@ process.on('unhandledRejection', error => {
 });
 
 function startOsmAgent() {
-  handlerOpenStoreman(global.monitorLogger)
+  handlerOpenStoreman();
   gpk.run();
   if(global.metric){
       getIncntSlshWriter().run();

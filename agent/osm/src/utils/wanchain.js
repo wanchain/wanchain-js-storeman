@@ -27,7 +27,7 @@ console.log("address: %s", selfAddress);
 const web3 = new Web3(new Web3.providers.HttpProvider(config.wanNodeURL));
 
 const gpkSc = getContract('gpk', config.contractAddress.gpk);
-const smg = getContract('smg', config.contractAddress.smg);
+const smgSc = getContract('smg', config.contractAddress.smg);
 
 function getContract(name, address) {
   let abi = abiMap.get(name);
@@ -160,33 +160,39 @@ function getEvents(options) {
   return web3.eth.getPastLogs(options); // promise
 }
 
-
 async function getGroupById(groupId) {
-  let group1 = await smg.methods.getStoremanGroupInfo(groupId).call();
-  let group2 = await smg.methods.getStoremanGroupConfig(groupId).call();
-  let group = Object.assign(group, group2);
-  let selectedNode = [];
-  for(let i=0; i<group.selectedCount; i++){
-    let a = await smg.methods.getSelectedSmInfo(groupId, i);
-    selectedNode.push(a.wkAddr);
+  let info = await smgSc.methods.getStoremanGroupInfo(groupId).call();
+  let cfg = await smgSc.methods.getStoremanGroupConfig(groupId).call();
+  let time = await smgSc.methods.getStoremanGroupTime(groupId).call();
+  let group = Object.assign(info, cfg, time);
+  let ps = new Array(group.memberCount);
+  for (let i = 0; i < group.memberCount; i++) {
+    ps[i] = new Promise(async (resolve, reject) => {
+      try {
+        let sm = await smgSc.methods.getSelectedSmInfo(groupId, i).call();
+        resolve(sm.wkAddr.toLowerCase());
+      } catch (err) {
+        reject(err);
+      }
+    })
   }
-  group.selectedNode = selectedNode;
-  return group
+  group.selectedNode = await Promise.all(ps);
+  return group;
 }
 
 async function getSkbyAddr(addr) {
-  let sk = await smg.methods.getStoremanInfo(addr).call();
+  let sk = await smgSc.methods.getStoremanInfo(addr).call();
   return sk;
 }
 
 async function sendToSelect(groupId) {
-  let txData = await smg.methods.select(groupId).encodeABI();
+  let txData = await smgSc.methods.select(groupId).encodeABI();
   let txHash = await sendTx(config.contractAddress.smg, txData);
   return txHash;
 }
 
 async function sendToIncentive(addr) {
-  let txData = await smg.methods.incentiveCandidator(addr).encodeABI();
+  let txData = await smgSc.methods.incentiveCandidator(addr).encodeABI();
   let txHash = await sendTx(config.contractAddress.smg, txData);
   return txHash;
 }
