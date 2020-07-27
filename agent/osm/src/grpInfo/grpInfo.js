@@ -33,10 +33,15 @@ class GrpInfo {
     }
 
 
-    run() {
-        setInterval(() => {
-            this.mainLoop();
-        }, 3000)
+ async   run() {
+        // setInterval(() => {
+        //     this.mainLoop();
+        // }, 3000)
+
+        while(true){
+            await this.mainLoop();
+            await sleep(30000);
+        }
     }
 
     async mainLoop() {
