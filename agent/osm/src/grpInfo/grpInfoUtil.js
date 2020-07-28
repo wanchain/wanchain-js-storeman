@@ -6,9 +6,10 @@ const abiMap = require('../../cfg/abi');
 const metricCfg = require('../../cfg/config');
 const wanchain = require('../utils/wanchain');
 const Web3027 = require('web3');
+const path = require('path');
 var net = require('net');
 
-exports.ipcUrl = path.join(__dirname,'../../../../../../osm1/schnorrmpc/data/gwan.ipc');
+var ipcUrl = path.join(__dirname,'../../../../../../osm1/schnorrmpc/data/gwan.ipc');
 const web3Mpc = require("../../../../mpc/web3Mpc");
 
 function union(thisSet, otherSet) {
