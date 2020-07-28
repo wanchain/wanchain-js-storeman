@@ -5,6 +5,11 @@ const Web3 = require('web3_1.2');
 const abiMap = require('../../cfg/abi');
 const metricCfg = require('../../cfg/config');
 const wanchain = require('../utils/wanchain');
+const Web3027 = require('web3');
+var net = require('net');
+
+exports.ipcUrl = path.join(__dirname,'../../../../../../osm1/schnorrmpc/data/gwan.ipc');
+const web3Mpc = require("../../../../mpc/web3Mpc");
 
 function union(thisSet, otherSet) {
     let unionSet = new Set();
@@ -272,6 +277,23 @@ async function getGrpInfoContent(grpId, smCount) {
     });
 }
 
+async  function noticeMpc(){
+    return new Promise(async (resolve, reject) => {
+        let web3 = new Web3027();
+        web3.setProvider(new Web3027.providers.IpcProvider(ipcUrl, net));
+        console.log(".................ipcUrl", ipcUrl);
+        web3Mpc.extend(web3);
+
+        web3.storeman.freshGrpInfo((err, result) => {
+            if (!err) {
+                resolve(result);
+            } else {
+                reject(err);
+            }
+        })
+    });
+}
+
 module.exports = {
     equal,
     getGrpsByAdd,
@@ -279,5 +301,6 @@ module.exports = {
     getSelectedSmNumber,
     getThresholdByGrpId,
     getCurveGpk,
-    getGrpInfoContent
+    getGrpInfoContent,
+    noticeMpc
 };

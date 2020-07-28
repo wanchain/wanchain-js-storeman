@@ -13,14 +13,6 @@ exports.contractAddress = {
 };
 exports.GPK = "0x6164a0f5a32836c7b5b4de8049fda5c78361ff0f7edd5570c54c0ecafc7508de514dbe209ce0d4693271f836773d9f78bd0d25ae25cc4c86e6257d808e6d0453";
 
-// exports.keystore = {
-//     //todo should input the real keystore path
-//     //path: global.keystore,
-//     path: '/home/jacob/wanchain/openStoreman/test/keystore',
-//     pwd: 'wanglu',
-// };
-
-
 exports.selfAddress = "0x5793e629c061e7fd642ab6a1b4d552cec0e2d606";
 exports.ownerAddress = "0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e";
 

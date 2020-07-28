@@ -87,26 +87,6 @@ class IncntSlshWriter {
             console.log("--------------------------------setInterval :: get static data ---------------------");
             this.getStaticData();
         }
-        // setInterval(async() => {
-        //
-        //     console.log("\n\n\n\n\n");
-        //     let task = this.popQueue();
-        //     if (task != null) {
-        //         console.log("task :", task);
-        //         this.procSignedResult(task).catch((err) => {
-        //             console.log("--------------------------------setInterval ::procSignedResult error", err);
-        //             console.log("--------------------------------setInterval :: enQueue---------------------");
-        //             this.enQueue(task.xHash, task.signedResult);
-        //         })
-        //     }
-        //     await sleep(5000);
-        // }, 10000);
-
-        // setInterval(() => {
-        //     console.log("\n\n\n\n\n");
-        //     console.log("--------------------------------setInterval :: get static data ---------------------");
-        //     this.getStaticData();
-        // }, 10000)
     }
 
     getStaticData() {

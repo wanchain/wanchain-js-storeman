@@ -12,7 +12,8 @@ const {
     getSelectedSmNumber,
     getThresholdByGrpId,
     getCurveGpk,
-    getGrpInfoContent
+    getGrpInfoContent,
+    noticeMpc
 } = require('./grpInfoUtil');
 
 const Web3 = require('web3');
@@ -25,7 +26,6 @@ function sleep(time) {
     })
 }
 
-
 class GrpInfo {
     constructor() {
         this.preGrpSet = new Set();
@@ -34,9 +34,6 @@ class GrpInfo {
 
 
  async   run() {
-        // setInterval(() => {
-        //     this.mainLoop();
-        // }, 3000)
 
         while(true){
             await this.mainLoop();
@@ -73,15 +70,14 @@ class GrpInfo {
 
             let fullFileName = path.join(metricCfg.grpInfoOutPath, metricCfg.grpInfoFileName);
 
-            p.then((fileContent) => {
+            p.then(async (fileContent) => {
                 if (fileContent.length) {
                     this.writeGrpInfoFile(fileContent, fullFileName);
-                    //todo notify mpc
+                    await noticeMpc();
                 } else {
                     console.log(">>>>>>>>>>>>empty file content.");
                 }
             });
-
 
         } catch (err) {
             console.log("err in mainLoop", err);
