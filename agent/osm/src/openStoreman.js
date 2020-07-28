@@ -19,6 +19,7 @@ const INVALID_GROUP_ID = '0x0000000000000000000000000000000000000000000000000000
 const wkAddr = wanchain.selfAddress;
 
 let lastIncentivedDay = 0;
+let incentiveTxHash = '';
 
 async function sleep(time) {
 	return new Promise(function (resolve, reject) {
@@ -29,28 +30,43 @@ async function sleep(time) {
 };
 
 async function handlerOpenStoremanIncentive(wkaddr){
-  let curDay = Date.now()/1000/60/60/24;
-  if(curDay == lastIncentivedDay){
-    return;
+  let curDay = parseInt(Date.now()/1000/60/60/24);
+  if (curDay == lastIncentivedDay) {
+    return true;
   }
-  while(1){
-    let txhash = await wanchain.sendToIncentive(wkaddr)
-    logger.info(arguments.callee.name+" txhash:", txhash);
-    let receipt = await wanchain.getTxReceipt(txhash, arguments.callee.name)
-    if(!receipt || !receipt.logs || receipt.logs.topics[3]==1){
-      lastIncentivedDay = curDay;
-      break;
+  if (!incentiveTxHash) {
+    incentiveTxHash = await wanchain.sendToIncentive(wkaddr)
+    logger.info(arguments.callee.name + " txhash:", incentiveTxHash);
+    return false;
+  } else {
+    let receipt = await wanchain.getTxReceipt(incentiveTxHash, 'osm incentive');
+    if (!receipt) {
+      logger.info("osm incentive receipt none");
+      return false;
+    } else if (!receipt.status) {
+      logger.info("osm incentive %s receipt error: %O", incentiveTxHash, receipt);
+      incentiveTxHash = '';
+      return true;
+    } else {
+      incentiveTxHash = '';
+      if (receipt.logs.topics[3] == 1) {
+        logger.info("osm incentive end");
+        lastIncentivedDay = curDay;
+        return true;
+      } else {
+        return false;
+      }
     }
   }
 }
 
 async function handlerOpenStoremanStatus(group){
   let cur = parseInt(Date.now()/1000);
-  switch(parseInt(group.status)){
+  switch (parseInt(group.status)) {
     case GroupStatus.curveSeted: // toselect.
-      if(wkAddr == group.selectedNode[0]){ // is Leader
+      if (wkAddr == group.selectedNode[0]) { // is Leader
         let selectTime = parseInt(group.registerTime) + parseInt(group.registerDuration);
-        if(cur > selectTime){
+        if (cur > selectTime){
           let txHash = await wanchain.sendToSelect(group.groupId);
           logger.info("osm select txHash: %s", txHash);
         }
@@ -62,16 +78,15 @@ async function handlerOpenStoremanStatus(group){
           // await wanchain.sendUnregister(group.groupId);
         }
       }
-
       break;
     case GroupStatus.unregistered:  // TODO: 可能不需要处理. 平账后, 直接标志为dismissed
-      if(wkAddr == group.selectedNode[0]){ // is Leader
-        if(cur > group.registerTime+group.registerDuration){
-          await wanchain.sendToSelect(group.groupId);
+      if (wkAddr == group.selectedNode[0]) { // is Leader
+        let dismissTime = parseInt(group.workTime) + parseInt(group.totalTime)
+        if (cur > dismissTime) {
+          // await wanchain.sendToSelect(group.groupId);
         }
       }
-	  // storemanGroupDismiss
-
+	    // storemanGroupDismiss
       break;
     default:
       // just ignore
@@ -83,21 +98,23 @@ async function handlerOpenStoreman() {
   await wanchain.updateNounce();
   while (1) {
     logger.info("********************************** handlerOpenStoreman start **********************************");
+    let incentiveDone = false;
     try {
       let sk = await wanchain.getSkbyAddr(wkAddr);
       if (sk.groupId) {
+        incentiveDone = await handlerOpenStoremanIncentive(wkAddr);
         let group = await wanchain.getGroupById(sk.groupId);
-        handlerOpenStoremanIncentive(wkAddr);
-        handlerOpenStoremanStatus(group);
+        await handlerOpenStoremanStatus(group);
       }
       if (sk.nextGroupId != INVALID_GROUP_ID) {
         let groupNext = await wanchain.getGroupById(sk.nextGroupId);
-        handlerOpenStoremanStatus(groupNext);
+        await handlerOpenStoremanStatus(groupNext);
       }
     } catch(err) {
       logger.error("handlerOpenStoreman error:", err);
     }
-    await sleep(1000*60);
+    let sleepSec = incentiveDone? 60 : 5;
+    await sleep(sleepSec * 1000);
   }
 }
 

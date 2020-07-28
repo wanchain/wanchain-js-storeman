@@ -196,6 +196,7 @@ async function sendToIncentive(addr) {
   let txHash = await sendTx(config.contractAddress.smg, txData);
   return txHash;
 }
+
 function genKeystoreFile(gpk, sk) {
   let password = encrypt.genRandomHex(16);
   let keystore = web3.eth.accounts.encrypt(sk, password);
