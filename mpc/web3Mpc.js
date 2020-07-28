@@ -21,6 +21,7 @@ module.exports = {
         		insertMethod('signDataByApprove', 'storeman_signDataByApprove', 1, [null], null),
         		insertMethod('getDataForApprove', 'storeman_getDataForApprove', 1, [null], null),
         		insertMethod('approveData', 'storeman_approveData', 1, [null], null),
+			insertMethod('freshGrpInfo', 'storeman_freshGrpInfo', 0, null, null),
         	],
         	properties:[],
         });	
