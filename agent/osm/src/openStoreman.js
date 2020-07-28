@@ -49,7 +49,7 @@ async function handlerOpenStoremanIncentive(wkaddr){
       return true;
     } else {
       incentiveTxHash = '';
-      if (receipt.logs.topics[3] == 1) {
+      if (receipt.logs[0].topics[3] == 1) {
         logger.info("osm incentive end");
         lastIncentivedDay = curDay;
         return true;
