@@ -8,6 +8,16 @@ let KeyStore = require('../../../../utils/keyStore');
 const Web3 = require('web3');
 const wanchain = require('../utils/wanchain');
 const {startFakeSmagent} = require('./fakesmagent/testFakesmagent');
+const {
+    equal,
+    getGrpsByAdd,
+    getReadyGrps,
+    getSelectedSmNumber,
+    getThresholdByGrpId,
+    getCurveGpk,
+    getGrpInfoContent,
+    noticeMpc
+} = require('../grpInfo/grpInfoUtil');
 
 
 let {getCommonData, getReceipt} = require('./metricUtil');
@@ -85,51 +95,62 @@ class IncntSlshWriter {
 
             console.log("\n\n\n\n\n");
             console.log("--------------------------------setInterval :: get static data ---------------------");
-            this.getStaticData();
+            if(global.metricStatic){
+                this.getStaticData();
+            }
         }
     }
 
-    getStaticData() {
-        //getPrdInctMetric
-        //getPrdSlshMetric
+    async getStaticData() {
         function getEpIDByNow() {
             let tmstamp = new Date().getTime() / 1000;
             return Math.floor(tmstamp / (1*12*10));
         }
+        //getPrdInctMetric
+        //getPrdSlshMetric
+        try{
 
-        let startEpIDTemp = getEpIDByNow();
-        let oneWeekEpoch = 100;
-        let startEpID = startEpIDTemp - oneWeekEpoch;
-        //let endEpID = startEpID + 1;
-        let endEpID = startEpIDTemp + 1;
-        let grpId = "0x0000000000000000000000000000000000000000000000003133323935313034";
+            let startEpIDTemp = getEpIDByNow();
+            let oneWeekEpoch = 100;
+            let startEpID = startEpIDTemp - oneWeekEpoch;
+            //let endEpID = startEpID + 1;
+            let endEpID = startEpIDTemp + 1;
+            //let grpId = "0x0000000000000000000000000000000000000000000000003133323935313034";
 
-        let abi = abiMap.get("metric");
-        let address = metricCfg.contractAddress.metric;
+            let grps = await getGrpsByAdd(global.workingAddress);
+            let wkGrps = await getReadyGrps(grps);
 
-        let web3 = new Web3(new Web3.providers.HttpProvider(metricCfg.wanNodeURL));
+            for(let grpId of wkGrps){
+                let abi = abiMap.get("metric");
+                let address = metricCfg.contractAddress.metric;
 
-        let MyContract = web3.eth.contract(abi);
-        let c = MyContract.at(address);
-        let ret = c.getPrdInctMetric.call(grpId, startEpID, endEpID);
-        console.log(".............getPrdInctMetric..........");
-        console.log(".............startEpId.........." + startEpID);
-        console.log(".............endEpID.........." + endEpID);
+                let web3 = new Web3(new Web3.providers.HttpProvider(metricCfg.wanNodeURL));
 
-        for (let i = 0; i < ret.length; i++) {
-            console.log("i: " + i + "incentive count: " + ret[i].toString(10));
-        }
+                let MyContract = web3.eth.contract(abi);
+                let c = MyContract.at(address);
+                let ret = c.getPrdInctMetric.call(grpId, startEpID, endEpID);
+                console.log(".............getPrdInctMetric..........");
+                console.log(".............startEpId.........." + startEpID);
+                console.log(".............endEpID.........." + endEpID);
 
-        console.log(".............getPrdSlshMetric..........");
-        ret = c.getPrdSlshMetric.call(grpId, startEpID, endEpID);
-        for (let i = 0; i < ret.length; i++) {
-            console.log("i: " + i + "slsh count: " + ret[i].toString(10));
-        }
+                for (let i = 0; i < ret.length; i++) {
+                    console.log("i: " + i + "incentive count: " + ret[i].toString(10));
+                }
 
-        console.log(".............getDependence..........");
-        ret = c.getDependence.call();
-        for (let i = 0; i < ret.length; i++) {
-            console.log("i: " + i + " dependence: " + ret[i]);
+                console.log(".............getPrdSlshMetric..........");
+                ret = c.getPrdSlshMetric.call(grpId, startEpID, endEpID);
+                for (let i = 0; i < ret.length; i++) {
+                    console.log("i: " + i + "slsh count: " + ret[i].toString(10));
+                }
+
+                console.log(".............getDependence..........");
+                ret = c.getDependence.call();
+                for (let i = 0; i < ret.length; i++) {
+                    console.log("i: " + i + " dependence: " + ret[i]);
+                }
+            }
+        }catch(err){
+
         }
     }
 

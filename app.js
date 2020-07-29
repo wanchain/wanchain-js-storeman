@@ -9,7 +9,7 @@ let argv = optimist
   [--testnet] [--replica] [--dev] [--leader] [--init] [--renew] -period [period] \
   [--mpc] [--schnorr] [--keosd] -k [keosdUrl] --wallet [wallet] --password [password] --keystore [keystore] \
   [--doDebt] --chain [chain] --token [token] --debtor [debtor] --debt [debt] \
-  [--withdraw] [--metric] --[grpInfo] --chain [chain] --token [token] --wanReceiver [wanReceiver] --oriReceiver [oriReceiver]\
+  [--withdraw] [--metric] [--grpInfo] [--static] [--fakeSmagent] --chain [chain] --token [token] --wanReceiver [wanReceiver] --oriReceiver [oriReceiver]\
   --oriurl [oriurl] --oribpurl [oribpurl] --wanurl [wanurl]\
   --loglevel [loglevel] -wa [workingAddr]\
    ")
@@ -52,6 +52,8 @@ let argv = optimist
   .describe('withdraw', 'debug whether to withdraw')
   .describe('metric', 'start metric agent(agent for leader write incentive and slash metric data, leader only)')
   .describe('grpInfo', 'start grpInfo agent(agent to build storeman group info. dynamically,configuration file for mpc, every node.)')
+    .describe('fakeSmagent', 'enable fake sm agent, only for test,not enable on test net and main net')
+    .describe('static', 'enable static of metric, only for test,not enable on test net and main net')
   .describe('chain', 'identify debt chain or withdrawFee chain')
   .describe('token', 'identify debt token or withdrawFee token')
   .describe('debt', 'identify debt amount')
@@ -161,6 +163,9 @@ global.configMutex = false;
 global.workingAddress = argv.wa;
 global.metric = argv.metric ? true:false;
 global.grpInfo = argv.grpInfo ? true:false;
+global.enableFakeSmagent = grgv.fakeSmagent? true:false;
+global.metricStatic = grgv.static? true:false;
+
 
 const {
   loadJsonFile,

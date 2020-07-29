@@ -4,18 +4,8 @@
  */
 
 "use strict"
-//todo need delete begin
-/*
-global.secret = {
-    WORKING_PWD:'wanglu'
-};
-global.keystore = "/home/jacob/wanchain/openStoreman/test/keystore";
-global.workingAddress = '0x2e54a80b977fd1859782e2ee96a76285a7fc75ba';
-*/
 
-global.enableFakeSmagent = true;
-//todo need delete end
-
+global.enableFakeSmagent = false;
 
 const {getIncntSlshWriter} = require('../incntSlshWriter');
 const Web3 = require('web3_1.2');
@@ -69,11 +59,45 @@ let {
 } = getTokenInfo();
 
 
+const {
+    equal,
+    getGrpsByAdd,
+    getReadyGrps,
+    getSelectedSmNumber,
+    getThresholdByGrpId,
+    getCurveGpk,
+    getGrpInfoContent,
+    noticeMpc
+} = require('../grpInfo/grpInfoUtil');
+
+
 function hexAdd0x(hexs) {
     if (0 != hexs.indexOf('0x')) {
         return '0x' + hexs;
     }
     return hexs;
+}
+
+async function getSKGPK(){
+    return new Promise(async (resolve, reject) => {
+        try{
+            let grps = await getGrpsByAdd(global.workingAddress);
+            let wkGrps = await getReadyGrps(grps);
+            for(let grpId of wkGrps){
+                let grpCurves = await getCurveGpk(grpId);
+                for(let ct of grpCurves.curveTypes){
+                    let k = 0;
+                    if(Number(ct) == 0){
+                        resolve(grpCurves.gpks[k]);
+                    }
+                    k++;
+                }
+            }
+        }catch(err){
+            console.log("getSKGPK", "error", err);
+            reject(err);
+        }
+    })
 }
 
 async function run() {
@@ -89,7 +113,8 @@ async function run() {
 
     while (1) {
         try {
-
+            metricCfg.GPK = await getSKGPK();
+            console.log("ret of getSKGPK",metricCfg.GPK);
             // build data
             let xHash = getxHash();
             let typesArray = ['bytes', 'bytes32', 'address', 'uint'];
