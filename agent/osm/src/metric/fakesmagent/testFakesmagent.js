@@ -13,7 +13,7 @@ global.keystore = "/home/jacob/wanchain/openStoreman/test/keystore";
 global.workingAddress = '0x2e54a80b977fd1859782e2ee96a76285a7fc75ba';
 */
 
-global.enableFakeSmagent = true;
+global.enableFakeSmagent = false;
 //todo need delete end
 
 
