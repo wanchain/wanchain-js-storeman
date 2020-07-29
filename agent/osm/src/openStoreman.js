@@ -1,7 +1,7 @@
 const wanchain = require('./utils/wanchain');
 const Logger = require('../../../comm/logger.js');
 
-const logger = new Logger("openStoreman-" + global.argv.c, "log/openStoreman.log", "log/openStoreman_error.log", global.argv.loglevel);
+const logger = new Logger("osm-" + global.argv.c, "log/osm.log", "log/osm_error.log", global.argv.loglevel);
 
 const GroupStatus = {
   none:0, 

@@ -8,7 +8,7 @@ const GroupInfo = require('../../db/models/group_info');
 const Round = require('./Round');
 const Logger = require('../../../../comm/logger.js');
 
-const logger = new Logger("gpk-agent-" + wanchain.selfAddress, "log/gpk.log", "log/gpk_error.log", global.argv.loglevel);
+const logger = new Logger("gpk-" + wanchain.selfAddress, "log/gpk.log", "log/gpk_error.log", global.argv.loglevel);
 
 // record latest round of each group
 const groupMap = new Map();
