@@ -1,7 +1,7 @@
 const wanchain = require('./utils/wanchain');
 const Logger = require('../../../comm/logger.js');
 
-const logger = new Logger("openStoreman-" + global.argv.c, "log/openStoreman.log", "log/openStoreman_error.log", global.argv.loglevel);
+const logger = new Logger("osm-" + global.argv.c, "log/osm.log", "log/osm_error.log", global.argv.loglevel);
 
 const GroupStatus = {
   none:0, 
@@ -49,7 +49,7 @@ async function handlerOpenStoremanIncentive(wkaddr){
       return true;
     } else {
       incentiveTxHash = '';
-      if (receipt.logs.topics[3] == 1) {
+      if (receipt.logs[0].topics[3] == 1) {
         logger.info("osm incentive end");
         lastIncentivedDay = curDay;
         return true;

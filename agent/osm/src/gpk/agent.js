@@ -8,7 +8,7 @@ const GroupInfo = require('../../db/models/group_info');
 const Round = require('./Round');
 const Logger = require('../../../../comm/logger.js');
 
-const logger = new Logger("gpk-agent-" + wanchain.selfAddress, "log/gpk.log", "log/gpk_error.log", global.argv.loglevel);
+const logger = new Logger("gpk-" + wanchain.selfAddress, "log/gpk.log", "log/gpk_error.log", global.argv.loglevel);
 
 // record latest round of each group
 const groupMap = new Map();
@@ -111,7 +111,7 @@ async function procSmgSelectedEvent(evt) {
       } else if (group.round < round) {
         await group.nextRound(round);
       } else {
-        logger.error("gpk agent ignore group %s round %d status %d event", groupId, round, status);
+        logger.info("gpk agent ignore group %s round %d status %d event", groupId, round, status);
       }
     } else {
       logger.info("gpk agent skip group %s round %d as not-selected", groupId, round);  
