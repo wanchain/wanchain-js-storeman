@@ -68,7 +68,7 @@ const {
     getCurveGpk,
     getGrpInfoContent,
     noticeMpc
-} = require('../grpInfo/grpInfoUtil');
+} = require('../../grpInfo/grpInfoUtil');
 
 
 function hexAdd0x(hexs) {
