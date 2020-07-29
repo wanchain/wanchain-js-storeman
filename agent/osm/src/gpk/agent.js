@@ -111,7 +111,7 @@ async function procSmgSelectedEvent(evt) {
       } else if (group.round < round) {
         await group.nextRound(round);
       } else {
-        logger.error("gpk agent ignore group %s round %d status %d event", groupId, round, status);
+        logger.info("gpk agent ignore group %s round %d status %d event", groupId, round, status);
       }
     } else {
       logger.info("gpk agent skip group %s round %d as not-selected", groupId, round);  
