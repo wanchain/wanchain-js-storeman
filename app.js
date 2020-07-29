@@ -163,8 +163,8 @@ global.configMutex = false;
 global.workingAddress = argv.wa;
 global.metric = argv.metric ? true:false;
 global.grpInfo = argv.grpInfo ? true:false;
-global.enableFakeSmagent = grgv.fakeSmagent? true:false;
-global.metricStatic = grgv.static? true:false;
+global.enableFakeSmagent = argv.fakeSmagent? true:false;
+global.metricStatic = argv.static? true:false;
 
 
 const {

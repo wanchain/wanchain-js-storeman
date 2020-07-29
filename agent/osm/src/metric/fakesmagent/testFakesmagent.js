@@ -5,8 +5,6 @@
 
 "use strict"
 
-global.enableFakeSmagent = false;
-
 const {getIncntSlshWriter} = require('../incntSlshWriter');
 const Web3 = require('web3_1.2');
 const Web3027 = require('web3');
@@ -68,7 +66,7 @@ const {
     getCurveGpk,
     getGrpInfoContent,
     noticeMpc
-} = require('../grpInfo/grpInfoUtil');
+} = require('../../grpInfo/grpInfoUtil');
 
 
 function hexAdd0x(hexs) {
