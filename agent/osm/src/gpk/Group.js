@@ -2,6 +2,7 @@ const config = require('../../cfg/config');
 const wanchain = require('../utils/wanchain');
 const Round = require('./Round');
 const GroupInfo = require('../../db/models/group_info');
+const { GpkStatus } = require('./Types');
 
 class Group {
   constructor(logger, id, round) {
@@ -17,6 +18,7 @@ class Group {
     this.selfSk = ''; // hex string with 0x
     this.selfPk = ''; // hex string with 0x
     this.selfAddress = ''; // hex string with 0x
+    this.running = true;
 
     // round
     this.curves = [];
@@ -105,6 +107,8 @@ class Group {
       this.logger.info("gpk group ignore old round %d(<%d) process", round, this.round);
       return;
     }
+    this.running = (this.rounds[0].status < GpkStatus.Complete)
+                || (this.rounds[1] && (this.rounds[1].status < GpkStatus.Complete));
     let gCopy = Object.assign({}, this);
     delete gCopy.logger;
     delete gCopy.smgSc;
@@ -125,10 +129,10 @@ class Group {
     await GroupInfo.updateOne(key, gCopy, {upsert: true});
   }
 
-  async removeProgress(round) {
-    let key = {id: this.id, round, selfAddress: this.selfAddress};
-    await GroupInfo.deleteOne(key);
-  }
+  // async removeProgress(round) {
+  //   let key = {id: this.id, round, selfAddress: this.selfAddress};
+  //   await GroupInfo.deleteOne(key);
+  // }
 }
 
 module.exports = Group;

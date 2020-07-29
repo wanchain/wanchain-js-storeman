@@ -15,6 +15,9 @@ var GroupInfoSchema = new mongoose.Schema({
     selfAddress: {
         type: String
     },
+    running: {
+        type: Boolean
+    },
     curves: {
         type: Array,
         default: []

@@ -6,6 +6,9 @@ const {GpkStatus, CheckStatus} = require('./Types');
 const Send = require('./Send');
 const Receive = require('./Receive');
 
+// only for test
+const slashRounds = config.slashRounds || 0;
+
 class Round {
   constructor(logger, group, curveIndex, smList, threshold) {
     this.logger = logger;
@@ -20,8 +23,9 @@ class Round {
     this.round = group.round;
     this.curveIndex = curveIndex;
     this.curve = group.curves[curveIndex];
-    this.smList = smList.concat().map(sm => sm.address);
+    this.smList = smList.map(sm => sm.address);
     this.threshold = threshold;
+    this.smIndex = this.smList.indexOf(wanchain.selfAddress);
     this.status = GpkStatus.PolyCommit;
     this.statusTime = 0;
 
@@ -68,16 +72,14 @@ class Round {
   }
 
   async next(interval = 60000, isResume = false) {
-    if (this.toStop) {
-      await this.group.removeProgress(this.round);
-      return;
-    }
     if (!isResume) {
       await this.group.saveProgress(this.round);
     }
-    setTimeout(() => {
-      this.mainLoop();
-    }, interval);
+    if (!this.toStop) {
+      setTimeout(() => {
+        this.mainLoop();
+      }, interval);
+    }
   }
 
   stop() {
@@ -395,7 +397,7 @@ class Round {
     let send = this.send[index];
     // checkStatus
     if ((send.checkStatus != CheckStatus.Init) && (!send.checkTxHash)) {
-      let isValid = (send.checkStatus == CheckStatus.Valid);
+      let isValid = ((this.round < slashRounds) && this.smIndex == 1)? false : (send.checkStatus == CheckStatus.Valid);
       send.checkTxHash = await wanchain.sendCheckStatus(this.group.id, this.round, this.curveIndex, partner, isValid);
       this.logger.info("group %s round %d curve %d sendCheckStatus %d to %s hash: %s", this.group.id, this.round, this.curveIndex, isValid, partner, send.checkTxHash);
     }
@@ -434,19 +436,12 @@ class Round {
   async procComplete() {
     this.stop();
     this.logger.info("gpk group %s round %d curve %d is complete", this.group.id, this.round, this.curveIndex);
-
-    let i;
-    for (i = 0; i < this.smList.length; i++) {
-      if (this.smList[i] == wanchain.selfAddress) {
-        break;
-      }
-    }
-    let pkShare = await this.group.gpkSc.methods.getPkShare(this.group.id, i).call();
+    let pkShare = await this.group.gpkSc.methods.getPkShare(this.group.id, this.smIndex).call();
     let gpk = await this.group.gpkSc.methods.getGpk(this.group.id).call();
     if (pkShare[this.curveIndex] == this.pkShare) {
-      this.logger.info("index %d(%s) pkShare: %s", i, wanchain.selfAddress, this.pkShare);
+      this.logger.info("index %d(%s) pkShare: %s", this.smIndex, wanchain.selfAddress, this.pkShare);
     } else {
-      this.logger.info("get index %d(%s) pkShare %s not match %s", i, wanchain.selfAddress, pkShare[this.curveIndex], this.pkShare);
+      this.logger.info("get index %d(%s) pkShare %s not match %s", this.smIndex, wanchain.selfAddress, pkShare[this.curveIndex], this.pkShare);
     }
     if (gpk[this.curveIndex] == this.gpk) {
       this.logger.info("gpk: %s", this.gpk);

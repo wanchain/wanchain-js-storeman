@@ -30,7 +30,7 @@ function run() {
 }
 
 async function recoverGroup() {
-  let groups = await GroupInfo.find({selfAddress: wanchain.selfAddress}).exec();
+  let groups = await GroupInfo.find({selfAddress: wanchain.selfAddress, running: true}).exec();
   await Promise.all(groups.map(group => {
     return new Promise(async (resolve, reject) => {
       logger.info("gpk agent recover group %s", group.id);
@@ -145,6 +145,7 @@ async function checkSelfSelected(groupId) {
 function procGpkCreatedLogger(evt) {
   let groupId = evt.topics[1];
   let round = evt.topics[2];
+  groupMap.delete(groupId);
   logger.info("gpk agent complete group %s at round %d", groupId, round);
 }
 
@@ -158,6 +159,7 @@ function procGpkSlashLogger(evt) {
 function procGpkCloseLogger(evt) {
   let groupId = evt.topics[1];
   let round = evt.topics[2];
+  groupMap.delete(groupId);
   logger.info("gpk agent close group %s at round %d", groupId, round);
 }
 

@@ -27,3 +27,5 @@ exports.gasLimit = 10000000;
 
 exports.dbUrl = global.dbUrl;
 exports.dbOption = global.dbOption;
+
+exports.slashRounds = 1;
