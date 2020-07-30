@@ -1,3 +1,4 @@
+const config = require('../cfg/config');
 const wanchain = require('./utils/wanchain');
 const Logger = require('../../../comm/logger.js');
 
