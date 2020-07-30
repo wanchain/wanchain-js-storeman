@@ -42,6 +42,9 @@ class EventTracker {
       }
       if (!this.startBlock) {
         this.startBlock = await wanchain.getBlockNumber() - this.confirmBlocks - rewindBlocks;
+        if (this.startBlock < 0) {
+          this.startBlock = 0;
+        }
       }
       this.logger.info("%s eventTracker start from block %d", this.id, this.startBlock);
       
