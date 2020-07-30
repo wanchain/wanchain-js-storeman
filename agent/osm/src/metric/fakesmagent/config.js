@@ -6,6 +6,8 @@ exports.ipcUrl = path.join(__dirname,'../../../../../../../osm1/schnorrmpc/data/
 exports.ipcUrlNode2 = path.join(__dirname,'../../../../../../../osm2/schnorrmpc/data/gwan.ipc');
 exports.ipcUrlNode3 = path.join(__dirname,'../../../../../../../osm3/schnorrmpc/data/gwan.ipc');
 exports.ipcUrlNode4 = path.join(__dirname,'../../../../../../../osm4/schnorrmpc/data/gwan.ipc');
+exports.ipcUrlNode5 = path.join(__dirname,'../../../../../../../osm5/schnorrmpc/data/gwan.ipc');
+exports.ipcUrlNode6 = path.join(__dirname,'../../../../../../../osm6/schnorrmpc/data/gwan.ipc');
 
 exports.contractAddress = {
     htlc:'0xBC14e83fB52eB2b3233E067ed6dA4a0D45014495',
