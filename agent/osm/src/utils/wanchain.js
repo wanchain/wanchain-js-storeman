@@ -197,6 +197,18 @@ async function sendToIncentive(addr) {
   return txHash;
 }
 
+async function sendToDismiss(groupId) {
+  let txData = await smgSc.methods.storemanGroupDismiss(groupId).encodeABI();
+  let txHash = await sendTx(config.contractAddress.smg, txData);
+  return txHash;
+}
+
+async function sendToUnregister(groupId) {
+  let txData = await smgSc.methods.storemanGroupUnregister(groupId).encodeABI();
+  let txHash = await sendTx(config.contractAddress.smg, txData);
+  return txHash;
+}
+
 function genKeystoreFile(gpk, sk) {
   let password = encrypt.genRandomHex(16);
   let keystore = web3.eth.accounts.encrypt(sk, password);
@@ -246,6 +258,11 @@ module.exports = {
   getBlockNumber,
   getEvents,
   genKeystoreFile,
-  getGroupById,getSkbyAddr,sendToSelect, sendToIncentive,
+  getGroupById,
+  getSkbyAddr,
+  sendToSelect,
+  sendToIncentive,
+  sendToDismiss,
+  sendToUnregister,
   parseEvent
 }

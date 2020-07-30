@@ -21,6 +21,8 @@ const wkAddr = wanchain.selfAddress;
 let lastIncentivedDay = 0;
 let incentiveTxHash = '';
 
+const smgSc = wanchain.getContract('smg', config.contractAddress.smg);
+
 async function sleep(time) {
 	return new Promise(function (resolve, reject) {
 			setTimeout(function () {
@@ -73,20 +75,19 @@ async function handlerOpenStoremanStatus(group){
       }
       break;
     case GroupStatus.ready:  // to unregister
-      if(wkAddr == group.selectedNode[0]){ // is Leader
-        if(cur > group.endTime){
-          // await wanchain.sendUnregister(group.groupId);
+      if (wkAddr == group.selectedNode[0]){ // is Leader
+        if (cur > group.endTime) {
+          await wanchain.sendUnregister(group.groupId);
         }
       }
       break;
     case GroupStatus.unregistered:  // TODO: 可能不需要处理. 平账后, 直接标志为dismissed
       if (wkAddr == group.selectedNode[0]) { // is Leader
-        let dismissTime = parseInt(group.workTime) + parseInt(group.totalTime)
-        if (cur > dismissTime) {
-          // await wanchain.sendToSelect(group.groupId);
+        let dismissable = await smgSc.methods.checkGroupDismissable(groupId).call();
+        if (dismissable) {
+          await wanchain.sendToDismiss(group.groupId);
         }
       }
-	    // storemanGroupDismiss
       break;
     default:
       // just ignore
