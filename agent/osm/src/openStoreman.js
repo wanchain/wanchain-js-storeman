@@ -78,7 +78,7 @@ async function handlerOpenStoremanStatus(group){
     case GroupStatus.ready:  // to unregister
       if (wkAddr == group.selectedNode[0]){ // is Leader
         if (cur > group.endTime) {
-          await wanchain.sendUnregister(group.groupId);
+          await wanchain.sendToUnregister(group.groupId);
         }
       }
       break;
