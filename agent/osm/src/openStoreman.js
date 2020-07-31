@@ -32,13 +32,13 @@ async function sleep(time) {
 	});
 };
 
-async function handlerOpenStoremanIncentive(groupId, wkaddr){
+async function handlerOpenStoremanIncentive(groupId){
   let curDay = parseInt(Date.now()/1000/60/60/24);
   if (curDay == lastIncentivedDay) {
     return true;
   }
   if (!incentiveTxHash) {
-    incentiveTxHash = await wanchain.sendToIncentive(wkaddr)
+    incentiveTxHash = await wanchain.sendToIncentive(wkAddr)
     logger.info("osm incentive group %s day %d txhash: %s", groupId, lastIncentivedDay, incentiveTxHash);
     return false;
   } else {
@@ -47,7 +47,7 @@ async function handlerOpenStoremanIncentive(groupId, wkaddr){
       // logger.info("osm incentive wait receipt");
       return false;
     } else if (!receipt.status) {
-      logger.info("osm incentive group %s day %d txhash %s receipt error: %O", groupId, lastIncentivedDay, incentiveTxHash, receipt);
+      logger.error("osm incentive group %s day %d txhash %s receipt error: %O", groupId, lastIncentivedDay, incentiveTxHash, receipt);
       incentiveTxHash = '';
       return true;
     } else {
@@ -100,12 +100,16 @@ async function handlerOpenStoreman() {
   await wanchain.updateNounce();
   while (1) {
     logger.info("********************************** handlerOpenStoreman start **********************************");
-    let incentiveDone = false;
+    let incentiveDone = true;
     try {
       let sk = await wanchain.getSkbyAddr(wkAddr);
-      if (sk.groupId) {
-        incentiveDone = await handlerOpenStoremanIncentive(sk.groupId, wkAddr);
+      if (sk.groupId != INVALID_GROUP_ID) {
+        let selected = await checkSelected(sk.groupId);
+        if (selected) {
+          incentiveDone = await handlerOpenStoremanIncentive(sk.groupId, wkAddr);
+        }
         let group = await wanchain.getGroupById(sk.groupId);
+        logger.info("group info:", group);
         await handlerOpenStoremanStatus(group);
       }
       if (sk.nextGroupId != INVALID_GROUP_ID) {
@@ -119,6 +123,19 @@ async function handlerOpenStoreman() {
     await sleep(sleepSec * 1000);
   }
 }
+
+async function checkSelected(groupId) {
+  let selected = false;
+  let smNumber = await smgSc.methods.getSelectedSmNumber(groupId).call();
+  for (let i = 0; i < smNumber; i++) {
+    let sm = await smgSc.methods.getSelectedSmInfo(groupId, i).call();
+    logger.info("check group %s selected %d: %s", groupId, i, sm.wkAddr.toLowerCase());
+    if (wkAddr == sm.wkAddr.toLowerCase()) {
+      selected = true;
+    }    
+  }
+  return selected;
+}  
 
 module.exports = {
   GroupStatus,
