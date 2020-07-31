@@ -44,7 +44,7 @@ async function handlerOpenStoremanIncentive(wkaddr){
   } else {
     let receipt = await wanchain.getTxReceipt(incentiveTxHash, 'osm incentive');
     if (!receipt) {
-      logger.info("osm incentive receipt none");
+      logger.info("osm incentive wait receipt");
       return false;
     } else if (!receipt.status) {
       logger.info("osm incentive %s receipt error: %O", incentiveTxHash, receipt);
@@ -84,7 +84,7 @@ async function handlerOpenStoremanStatus(group){
       break;
     case GroupStatus.unregistered:  // TODO: 可能不需要处理. 平账后, 直接标志为dismissed
       if (wkAddr == group.selectedNode[0]) { // is Leader
-        let dismissable = await smgSc.methods.checkGroupDismissable(groupId).call();
+        let dismissable = await smgSc.methods.checkGroupDismissable(group.groupId).call();
         if (dismissable) {
           await wanchain.sendToDismiss(group.groupId);
         }
@@ -115,7 +115,7 @@ async function handlerOpenStoreman() {
     } catch(err) {
       logger.error("handlerOpenStoreman error:", err);
     }
-    let sleepSec = incentiveDone? 60 : 5;
+    let sleepSec = incentiveDone? 60 : 10;
     await sleep(sleepSec * 1000);
   }
 }
