@@ -14,7 +14,7 @@
           "maxGasPrice": 50,
           "gasPriceDelta": 10,
           "gasLimit": 470000,
-          "approveTokenAllowance": 40000,
+          "approveTokenAllowance": 1000000,
           "tokenAllowanceThreshold": 500,
           "storemanOri": "0x45aff9950f2b174028a88ce8648c49b6ae1e7765",
           "storemanWan": "0x484a7cd86806eefaadccfc7b717edc45c04f99c0",

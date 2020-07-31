@@ -71,6 +71,9 @@ module.exports = class BaseAgent {
       this.tokenAddr = record.tokenAddr;
       this.tokenSymbol = record.tokenSymbol;
       this.decimals = record.decimals;
+
+      let tokenAbi = moduleConfig.tokenAbi;
+      this.tokenContract = new Contract(tokenAbi, this.tokenAddr);
     }
 
     this.debtOptEnable = moduleConfig.crossInfoDict[crossChain].CONF.debtOptEnable;
@@ -636,6 +639,31 @@ module.exports = class BaseAgent {
     }
 
     return [hashX, content];
+  }
+
+  getApproveData() {
+    this.logger.debug("********************************** funcInterface **********************************", this.approveFunc);
+    return this.tokenContract.constructData(this.approveFunc, this.contractAddr, this.amount);
+  }
+  
+  buildApproveZeroData(hashKey, result) {
+    this.logger.debug("********************************** insertApproveZeroData trans **********************************", hashKey);
+
+    let content = {
+      storemanApproveZeroTxHash: (Array.isArray(this.record.storemanApproveZeroTxHash)) ? [...this.record.storemanApproveZeroTxHash] : [this.record.storemanApproveZeroTxHash]
+    }
+    content.storemanApproveZeroTxHash.push(result.toLowerCase());
+    return content;
+  }
+
+  buildApproveData(hashKey, result) {
+    this.logger.debug("********************************** insertApproveData trans **********************************", hashKey);
+
+    let content = {
+      storemanApproveTxHash: (Array.isArray(this.record.storemanApproveTxHash)) ? [...this.record.storemanApproveTxHash] : [this.record.storemanApproveTxHash]
+    }
+    content.storemanApproveTxHash.push(result.toLowerCase());
+    return content;
   }
 
   buildLockData(hashKey, result) {
