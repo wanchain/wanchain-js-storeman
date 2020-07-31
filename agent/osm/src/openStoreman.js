@@ -32,29 +32,29 @@ async function sleep(time) {
 	});
 };
 
-async function handlerOpenStoremanIncentive(wkaddr){
+async function handlerOpenStoremanIncentive(groupId, wkaddr){
   let curDay = parseInt(Date.now()/1000/60/60/24);
   if (curDay == lastIncentivedDay) {
     return true;
   }
   if (!incentiveTxHash) {
     incentiveTxHash = await wanchain.sendToIncentive(wkaddr)
-    logger.info(arguments.callee.name + " txhash:", incentiveTxHash);
+    logger.info("osm incentive group %s day %d txhash: %s", groupId, lastIncentivedDay, incentiveTxHash);
     return false;
   } else {
     let receipt = await wanchain.getTxReceipt(incentiveTxHash, 'osm incentive');
     if (!receipt) {
-      logger.info("osm incentive wait receipt");
+      // logger.info("osm incentive wait receipt");
       return false;
     } else if (!receipt.status) {
-      logger.info("osm incentive %s receipt error: %O", incentiveTxHash, receipt);
+      logger.info("osm incentive group %s day %d txhash %s receipt error: %O", groupId, lastIncentivedDay, incentiveTxHash, receipt);
       incentiveTxHash = '';
       return true;
     } else {
       incentiveTxHash = '';
       if (receipt.logs[0].topics[3] == 1) {
-        logger.info("osm incentive end");
         lastIncentivedDay = curDay;
+        logger.info("osm incentive group %s finish day %d", groupId, lastIncentivedDay);
         return true;
       } else {
         return false;
@@ -104,7 +104,7 @@ async function handlerOpenStoreman() {
     try {
       let sk = await wanchain.getSkbyAddr(wkAddr);
       if (sk.groupId) {
-        incentiveDone = await handlerOpenStoremanIncentive(wkAddr);
+        incentiveDone = await handlerOpenStoremanIncentive(sk.groupId, wkAddr);
         let group = await wanchain.getGroupById(sk.groupId);
         await handlerOpenStoremanStatus(group);
       }
