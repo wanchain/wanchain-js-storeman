@@ -5,9 +5,9 @@ exports.wanNodeURL = globalConfig.testnet.wanWeb3Url;
 // exports.wanNodeURL = 'http://127.0.0.1:7654';
 
 exports.contractAddress = {
-    smg: '0xc153354CaD58C8Bd8f337118977103711d72e3b7',
-    gpk: '0x2Eb040A9C30aDB89BfFC243a3da7432abB8277e6',
-    metric: '0xF96E3D527Bf639D871227cacf1Ec751c7F3cF914'
+    smg: '0xa4d326aBe48cD29dA6441b9672615e6CC651513D',
+    gpk: '0xE31289389530cabb4b3d2fc82FD7Fb724E80dc5f',
+    metric: '0x4A18571CDa0898313E9CD1eeaB63EB6712C4b0A2'
 };
 
 exports.keystore = {
@@ -28,4 +28,4 @@ exports.gasLimit = 10000000;
 exports.dbUrl = global.dbUrl;
 exports.dbOption = global.dbOption;
 
-exports.slashRounds = 1;
+exports.slashRounds = 0;
