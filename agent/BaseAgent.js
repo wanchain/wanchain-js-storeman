@@ -76,6 +76,8 @@ module.exports = class BaseAgent {
       this.tokenContract = new Contract(tokenAbi, this.tokenAddr);
     }
 
+    this.approveFunc = 'approve';
+
     this.debtOptEnable = moduleConfig.crossInfoDict[crossChain].CONF.debtOptEnable;
 
     this.debtFunc = crossInfoInst.debtFunc;
