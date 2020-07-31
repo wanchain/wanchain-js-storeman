@@ -104,12 +104,11 @@ async function handlerOpenStoreman() {
     try {
       let sk = await wanchain.getSkbyAddr(wkAddr);
       if (sk.groupId != INVALID_GROUP_ID) {
-        let selected = await checkSelected(sk.groupId);
-        if (selected) {
-          incentiveDone = await handlerOpenStoremanIncentive(sk.groupId, wkAddr);
-        }
         let group = await wanchain.getGroupById(sk.groupId);
         logger.info("group info:", group);
+        if ((group.status >= GroupStatus.ready) && group.selectedNode.indexOf(wkAddr)) {
+          incentiveDone = await handlerOpenStoremanIncentive(sk.groupId, wkAddr);
+        }
         await handlerOpenStoremanStatus(group);
       }
       if (sk.nextGroupId != INVALID_GROUP_ID) {
@@ -123,19 +122,6 @@ async function handlerOpenStoreman() {
     await sleep(sleepSec * 1000);
   }
 }
-
-async function checkSelected(groupId) {
-  let selected = false;
-  let smNumber = await smgSc.methods.getSelectedSmNumber(groupId).call();
-  for (let i = 0; i < smNumber; i++) {
-    let sm = await smgSc.methods.getSelectedSmInfo(groupId, i).call();
-    logger.info("check group %s selected %d: %s", groupId, i, sm.wkAddr.toLowerCase());
-    if (wkAddr == sm.wkAddr.toLowerCase()) {
-      selected = true;
-    }    
-  }
-  return selected;
-}  
 
 module.exports = {
   GroupStatus,
