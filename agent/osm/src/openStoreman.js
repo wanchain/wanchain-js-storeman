@@ -69,16 +69,17 @@ async function handlerOpenStoremanStatus(group){
     case GroupStatus.curveSeted: // toselect.
       if (wkAddr == group.selectedNode[0]) { // is Leader
         let selectTime = parseInt(group.registerTime) + parseInt(group.registerDuration);
-        if (cur > selectTime){
+        if (cur > selectTime) {
           let txHash = await wanchain.sendToSelect(group.groupId);
-          logger.info("osm select txHash: %s", txHash);
+          logger.info("osm group %s select txHash: %s", group.groupId, txHash);
         }
       }
       break;
     case GroupStatus.ready:  // to unregister
       if (wkAddr == group.selectedNode[0]){ // is Leader
         if (cur > group.endTime) {
-          await wanchain.sendToUnregister(group.groupId);
+          let txHash = await wanchain.sendToUnregister(group.groupId);
+          logger.info("osm group %s unregister txHash: %s", group.groupId, txHash);
         }
       }
       break;
@@ -86,7 +87,8 @@ async function handlerOpenStoremanStatus(group){
       if (wkAddr == group.selectedNode[0]) { // is Leader
         let dismissable = await smgSc.methods.checkGroupDismissable(group.groupId).call();
         if (dismissable) {
-          await wanchain.sendToDismiss(group.groupId);
+          let txHash = await wanchain.sendToDismiss(group.groupId);
+          logger.info("osm group %s dismiss txHash: %s", group.groupId, txHash);
         }
       }
       break;
@@ -103,6 +105,7 @@ async function handlerOpenStoreman() {
     let incentiveDone = true;
     try {
       let sk = await wanchain.getSkbyAddr(wkAddr);
+      logger.info("%s sk info:", wkAddr, sk);
       if (sk.groupId != INVALID_GROUP_ID) {
         let group = await wanchain.getGroupById(sk.groupId);
         logger.info("group info:", group);
@@ -113,6 +116,7 @@ async function handlerOpenStoreman() {
       }
       if (sk.nextGroupId != INVALID_GROUP_ID) {
         let groupNext = await wanchain.getGroupById(sk.nextGroupId);
+        logger.info("next group info:", groupNext);
         await handlerOpenStoremanStatus(groupNext);
       }
     } catch(err) {
