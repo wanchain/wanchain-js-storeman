@@ -72,7 +72,7 @@ class GrpInfo {
 
             p.then(async (fileContent) => {
                 if (fileContent.length) {
-                    this.writeGrpInfoFile(fileContent, fullFileName);
+                    await this.writeGrpInfoFile(fileContent, fullFileName);
                     await noticeMpc();
                 } else {
                     console.log(">>>>>>>>>>>>empty file content.");
@@ -192,15 +192,20 @@ class GrpInfo {
         return JSON.stringify(fileContent)
     }
 
-    writeGrpInfoFile(fileContent, filename) {
-        console.log(">>>>>>>>>>>>>>>fileContent ", fileContent);
-        fs.writeFile(filename, fileContent, (err, result) => {
-            if (err) {
-                console.log(err)
-            } else {
-                console.log("writeGrpInfoFile successfully. filename:", filename);
-            }
-        });
+   async writeGrpInfoFile(fileContent, filename) {
+        return new Promise((resolve, reject) => {
+            console.log(">>>>>>>>>>>>>>>fileContent ", fileContent);
+            fs.writeFile(filename, fileContent, (err, result) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                } else {
+                    console.log("writeGrpInfoFile successfully. filename:", filename);
+                    resolve(0);
+                }
+            });
+        })
+
     }
 }
 
