@@ -106,7 +106,7 @@ async function handlerOpenStoreman() {
       if (sk.groupId != INVALID_GROUP_ID) {
         let group = await wanchain.getGroupById(sk.groupId);
         logger.info("group info:", group);
-        if ((group.status >= GroupStatus.ready) && group.selectedNode.indexOf(wkAddr)) {
+        if ((group.status >= GroupStatus.ready) && (group.selectedNode.indexOf(wkAddr) >= 0)) {
           incentiveDone = await handlerOpenStoremanIncentive(sk.groupId, wkAddr);
         }
         await handlerOpenStoremanStatus(group);

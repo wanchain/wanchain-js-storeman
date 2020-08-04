@@ -168,19 +168,22 @@ class IncntSlshWriter {
             let data = c.buildData(task);
 
             try{
-                let commoneInfo = [];
-                commoneInfo = await getCommonData();
-                console.log(">>>>>commoneInfor ", commoneInfo);
+                // let commoneInfo = [];
+                // commoneInfo = await getCommonData();
+                // console.log(">>>>>commoneInfor ", commoneInfo);
 
-                let mt = new MetricTrans(...commoneInfo);
-                mt.setData(data);
+                // let mt = new MetricTrans(...commoneInfo);
+                // mt.setData(data);
 
-                // let prvKey = KeyStore.getPrivateKeyByKsPath(wanchain.selfAddress, metricCfg.keystore.pwd, metricCfg.keystore.path);
-                //let signedRawTx = mt.signFromKeystore(metricCfg.keystore.pwd, metricCfg.keystore.path);
-                let signedRawTx = mt.sign(wanchain.selfSk);
-                console.log("<<<<<<<<signedRawTx is " + signedRawTx);
+                // // let prvKey = KeyStore.getPrivateKeyByKsPath(wanchain.selfAddress, metricCfg.keystore.pwd, metricCfg.keystore.path);
+                // //let signedRawTx = mt.signFromKeystore(metricCfg.keystore.pwd, metricCfg.keystore.path);
+                // let signedRawTx = mt.sign(wanchain.selfSk);
+                // console.log("<<<<<<<<signedRawTx is " + signedRawTx);
 
-                let txHash = await mt.sendSignedRawTrans(signedRawTx)
+                // let txHash = await mt.sendSignedRawTrans(signedRawTx)
+                // console.log("---------------------------sendTrans successfully------------ txHash", txHash);
+
+                let txHash = await wanchain.sendTx(address, data);
                 console.log("---------------------------sendTrans successfully------------ txHash", txHash);
 
                 let rcpt = await getReceipt(txHash);

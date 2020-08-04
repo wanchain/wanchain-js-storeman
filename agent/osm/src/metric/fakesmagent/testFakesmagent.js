@@ -10,6 +10,7 @@ const Web3 = require('web3_1.2');
 const Web3027 = require('web3');
 const abiMap = require('./abi');
 const metricCfg = require('./config');
+const wanchain = require('../../utils/wanchain');
 
 const CurveType = {
     sk256: '0x00',
@@ -131,15 +132,24 @@ async function run() {
 
 
             let c = await getContract(abiMap.get("htlc"), metricCfg.contractAddress.htlc);
-            await c.methods.inSmgLock(Web3.utils.toHex(asciiTokenOrigAccount),
-                xHash,
-                metricCfg.wanAddress,
-                metricCfg.value,
-                metricCfg.GPK,
-                sr.R,
-                sr.S).send({from: metricCfg.ownerAddress}).on('transactionHash', function (hash) {
-                console.log("......................inSmgLock transactionHash ", hash);
-            });
+            // await c.methods.inSmgLock(Web3.utils.toHex(asciiTokenOrigAccount),
+            //     xHash,
+            //     metricCfg.wanAddress,
+            //     metricCfg.value,
+            //     metricCfg.GPK,
+            //     sr.R,
+            //     sr.S).send({from: metricCfg.ownerAddress}).on('transactionHash', function (hash) {
+            //     console.log("......................inSmgLock transactionHash ", hash);
+            // });
+            let txData = await c.methods.inSmgLock(Web3.utils.toHex(asciiTokenOrigAccount),
+            xHash,
+            metricCfg.wanAddress,
+            metricCfg.value,
+            metricCfg.GPK,
+            sr.R,
+            sr.S).encodeABI();
+            let txHash = await wanchain.sendTx(metricCfg.contractAddress.htlc, txData);
+            console.log("......................inSmgLock transactionHash ", txHash);
         } catch (err) {
             console.log("Error in inSmgLock ignore....");
         }
