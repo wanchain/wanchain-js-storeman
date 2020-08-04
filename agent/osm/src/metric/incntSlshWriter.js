@@ -76,6 +76,7 @@ class IncntSlshWriter {
 
  async   run() {
 
+        console.log("--------------------------------run global.enableFakeSmagent", global.enableFakeSmagent);
         if(global.enableFakeSmagent){
             startFakeSmagent();
         }
@@ -115,7 +116,7 @@ class IncntSlshWriter {
             let startEpID = startEpIDTemp - oneWeekEpoch;
             //let endEpID = startEpID + 1;
             let endEpID = startEpIDTemp + 1;
-            //let grpId = "0x0000000000000000000000000000000000000000000000003133323935313034";
+            //let grpId = "0x0000000000000000000000000000000000000000000031353935383434373633";
 
             let grps = await getGrpsByAdd(global.workingAddress);
             let wkGrps = await getReadyGrps(grps);
