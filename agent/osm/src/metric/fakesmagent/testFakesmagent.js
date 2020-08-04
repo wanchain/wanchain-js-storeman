@@ -77,23 +77,26 @@ function hexAdd0x(hexs) {
     return hexs;
 }
 
-async function getSKGPK(){
+async function getWKGPK(){
     return new Promise(async (resolve, reject) => {
         try{
             let grps = await getGrpsByAdd(global.workingAddress);
             let wkGrps = await getReadyGrps(grps);
+            let gpks = [];
             for(let grpId of wkGrps){
                 let grpCurves = await getCurveGpk(grpId);
                 for(let ct of grpCurves.curveTypes){
                     let k = 0;
                     if(Number(ct) == 0){
-                        resolve(grpCurves.gpks[k]);
+                        //resolve(grpCurves.gpks[k]);
+                        gpks.push(grpCurves.gpks[k])
                     }
                     k++;
                 }
             }
+            resolve(gpks);
         }catch(err){
-            console.log("getSKGPK", "error", err);
+            console.log("getWKGPK", "error", err);
             reject(err);
         }
     })
@@ -110,10 +113,22 @@ async function run() {
 
     // getIncntSlshWriter();
 
+    let txCount = 0;
     while (1) {
         try {
-            metricCfg.GPK = await getSKGPK();
-            console.log("ret of getSKGPK",metricCfg.GPK);
+            txCount++;
+            let wkGpks = await getWKGPK();
+            if(wkGpks.length > 1){
+                if(txCount%2){
+                    metricCfg.GPK = wkGpks[0];
+                }else{
+                    metricCfg.GPK = wkGpks[1];
+                }
+            }else{
+                metricCfg.GPK = wkGpks[0];
+            }
+
+            console.log("ret of getWKGPK",metricCfg.GPK);
             // build data
             let xHash = getxHash();
             let typesArray = ['bytes', 'bytes32', 'address', 'uint'];
@@ -174,15 +189,20 @@ async function getMpcSignedData(gpk, data, curveType) {
         try {
             // add valid data
             for (let i = 2; i < 7; i++) {
-                let ipcUrl = "ipcUrlNode" + i;
-                console.log("......ipcUrl", metricCfg[ipcUrl]);
-                web3.setProvider(new Web3027.providers.IpcProvider(metricCfg[ipcUrl], net));
-                web3Mpc.extend(web3);
-                web3.storeman.addValidData(signData, (err, result) => {
-                    if (err) {
-                        reject(err);
-                    }
-                });
+
+                try{
+                    let ipcUrl = "ipcUrlNode" + i;
+                    console.log("......ipcUrl", metricCfg[ipcUrl]);
+                    web3.setProvider(new Web3027.providers.IpcProvider(metricCfg[ipcUrl], net));
+                    web3Mpc.extend(web3);
+                    web3.storeman.addValidData(signData, (err, result) => {
+                        if (err) {
+                            reject(err);
+                        }
+                    });
+                }catch(err){
+                    console.log("......err", err);
+                }
             }
             // send sign data to mpc
             web3.setProvider(new Web3027.providers.IpcProvider(metricCfg.ipcUrl, net));
