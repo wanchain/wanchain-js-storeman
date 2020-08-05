@@ -209,15 +209,22 @@ async function sendToUnregister(groupId) {
   return txHash;
 }
 
-function genKeystoreFile(gpk, sk) {
-  let password = encrypt.genRandomHex(16);
-  let keystore = web3.eth.accounts.encrypt(sk, password);
+function createGpkFile(gpk, sk) {
+  let pwd = config.keystore.pwd;
+  let keystore = web3.eth.accounts.encrypt(sk, pwd);
   let gAddress = ethUtil.pubToAddress(Buffer.from(gpk.substr(2), 'hex')).toString('hex').toLowerCase(); // no 0x
   keystore.address = gAddress;
   let fp = path.join(__dirname, '../../../../../keystore/ks', gpk);
   fs.writeFileSync(fp, JSON.stringify(keystore), 'utf8');
   fp = path.join(__dirname, '../../../../../keystore/pwd', gpk + '.pwd');
-  fs.writeFileSync(fp, password, 'utf8');
+  fs.writeFileSync(fp, pwd, 'utf8');
+}
+
+function discardGpkFile(gpk) {
+  let fp = path.join(__dirname, '../../../../../keystore/ks', gpk);
+  fs.unlink(fp, err => {});
+  fp = path.join(__dirname, '../../../../../keystore/pwd', gpk + '.pwd');
+  fs.unlink(fp, err => {});
 }
 
 function parseEvent(contractName, eventName, event) {
@@ -257,7 +264,8 @@ module.exports = {
   sendSijTimeout,
   getBlockNumber,
   getEvents,
-  genKeystoreFile,
+  createGpkFile,
+  discardGpkFile,
   getGroupById,
   getSkbyAddr,
   sendToSelect,

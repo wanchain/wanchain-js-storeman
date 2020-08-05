@@ -300,7 +300,7 @@ class Round {
     this.skShare = '0x' + skShare.toBuffer(32).toString('hex');
     this.pkShare = '0x' + encrypt.mulG(this.curve, skShare).getEncoded(false).toString('hex').substr(2);
     this.gpk = '0x' + gpk.getEncoded(false).toString('hex').substr(2);
-    wanchain.genKeystoreFile(this.gpk, this.skShare);
+    wanchain.createGpkFile(this.gpk, this.skShare);
     this.logger.info("skShare: %s", this.skShare);
     this.logger.info("pkShare: %s", this.pkShare);
     this.logger.info("gpk: %s", this.gpk);
@@ -452,6 +452,9 @@ class Round {
   
   async procClose() {
     this.stop();
+    if (this.gpk) {
+      wanchain.discardGpkFile(this.gpk);
+    }
     this.logger.info("gpk group %s round %d curve %d is closed", this.group.id, this.round, this.curveIndex);
   }
 }
