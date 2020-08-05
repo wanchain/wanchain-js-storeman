@@ -104,7 +104,7 @@ async function handlerOpenStoreman() {
     logger.info("********************************** handlerOpenStoreman start **********************************");
     let incentiveDone = true;
     try {
-      let sk = await wanchain.getSkbyAddr(wkAddr);
+      let sk = await smgSc.methods.getStoremanInfo(wkAddr).call();
       logger.info("%s sk info:", wkAddr, sk);
       if (sk.groupId != INVALID_GROUP_ID) {
         let group = await wanchain.getGroupById(sk.groupId);
