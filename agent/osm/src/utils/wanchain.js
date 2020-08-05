@@ -180,11 +180,6 @@ async function getGroupById(groupId) {
   return group;
 }
 
-async function getSkbyAddr(addr) {
-  let sk = await smgSc.methods.getStoremanInfo(addr).call();
-  return sk;
-}
-
 async function sendToSelect(groupId) {
   let txData = await smgSc.methods.select(groupId).encodeABI();
   let txHash = await sendTx(config.contractAddress.smg, txData);
@@ -267,7 +262,6 @@ module.exports = {
   createGpkFile,
   discardGpkFile,
   getGroupById,
-  getSkbyAddr,
   sendToSelect,
   sendToIncentive,
   sendToDismiss,
