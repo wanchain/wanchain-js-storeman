@@ -105,14 +105,16 @@ async function handlerOpenStoreman() {
     let incentiveDone = true;
     try {
       let sk = await smgSc.methods.getStoremanInfo(wkAddr).call();
-      logger.info("%s sk info:", wkAddr, sk);
       if (sk.groupId != INVALID_GROUP_ID) {
+        logger.info("sk info:", sk);
         let group = await wanchain.getGroupById(sk.groupId);
         logger.info("group info:", group);
         if ((group.status >= GroupStatus.ready) && (group.selectedNode.indexOf(wkAddr) >= 0)) {
           incentiveDone = await handlerOpenStoremanIncentive(sk.groupId, wkAddr);
         }
         await handlerOpenStoremanStatus(group);
+      } else {
+        logger.info("sk %s is not selected", wkAddr);
       }
       if (sk.nextGroupId != INVALID_GROUP_ID) {
         let groupNext = await wanchain.getGroupById(sk.nextGroupId);
