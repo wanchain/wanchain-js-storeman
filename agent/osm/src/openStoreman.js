@@ -33,8 +33,8 @@ async function sleep(time) {
 };
 
 async function handlerOpenStoremanIncentive(group) {
-  let curDay = parseInt(Date.now()/1000/60/60/24);
-  let endDay = parseInt(group.endTime/1000/60/60/24);
+  let curDay = parseInt(Date.now()/1000);
+  let endDay = parseInt(group.endTime/1000);
   if ((lastIncentivedDay == curDay) || (lastIncentivedDay > endDay)) {
     return true;
   }
