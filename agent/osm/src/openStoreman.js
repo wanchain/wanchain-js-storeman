@@ -115,7 +115,7 @@ async function handlerOpenStoreman() {
         }
         await handlerOpenStoremanStatus(group);
       } else {
-        logger.info("sk %s is not selected", wkAddr);
+        logger.info("sk %s has not staked in", wkAddr);
       }
       if (sk.nextGroupId != INVALID_GROUP_ID) {
         let groupNext = await wanchain.getGroupById(sk.nextGroupId);
