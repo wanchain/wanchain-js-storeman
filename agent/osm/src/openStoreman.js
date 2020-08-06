@@ -32,14 +32,15 @@ async function sleep(time) {
 	});
 };
 
-async function handlerOpenStoremanIncentive(groupId){
+async function handlerOpenStoremanIncentive(group) {
   let curDay = parseInt(Date.now()/1000/60/60/24);
-  if (curDay == lastIncentivedDay) {
+  let endDay = parseInt(group.endTime/1000/60/60/24);
+  if ((lastIncentivedDay == curDay) || (lastIncentivedDay > endDay)) {
     return true;
   }
   if (!incentiveTxHash) {
     incentiveTxHash = await wanchain.sendToIncentive(wkAddr)
-    logger.info("osm incentive group %s day %d txhash: %s", groupId, lastIncentivedDay, incentiveTxHash);
+    logger.info("osm incentive group %s day %d txhash: %s", group.groupId, lastIncentivedDay, incentiveTxHash);
     return false;
   } else {
     let receipt = await wanchain.getTxReceipt(incentiveTxHash, 'osm incentive');
@@ -47,14 +48,14 @@ async function handlerOpenStoremanIncentive(groupId){
       // logger.info("osm incentive wait receipt");
       return false;
     } else if (!receipt.status) {
-      logger.error("osm incentive group %s day %d txhash %s receipt error: %O", groupId, lastIncentivedDay, incentiveTxHash, receipt);
+      logger.error("osm incentive group %s day %d txhash %s receipt error: %O", group.groupId, lastIncentivedDay, incentiveTxHash, receipt);
       incentiveTxHash = '';
       return true;
     } else {
       incentiveTxHash = '';
       if (receipt.logs[0].topics[3] == 1) {
         lastIncentivedDay = curDay;
-        logger.info("osm incentive group %s finish day %d", groupId, lastIncentivedDay);
+        logger.info("osm incentive group %s finish day %d", group.groupId, lastIncentivedDay);
         return true;
       } else {
         return false;
@@ -110,7 +111,7 @@ async function handlerOpenStoreman() {
         let group = await wanchain.getGroupById(sk.groupId);
         logger.info("group info:", group);
         if ((group.status >= GroupStatus.ready) && (group.selectedNode.indexOf(wkAddr) >= 0)) {
-          incentiveDone = await handlerOpenStoremanIncentive(sk.groupId, wkAddr);
+          incentiveDone = await handlerOpenStoremanIncentive(group, wkAddr);
         }
         await handlerOpenStoremanStatus(group);
       } else {
