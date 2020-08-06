@@ -111,9 +111,9 @@ class Group {
                 || (this.rounds[1] && (this.rounds[1].status < GpkStatus.Complete));
     let gCopy = Object.assign({}, this);
     delete gCopy.logger;
-    delete gCopy.smgSc;
-    delete gCopy.gpkSc;
     delete gCopy.selfSk;
+    gCopy.smgSc = config.contractAddress.smg;
+    gCopy.gpkSc = config.contractAddress.gpk;
     gCopy.rounds = [];
     let r0Copy = Object.assign({}, this.rounds[0]);
     delete r0Copy.logger;

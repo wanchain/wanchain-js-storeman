@@ -6,6 +6,12 @@ var GroupInfoSchema = new mongoose.Schema({
         type: String,
         index: true
     },
+    smgSc: {
+      type: String
+    },
+    gpkSc: {
+      type: String
+    },
     round: {
         type: Number,
     },

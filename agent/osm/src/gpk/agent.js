@@ -32,8 +32,13 @@ function run() {
 async function recoverGroup() {
   let groups = await GroupInfo.find({selfAddress: wanchain.selfAddress, running: true}).exec();
   await Promise.all(groups.map(group => {
-    return new Promise(async (resolve, reject) => {
-      logger.info("gpk agent recover group %s", group.id);
+    return new Promise(async (resolve, reject) => {      
+      if (checkContractChange(group)) {
+        logger.info("gpk agent recover group %s", group.id);
+      } else {
+        logger.info("gpk agent discard old contract group %s", group.id);
+        return resolve();
+      }
       try {
         let resumeGroup = new Group(logger, group.id, group.round);
         resumeGroup.curves = group.curves;
@@ -54,6 +59,11 @@ async function recoverGroup() {
       }
     });
   }));
+}
+
+function checkContractChange(group) {
+  return ((group.smgSc.toLowerCase() == config.contractAddress.smg.toLowerCase()) &&
+          (group.gpkSc.toLowerCase() == config.contractAddress.gpk.toLowerCase()));
 }
 
 function listenEvent() {
